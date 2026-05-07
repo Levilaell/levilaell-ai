@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrackedLink } from "@/components/tracking/tracked-link";
@@ -36,10 +37,15 @@ export default function AboutPage() {
       <section className="container-page py-16 md:py-20">
         <div className="grid gap-10 lg:grid-cols-12 lg:gap-16 items-center">
           <div className="lg:col-span-4 order-2 lg:order-1">
-            <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-700 dark:from-zinc-100 dark:via-zinc-300 dark:to-zinc-500 grid place-items-center text-zinc-50 dark:text-zinc-900">
-              <span className="font-mono text-xs uppercase tracking-widest opacity-70">
-                Foto · em breve
-              </span>
+            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-border/60 bg-muted">
+              <Image
+                src="/og.png"
+                alt="Levi Lael"
+                fill
+                sizes="(min-width: 1024px) 33vw, 100vw"
+                className="object-cover"
+                priority
+              />
             </div>
           </div>
           <div className="lg:col-span-8 order-1 lg:order-2">
