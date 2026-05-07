@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 
 const packages = [
   {
-    icon: "🛠️",
     title: "Automação Sob Demanda",
     description:
       "Você me traz o problema; eu construo a solução técnica. Pode ser uma integração específica, um agente de IA, um pipeline de dados, um webhook handler robusto, ou qualquer sistema que automatize um processo seu.",
@@ -28,7 +27,6 @@ const packages = [
     featured: false,
   },
   {
-    icon: "🚀",
     title: "Sprint de IA",
     description:
       "Sprint focado pra colocar UM caso de uso de IA rodando em produção na sua empresa. Inclui: arquitetura, implementação, deploy, telemetria de custo e documentação técnica.",
@@ -41,7 +39,6 @@ const packages = [
     featured: true,
   },
   {
-    icon: "👨‍💻",
     title: "Desenvolvedor Dedicado",
     description:
       "Trabalho 40h/mês com você como desenvolvedor remoto dedicado: construo, mantenho, evoluo seus sistemas de automação e IA. Reuniões semanais. Stack 100% sua.",
@@ -73,8 +70,7 @@ const notList = [
   },
   {
     title: "Não pego qualquer projeto.",
-    detail:
-      "Se eu não for a melhor pessoa pro seu caso, eu indico quem é.",
+    detail: "Se eu não for a melhor pessoa pro seu caso, eu indico quem é.",
   },
 ];
 
@@ -86,8 +82,7 @@ const process = [
   },
   {
     title: "Proposta clara",
-    detail:
-      "Você recebe escopo, métricas, prazo e investimento por escrito.",
+    detail: "Você recebe escopo, métricas, prazo e investimento por escrito.",
   },
   {
     title: "Implementação",
@@ -96,8 +91,7 @@ const process = [
   },
   {
     title: "Documentação e handoff",
-    detail:
-      "Você fica com tudo: código, fluxos, manuais.",
+    detail: "Você fica com tudo: código, fluxos, manuais.",
   },
 ];
 
@@ -126,28 +120,14 @@ export default function ServicesPage() {
                   : "border-border",
               )}
             >
-              {p.featured && (
-                <div className="absolute -top-3 left-7 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-3 py-1 text-xs font-medium">
-                  <Star className="size-3" aria-hidden /> Mais escolhido
-                </div>
-              )}
-              <span className="text-3xl mb-4" aria-hidden>
-                {p.icon}
-              </span>
-              <h2 className="font-semibold text-xl tracking-tight">{p.title}</h2>
+              <span className="text-3xl mb-4" aria-hidden></span>
+              <h2 className="font-semibold text-xl tracking-tight">
+                {p.title}
+              </h2>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed flex-1">
                 {p.description}
               </p>
-              <dl className="mt-6 space-y-3 border-t border-border pt-5 text-sm">
-                <div className="flex items-center justify-between">
-                  <dt className="text-muted-foreground">Investimento</dt>
-                  <dd className="font-medium">{p.price}</dd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <dt className="text-muted-foreground">Prazo</dt>
-                  <dd className="font-medium">{p.timeline}</dd>
-                </div>
-              </dl>
+
               <p className="mt-5 text-xs text-muted-foreground leading-relaxed">
                 <strong className="text-foreground">Ideal para:</strong>{" "}
                 {p.idealFor}
@@ -183,7 +163,9 @@ export default function ServicesPage() {
                 key={item.title}
                 className="rounded-2xl border border-border bg-card p-6 md:p-7"
               >
-                <p className="font-semibold text-base md:text-lg">{item.title}</p>
+                <p className="font-semibold text-base md:text-lg">
+                  {item.title}
+                </p>
                 <p className="mt-2 text-sm md:text-base text-muted-foreground leading-relaxed">
                   {item.detail}
                 </p>
@@ -221,7 +203,9 @@ export default function ServicesPage() {
         <div className="container-page py-20 md:py-24 text-center">
           <h2 className="heading-2">Não sabe ainda qual pacote faz sentido?</h2>
           <p className="text-lead mt-4 max-w-xl mx-auto !text-zinc-300 dark:!text-zinc-700">
-            Faça o diagnóstico gratuito. Em 2 minutos a IA recomenda a abordagem certa pro seu caso. Ou agende uma call comigo direto, se preferir conversar primeiro.
+            Faça o diagnóstico gratuito. Em 2 minutos a IA recomenda a abordagem
+            certa pro seu caso. Ou agende uma call comigo direto, se preferir
+            conversar primeiro.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="xl" variant="brand" className="rounded-xl">

@@ -19,32 +19,24 @@ export default function ContactPage() {
       </p>
       <h1 className="heading-1">Vamos conversar.</h1>
       <p className="text-lead mt-5">
-        Para parcerias, dúvidas ou outros assuntos. Para diagnósticos e propostas, prefira a{" "}
+        Para parcerias, dúvidas ou outros assuntos. Para diagnósticos e
+        propostas, prefira a{" "}
         <Link
           href="/diagnosis"
           className="text-foreground underline decoration-brand decoration-2 underline-offset-4 font-medium"
         >
           ferramenta de diagnóstico
-        </Link>
-        {" "}— é mais rápido.
+        </Link>{" "}
+        — é mais rápido.
       </p>
 
       <div className="mt-10 rounded-2xl border border-border bg-card p-6 md:p-8">
-        <Suspense fallback={<div className="h-72 animate-pulse rounded-xl bg-muted" />}>
+        <Suspense
+          fallback={<div className="h-72 animate-pulse rounded-xl bg-muted" />}
+        >
           <ContactForm />
         </Suspense>
       </div>
-
-      <p className="mt-8 text-sm text-muted-foreground">
-        Se preferir, mande direto pra{" "}
-        <a
-          href={`mailto:${siteConfig.email.contact}`}
-          className="text-foreground font-medium underline underline-offset-2"
-        >
-          {siteConfig.email.contact}
-        </a>
-        .
-      </p>
     </section>
   );
 }

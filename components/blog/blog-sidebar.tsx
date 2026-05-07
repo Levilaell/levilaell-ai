@@ -17,9 +17,7 @@ export async function BlogSidebar() {
         <h3 className="font-semibold text-base mb-2">
           Insight semanal direto no e-mail.
         </h3>
-        <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-          Toda terça. Sem spam. Sai com 1 clique.
-        </p>
+
         <NewsletterForm source="blog_sidebar" variant="compact" />
       </div>
 
@@ -30,7 +28,12 @@ export async function BlogSidebar() {
         <h3 className="font-semibold text-amber-950 dark:text-amber-100 mb-3">
           Onde sua operação está perdendo tempo?
         </h3>
-        <Button asChild size="default" variant="brand" className="rounded-lg w-full">
+        <Button
+          asChild
+          size="default"
+          variant="brand"
+          className="rounded-lg w-full"
+        >
           <TrackedLink href="/diagnosis" trackLabel="blog_sidebar_diagnosis">
             Iniciar diagnóstico
             <ArrowRight className="size-4" aria-hidden />

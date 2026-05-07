@@ -13,7 +13,6 @@ export const metadata: Metadata = {
 
 const stack = [
   "n8n",
-  "Make",
   "Python",
   "Node.js",
   "APIs REST",
@@ -54,7 +53,8 @@ export default function AboutPage() {
             </p>
             <h1 className="heading-display">Eu sou Levi Lael.</h1>
             <p className="text-lead mt-6">
-              Engenheiro de operações com IA e automação. Tradutor profissional de caos em sistema.
+              Engenheiro de operações com IA e automação. Tradutor profissional
+              de caos em sistema.
             </p>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function AboutPage() {
             paragraphs={[
               "Em 2024 saí pra construir coisas próprias. Comecei com pipelines de conteúdo automatizados — sistemas que geravam vídeos longos e artigos completos sem intervenção humana, com controle de custo por execução. O foco não era o conteúdo. Era provar que dava pra rodar IA em produção sem quebrar e sem queimar dinheiro.",
               "Em 2025 levei isso pro mercado: construí o CaixaHub, um SaaS financeiro pra PMEs brasileiras que integrava com 100+ bancos via Open Finance. Sozinho. Webhook handlers com retry exponencial, OCR de boleto com revisão humana, motor de categorização que aprendia com cada correção. Cheguei a ter clientes pagantes antes de pausar a operação.",
-              "Foi ali que a tese travou: a maior parte dos projetos de \"IA\" hoje são demos. Funcionam no palco e quebram em produção. A diferença entre demo e sistema é a parte chata — idempotência, retry, telemetria de custo, orquestração multi-provedor. É exatamente o que o mercado não quer construir e por isso me contrata pra construir.",
+              'Foi ali que a tese travou: a maior parte dos projetos de "IA" hoje são demos. Funcionam no palco e quebram em produção. A diferença entre demo e sistema é a parte chata — idempotência, retry, telemetria de custo, orquestração multi-provedor. É exatamente o que o mercado não quer construir e por isso me contrata pra construir.',
             ]}
           />
           <Act
@@ -98,19 +98,29 @@ export default function AboutPage() {
           <h2 className="heading-2">O que eu acredito sobre operações</h2>
           <div className="mt-8 space-y-6 text-base md:text-lg leading-relaxed text-foreground/90">
             <p className="font-semibold text-foreground">
-              Empresas não falham por falta de gente. Falham por falta de sistema.
+              Empresas não falham por falta de gente. Falham por falta de
+              sistema.
             </p>
             <p>
-              Vejo todo dia empresas contratando pessoas pra resolver problemas que software resolveria em 2 semanas. Não por má-fé — por hábito. "Sempre fizemos assim." "É mais rápido fazer no manual." "Automação é caro."
+              Vejo todo dia empresas contratando pessoas pra resolver problemas
+              que software resolveria em 2 semanas. Não por má-fé — por hábito.
+              "Sempre fizemos assim." "É mais rápido fazer no manual."
+              "Automação é caro."
             </p>
             <p>
-              Mas a conta nunca fecha. Cada nova contratação é mais salário, mais gestão, mais ponto de falha. E daqui a 5 anos, a empresa que automatizou está faturando o dobro com metade da equipe — enquanto a empresa que insistiu no manual está pagando tudo o que ganha em folha.
+              Mas a conta nunca fecha. Cada nova contratação é mais salário,
+              mais gestão, mais ponto de falha. E daqui a 5 anos, a empresa que
+              automatizou está faturando o dobro com metade da equipe — enquanto
+              a empresa que insistiu no manual está pagando tudo o que ganha em
+              folha.
             </p>
             <p className="font-semibold text-foreground">
-              A pergunta certa não é "vale a pena automatizar?". É "quanto custa não automatizar?".
+              A pergunta certa não é "vale a pena automatizar?". É "quanto custa
+              não automatizar?".
             </p>
             <p>
-              É isso que eu construo: a resposta pra essa pergunta, na forma de sistemas que rodam sozinhos.
+              É isso que eu construo: a resposta pra essa pergunta, na forma de
+              sistemas que rodam sozinhos.
             </p>
           </div>
         </div>
@@ -174,13 +184,7 @@ export default function AboutPage() {
   );
 }
 
-function Act({
-  title,
-  paragraphs,
-}: {
-  title: string;
-  paragraphs: string[];
-}) {
+function Act({ title, paragraphs }: { title: string; paragraphs: string[] }) {
   return (
     <article>
       <h3 className="heading-3 mb-4">{title}</h3>
