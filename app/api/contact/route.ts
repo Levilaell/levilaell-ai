@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { contactSchema } from "@/types/forms";
-import { getSupabaseService, isSupabaseConfigured } from "@/lib/supabase";
+import { saveContact } from "@/lib/supabase";
 import { sendEmail, isResendConfigured } from "@/lib/resend";
 import {
   contactConfirmationEmail,
-  internalNotificationEmail,
+  internalContactEmail,
 } from "@/lib/email-templates";
 import { siteConfig } from "@/lib/site";
 
@@ -26,21 +26,14 @@ export async function POST(request: Request) {
   }
   const data = parsed.data;
 
-  if (isSupabaseConfigured()) {
-    const supabase = getSupabaseService();
-    if (supabase) {
-      const { error } = await supabase.from("contacts").insert({
-        name: data.name,
-        email: data.email,
-        company: data.company || null,
-        subject: data.subject,
-        message: data.message,
-      });
-      if (error) {
-        console.error("[contact] supabase insert error:", error);
-      }
-    }
-  }
+  await saveContact({
+    name: data.name,
+    email: data.email,
+    company: data.company || null,
+    service_interest: data.service_interest || null,
+    subject: data.subject,
+    message: data.message,
+  });
 
   if (isResendConfigured()) {
     const userEmail = contactConfirmationEmail({ name: data.name });
@@ -51,15 +44,13 @@ export async function POST(request: Request) {
       text: userEmail.text,
     });
 
-    const internal = internalNotificationEmail({
-      kind: "contact",
-      payload: {
-        name: data.name,
-        email: data.email,
-        company: data.company ?? "",
-        subject: data.subject,
-        message: data.message,
-      },
+    const internal = internalContactEmail({
+      name: data.name,
+      email: data.email,
+      company: data.company || null,
+      subject: data.subject,
+      serviceInterest: data.service_interest || null,
+      message: data.message,
     });
     await sendEmail({
       to: siteConfig.email.internal,
@@ -69,7 +60,7 @@ export async function POST(request: Request) {
       replyTo: data.email,
     });
   } else {
-    console.info("[contact] stubbed delivery", {
+    console.info("[contact] resend off — não enviado", {
       from: data.email,
       subject: data.subject,
     });

@@ -7,9 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DiagnosisProgress } from "@/components/diagnosis/diagnosis-progress";
 import {
   DIAGNOSIS_QUESTIONS,
+  REVENUE_OPTIONS,
   TOTAL_STEPS,
 } from "@/lib/diagnosis-questions";
 import {
@@ -102,12 +110,14 @@ export function DiagnosisForm() {
         analysis: DiagnosisAnalysis;
         createdAt: string;
         name: string;
+        timeline?: string;
       };
       const result: StoredResult = {
         id: data.id,
         createdAt: data.createdAt,
         name: data.name,
         analysis: data.analysis,
+        timeline: data.timeline,
       };
       saveResult(result);
       clearDraft();
@@ -222,6 +232,8 @@ function QuestionStep({
       )}
       <div className="mt-6 space-y-2.5">
         {question.options.map((opt) => {
+          const emoji = "emoji" in opt ? (opt as { emoji?: string }).emoji : undefined;
+
           if (question.type === "multi") {
             const current = (answers[question.field] as string[]) ?? [];
             const checked = current.includes(opt.value);
@@ -275,13 +287,14 @@ function QuestionStep({
                 )
               }
               className={cn(
-                "w-full text-left rounded-xl border px-4 py-3.5 text-sm transition-colors",
+                "w-full text-left rounded-xl border px-4 py-3.5 text-sm transition-colors flex items-center gap-3",
                 selected
                   ? "border-brand bg-brand/10 text-foreground"
                   : "border-border bg-background hover:border-brand/50 hover:bg-muted",
               )}
             >
-              {opt.label}
+              {emoji && <span className="text-lg" aria-hidden>{emoji}</span>}
+              <span>{opt.label}</span>
             </button>
           );
         })}
@@ -289,7 +302,10 @@ function QuestionStep({
         {question.type === "single_with_other" &&
           answers[question.field] === "other" && (
             <div className="pt-2">
-              <Label htmlFor={question.otherField} className="text-xs text-muted-foreground">
+              <Label
+                htmlFor={question.otherField}
+                className="text-xs text-muted-foreground"
+              >
                 {question.otherLabel}
               </Label>
               <Input
@@ -316,7 +332,7 @@ function LeadCaptureStep({
   return (
     <div>
       <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-3">
-        Q8 · Último passo
+        Q10 · Último passo
       </p>
       <h2 className="heading-3">Pra onde envio seu relatório?</h2>
       <p className="mt-2 text-sm text-muted-foreground">
@@ -325,7 +341,9 @@ function LeadCaptureStep({
 
       <div className="mt-6 space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="name">Nome <span className="text-destructive">*</span></Label>
+          <Label htmlFor="name">
+            Nome <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="name"
             value={answers.name ?? ""}
@@ -336,7 +354,9 @@ function LeadCaptureStep({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="email">E-mail <span className="text-destructive">*</span></Label>
+          <Label htmlFor="email">
+            E-mail <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="email"
             type="email"
@@ -347,27 +367,87 @@ function LeadCaptureStep({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="whatsapp">WhatsApp <span className="text-muted-foreground">(opcional)</span></Label>
-          <Input
-            id="whatsapp"
-            value={answers.whatsapp ?? ""}
-            onChange={(e) => setAnswer("whatsapp", formatPhone(e.target.value))}
-            placeholder="(11) 99999-9999"
-            autoComplete="tel"
-            inputMode="tel"
-          />
-        </div>
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900 p-4 space-y-4">
+          <p className="text-sm text-amber-950 dark:text-amber-100">
+            💡 <strong>Quer estimativa de ROI mais precisa?</strong> Esses dados ajudam a IA a calcular retorno real (não chute).
+          </p>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="company">Site/empresa <span className="text-muted-foreground">(opcional)</span></Label>
-          <Input
-            id="company"
-            value={answers.company ?? ""}
-            onChange={(e) => setAnswer("company", e.target.value)}
-            placeholder="empresa.com.br"
-            autoComplete="organization"
-          />
+          <div className="space-y-1.5">
+            <Label htmlFor="whatsapp">
+              WhatsApp <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <Input
+              id="whatsapp"
+              value={answers.whatsapp ?? ""}
+              onChange={(e) => setAnswer("whatsapp", formatPhone(e.target.value))}
+              placeholder="(11) 99999-9999"
+              autoComplete="tel"
+              inputMode="tel"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="company">
+              Site/empresa <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <Input
+              id="company"
+              value={answers.company ?? ""}
+              onChange={(e) => setAnswer("company", e.target.value)}
+              placeholder="empresa.com.br"
+              autoComplete="organization"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="revenue">
+              Faturamento mensal aproximado{" "}
+              <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <Select
+              value={(answers.q10_revenue as string | undefined) ?? ""}
+              onValueChange={(v) =>
+                setAnswer("q10_revenue", v as DiagnosisSubmission["q10_revenue"])
+              }
+            >
+              <SelectTrigger id="revenue" className="w-full">
+                <SelectValue placeholder="Selecione (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {REVENUE_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="employees">
+              Número de funcionários{" "}
+              <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <Input
+              id="employees"
+              type="number"
+              min={0}
+              value={
+                typeof answers.q10_employees === "number"
+                  ? answers.q10_employees
+                  : ""
+              }
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                setAnswer(
+                  "q10_employees",
+                  Number.isFinite(n) && n >= 0 ? n : undefined,
+                );
+              }}
+              placeholder="Ex: 12"
+              inputMode="numeric"
+            />
+          </div>
         </div>
 
         <label className="flex items-start gap-2.5 cursor-pointer pt-2">

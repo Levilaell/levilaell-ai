@@ -1,16 +1,29 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { diagnosisSubmissionSchema } from "@/types/forms";
-import { generateDiagnosisAnalysis } from "@/lib/anthropic";
-import { getSupabaseService, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  generateDiagnosisAnalysis,
+  AnthropicError,
+} from "@/lib/anthropic";
+import {
+  saveDiagnosis,
+  updateDiagnosisStatus,
+  scheduleEmailSequence,
+  isSupabaseConfigured,
+} from "@/lib/supabase";
 import { sendEmail, isResendConfigured } from "@/lib/resend";
 import {
   diagnosisReportEmail,
-  internalNotificationEmail,
+  internalDiagnosisEmail,
 } from "@/lib/email-templates";
+import { describeAnswers } from "@/lib/diagnosis-prompt";
+import { buildEmailSequenceItems } from "@/lib/email-sequence";
 import { siteConfig } from "@/lib/site";
-import type { DiagnosisAnalysis, DiagnosisAnswers } from "@/types/diagnosis";
-import type { PainArea } from "@/types/diagnosis";
+import type {
+  DiagnosisAnalysis,
+  DiagnosisAnswers,
+  PainArea,
+} from "@/types/diagnosis";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -20,10 +33,7 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "JSON inválido." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "JSON inválido." }, { status: 400 });
   }
 
   const parsed = diagnosisSubmissionSchema.safeParse(body);
@@ -41,70 +51,82 @@ export async function POST(request: Request) {
   }
 
   const data = parsed.data;
-  const id = randomUUID();
   const createdAt = new Date().toISOString();
 
   const answers: DiagnosisAnswers = {
-    q1_company_type: data.q1_company_type as DiagnosisAnswers["q1_company_type"],
-    q2_industry: data.q2_industry as DiagnosisAnswers["q2_industry"],
-    q2_industry_other: data.q2_industry_other,
+    q1_size: data.q1_size as DiagnosisAnswers["q1_size"],
+    q2_business_model: data.q2_business_model as DiagnosisAnswers["q2_business_model"],
+    q2_business_model_other: data.q2_business_model_other,
     q3_pain_areas: data.q3_pain_areas as PainArea[],
-    q4_tech_maturity:
-      data.q4_tech_maturity as DiagnosisAnswers["q4_tech_maturity"],
+    q4_tech_maturity: data.q4_tech_maturity as DiagnosisAnswers["q4_tech_maturity"],
     q5_hours_weekly: data.q5_hours_weekly as DiagnosisAnswers["q5_hours_weekly"],
     q6_automation_history:
       data.q6_automation_history as DiagnosisAnswers["q6_automation_history"],
     q7_main_goal: data.q7_main_goal as DiagnosisAnswers["q7_main_goal"],
+    q8_timeline: data.q8_timeline as DiagnosisAnswers["q8_timeline"],
+    q9_budget: data.q9_budget as DiagnosisAnswers["q9_budget"],
+    q10_revenue: data.q10_revenue
+      ? (data.q10_revenue as DiagnosisAnswers["q10_revenue"])
+      : undefined,
+    q10_employees:
+      typeof data.q10_employees === "number" ? data.q10_employees : undefined,
   };
 
+  // 1) Persist initial row (status=processing) ------------------------------
+  let diagnosisId: string | null = null;
+  let leadScoreSnapshot: number | null = null;
+  if (isSupabaseConfigured()) {
+    const saved = await saveDiagnosis({
+      ...answers,
+      name: data.name,
+      email: data.email,
+      whatsapp: data.whatsapp || undefined,
+      company: data.company || undefined,
+    });
+    if (saved) diagnosisId = saved.id;
+  }
+  // Fallback ID quando Supabase não está configurado (dev).
+  if (!diagnosisId) diagnosisId = randomUUID();
+
+  // 2) Run Anthropic --------------------------------------------------------
   let analysis: DiagnosisAnalysis;
   try {
     analysis = await generateDiagnosisAnalysis(answers);
-  } catch (error) {
-    console.error("[diagnosis] anthropic error:", error);
+  } catch (err) {
+    const message =
+      err instanceof AnthropicError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Erro desconhecido.";
+    if (isSupabaseConfigured()) {
+      await updateDiagnosisStatus(diagnosisId, {
+        status: "failed",
+        error_message: message,
+      });
+    }
+    console.error("[diagnosis] anthropic failed:", err);
     return NextResponse.json(
-      {
-        error:
-          "Não consegui gerar a análise agora. Tente novamente em alguns segundos.",
-      },
+      { error: "Não consegui gerar a análise agora. Tente novamente em alguns segundos." },
       { status: 502 },
     );
   }
 
+  // 3) Update with completed analysis --------------------------------------
   if (isSupabaseConfigured()) {
-    const supabase = getSupabaseService();
-    if (supabase) {
-      const { error } = await supabase.from("diagnoses").insert({
-        id,
-        created_at: createdAt,
-        name: data.name,
-        email: data.email,
-        whatsapp: data.whatsapp || null,
-        company: data.company || null,
-        q1_company_type: answers.q1_company_type,
-        q2_industry:
-          answers.q2_industry === "other" && answers.q2_industry_other
-            ? answers.q2_industry_other
-            : answers.q2_industry,
-        q3_pain_areas: answers.q3_pain_areas,
-        q4_tech_maturity: answers.q4_tech_maturity,
-        q5_hours_weekly: answers.q5_hours_weekly,
-        q6_automation_history: answers.q6_automation_history,
-        q7_main_goal: answers.q7_main_goal,
-        ai_analysis: analysis,
-        status: "completed",
-      });
-      if (error) {
-        console.error("[diagnosis] supabase insert error:", error);
-      }
-    }
+    await updateDiagnosisStatus(diagnosisId, {
+      status: "completed",
+      ai_analysis: analysis,
+    });
   }
 
+  // 4) Email 1 (relatório) — fire-and-forget but wait briefly --------------
   if (isResendConfigured()) {
     const userEmail = diagnosisReportEmail({
       name: data.name,
-      diagnosisId: id,
+      diagnosisId,
       analysis,
+      timeline: answers.q8_timeline,
     });
     await sendEmail({
       to: data.email,
@@ -113,18 +135,21 @@ export async function POST(request: Request) {
       text: userEmail.text,
     });
 
-    const internal = internalNotificationEmail({
-      kind: "diagnosis",
-      payload: {
-        id,
-        name: data.name,
-        email: data.email,
-        whatsapp: data.whatsapp ?? "",
-        company: data.company ?? "",
-        industry: answers.q2_industry,
-        company_type: answers.q1_company_type,
-        main_goal: answers.q7_main_goal,
-        link: `${siteConfig.url}/diagnosis/result/${id}`,
+    const labels = describeAnswers(answers);
+    const internal = internalDiagnosisEmail({
+      diagnosisId,
+      name: data.name,
+      email: data.email,
+      whatsapp: data.whatsapp || null,
+      company: data.company || null,
+      leadScore: leadScoreSnapshot,
+      analysis,
+      contextLabels: {
+        size: labels.size,
+        businessModel: labels.businessModel,
+        timeline: labels.timeline,
+        budget: labels.budget,
+        revenue: labels.revenue,
       },
     });
     await sendEmail({
@@ -132,18 +157,26 @@ export async function POST(request: Request) {
       subject: internal.subject,
       html: internal.html,
       text: internal.text,
+      replyTo: data.email,
     });
   } else {
-    console.info("[diagnosis] stubbed delivery", {
-      id,
+    console.info("[diagnosis] resend off — relatório não enviado", {
+      id: diagnosisId,
       to: data.email,
     });
   }
 
+  // 5) Schedule emails 2-6 (cron picks up later) ---------------------------
+  if (isSupabaseConfigured()) {
+    const items = buildEmailSequenceItems(new Date(createdAt));
+    await scheduleEmailSequence(diagnosisId, items);
+  }
+
   return NextResponse.json({
-    id,
+    id: diagnosisId,
     createdAt,
     name: data.name,
+    timeline: answers.q8_timeline,
     analysis,
   });
 }

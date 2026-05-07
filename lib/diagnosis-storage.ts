@@ -1,6 +1,6 @@
 import type { DiagnosisAnalysis, DiagnosisSubmission } from "@/types/diagnosis";
 
-const DRAFT_KEY = "diagnosis:draft:v1";
+const DRAFT_KEY = "diagnosis:draft:v2";
 const RESULT_PREFIX = "diagnosis:result:";
 
 export type DiagnosisDraft = {
@@ -13,6 +13,7 @@ export type StoredResult = {
   createdAt: string;
   name: string;
   analysis: DiagnosisAnalysis;
+  timeline?: string;
 };
 
 export function loadDraft(): DiagnosisDraft | null {

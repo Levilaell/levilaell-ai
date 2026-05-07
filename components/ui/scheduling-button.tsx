@@ -4,11 +4,26 @@ import { Button } from "@/components/ui/button";
 import { getSchedulingTarget } from "@/lib/calcom";
 import { cn } from "@/lib/utils";
 
+type CalcomVariant = "primary" | "secondary" | "white";
+
+const variantClasses: Record<CalcomVariant, string> = {
+  primary: "",
+  secondary: "",
+  white:
+    "bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 shadow-sm",
+};
+
+const baseVariant: Record<CalcomVariant, "brand" | "outline" | "default"> = {
+  primary: "brand",
+  secondary: "outline",
+  white: "default",
+};
+
 type Props = {
   subject?: string;
   label?: string;
   size?: "default" | "lg" | "xl";
-  variant?: "brand" | "default" | "outline";
+  variant?: CalcomVariant;
   className?: string;
 };
 
@@ -16,7 +31,7 @@ export function SchedulingButton({
   subject,
   label = "Agendar call gratuita",
   size = "lg",
-  variant = "brand",
+  variant = "primary",
   className,
 }: Props) {
   const target = getSchedulingTarget(subject);
@@ -26,8 +41,8 @@ export function SchedulingButton({
     <Button
       asChild
       size={size}
-      variant={variant}
-      className={cn("rounded-xl", className)}
+      variant={baseVariant[variant]}
+      className={cn("rounded-xl", variantClasses[variant], className)}
     >
       <Link
         href={target.href}
@@ -40,3 +55,6 @@ export function SchedulingButton({
     </Button>
   );
 }
+
+// Alias for the new convention requested in the brief.
+export const CalcomButton = SchedulingButton;

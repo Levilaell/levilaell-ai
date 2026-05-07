@@ -6,18 +6,20 @@ export type DiagnosisExample = {
   metaDescription: string;
   leadProfile: string;
   publishedAt: string;
+  timeline?: string;
   analysis: DiagnosisAnalysis;
 };
 
 export const examples: DiagnosisExample[] = [
   {
     slug: "clinicas-pequenas-saude",
-    title: "Diagnóstico anonimizado: clínica de saúde com 2 unidades e 18 funcionários",
+    title: "Clínica de saúde com 2 unidades e 18 funcionários",
     metaDescription:
       "Exemplo real anonimizado de diagnóstico para clínica em crescimento. Top 3 oportunidades, quick win e ROI estimado.",
     leadProfile:
       "Clínica multidisciplinar em São Paulo, 2 unidades, 18 funcionários. Faturamento estável mas com gargalo em recepção e remarcação.",
     publishedAt: "2026-04-10",
+    timeline: "next_month",
     analysis: {
       diagnostico_resumido:
         "Operação típica de clínica em crescimento: a recepção virou o gargalo de quase tudo — confirmações, remarcações, triagem inicial — e cada nova unidade aberta multiplica o problema sem multiplicar a receita proporcional.",
@@ -25,7 +27,7 @@ export const examples: DiagnosisExample[] = [
         {
           titulo: "Confirmação ativa automatizada de consultas",
           descricao:
-            "Bot no WhatsApp confirma a consulta 24h antes. Quem cancela libera horário automaticamente, e o sistema oferece o slot pra fila de espera. Reduz no-show de 25% para <8% em clínicas similares.",
+            "Bot no WhatsApp confirma a consulta 24h antes. Quem cancela libera horário automaticamente, e o sistema oferece o slot pra fila de espera.",
           impacto_estimado: "redução de 60% no no-show + 8h/semana economizadas",
           complexidade: "média",
           ferramentas_sugeridas: [
@@ -33,6 +35,7 @@ export const examples: DiagnosisExample[] = [
             "n8n",
             "Google Calendar API",
           ],
+          prazo_implementacao: "2-3 semanas",
         },
         {
           titulo: "Triagem inicial via chatbot",
@@ -41,6 +44,7 @@ export const examples: DiagnosisExample[] = [
           impacto_estimado: "12h/semana de recepcionista",
           complexidade: "média",
           ferramentas_sugeridas: ["Claude", "WhatsApp Business API", "Supabase"],
+          prazo_implementacao: "3-4 semanas",
         },
         {
           titulo: "Dashboard unificado de ocupação",
@@ -49,6 +53,7 @@ export const examples: DiagnosisExample[] = [
           impacto_estimado: "5-8% de aumento na receita por melhor utilização",
           complexidade: "baixa",
           ferramentas_sugeridas: ["Metabase", "Supabase", "n8n"],
+          prazo_implementacao: "1-2 semanas",
         },
       ],
       quick_win: {
@@ -60,16 +65,20 @@ export const examples: DiagnosisExample[] = [
           "Adicionar lembrete automático 24h antes da consulta.",
           "Medir taxa de redução de chamadas evitáveis nas próximas 2 semanas.",
         ],
+        ferramentas_necessarias: ["WhatsApp Business", "Google Sheets"],
       },
       estimativa_roi: {
-        horas_recuperaveis_mes: 80,
-        valor_estimado_mensal: "R$ 8.000 a R$ 14.000",
+        horas_recuperaveis_mes: "60-80",
+        valor_estimado_mensal: "R$ 8.000 a R$ 14.000/mês",
         tempo_payback: "2 a 3 meses",
+        disclaimer: null,
+        metodologia:
+          "Baseado em horas de recepção × custo médio do setor + redução de 60% no no-show com confirmação ativa.",
       },
       proximo_passo_recomendado: {
         abordagem: "consultoria_pontual",
         justificativa:
-          "Vocês têm processo claro e equipe capaz, mas falta camada técnica para construir as integrações. 4-6 semanas de implementação resolve o gargalo principal e deixa o time autônomo.",
+          "Vocês têm processo claro e equipe capaz, mas falta camada técnica para construir as integrações. 4-6 semanas de implementação resolve o gargalo principal e deixa o time autônomo pra iterar.",
       },
       alerta_estrategico:
         "Cuidado para não automatizar a recepção de forma fria. Saúde é serviço relacional — IA mal calibrada vai transferir ineficiência para insatisfação. Cada fluxo precisa de fallback humano em <30s.",
@@ -77,12 +86,13 @@ export const examples: DiagnosisExample[] = [
   },
   {
     slug: "agencias-marketing-em-crescimento",
-    title: "Diagnóstico anonimizado: agência de marketing com 12 pessoas",
+    title: "Agência de marketing com 12 pessoas",
     metaDescription:
       "Exemplo real anonimizado de diagnóstico para agência de marketing em crescimento. Onde automatizar antes de contratar mais.",
     leadProfile:
       "Agência de performance com 12 pessoas, 25 clientes ativos. Crescimento de 40% no último ano, equipe vivendo apagando incêndio.",
     publishedAt: "2026-04-03",
+    timeline: "this_week",
     analysis: {
       diagnostico_resumido:
         "Agência clássica em ponto de inflexão: cresceu rápido, processos não acompanharam, e cada novo cliente custa mais energia que o anterior. Sem automação, a próxima contratação é uma pessoa — quando deveria ser um sistema.",
@@ -94,6 +104,7 @@ export const examples: DiagnosisExample[] = [
           impacto_estimado: "20h/semana recuperadas",
           complexidade: "média",
           ferramentas_sugeridas: ["n8n", "Google Sheets API", "Looker Studio"],
+          prazo_implementacao: "2-3 semanas",
         },
         {
           titulo: "Onboarding automatizado de novo cliente",
@@ -102,14 +113,16 @@ export const examples: DiagnosisExample[] = [
           impacto_estimado: "redução de 60% no tempo de onboarding",
           complexidade: "média",
           ferramentas_sugeridas: ["n8n", "Notion API", "Slack API"],
+          prazo_implementacao: "3-5 semanas",
         },
         {
           titulo: "Aprovação de criativos por IA + humano",
           descricao:
-            "Pre-screening de criativos com IA verificando consistência de marca, política de plataformas e copy. Humano só revisa o que passou. Acelera ciclo de aprovação interno em 3-4x.",
+            "Pre-screening de criativos com IA verificando consistência de marca, política de plataformas e copy. Humano só revisa o que passou.",
           impacto_estimado: "10h/semana de coordenadores",
           complexidade: "alta",
           ferramentas_sugeridas: ["Claude Vision", "n8n", "Custom workflow"],
+          prazo_implementacao: "4-6 semanas",
         },
       ],
       quick_win: {
@@ -121,11 +134,15 @@ export const examples: DiagnosisExample[] = [
           "Substituir o relatório manual por esse link nas próximas 2 semanas.",
           "Iterar com feedback dos clientes antes de automatizar mais coisas.",
         ],
+        ferramentas_necessarias: ["Looker Studio", "Google Sheets"],
       },
       estimativa_roi: {
-        horas_recuperaveis_mes: 120,
-        valor_estimado_mensal: "R$ 12.000 a R$ 24.000",
+        horas_recuperaveis_mes: "120",
+        valor_estimado_mensal: "R$ 12.000 a R$ 24.000/mês",
         tempo_payback: "1 a 2 meses",
+        disclaimer: null,
+        metodologia:
+          "Calculado a partir das horas declaradas × custo médio de operadores em agência média do mercado BR.",
       },
       proximo_passo_recomendado: {
         abordagem: "parceria_continua",
@@ -139,12 +156,13 @@ export const examples: DiagnosisExample[] = [
   {
     slug: "ecommerces-faturando-100k-mes",
     title:
-      "Diagnóstico anonimizado: e-commerce faturando R$ 100k/mês em produtos físicos",
+      "E-commerce de moda com R$ 100k/mês em produtos físicos",
     metaDescription:
       "Exemplo real anonimizado de diagnóstico para e-commerce de R$100k/mês. Onde automatizar para crescer sem dobrar a operação.",
     leadProfile:
       "E-commerce de moda feminina, R$ 100k/mês recorrentes, 6 pessoas no time. Operação 100% nacional, sem foco em internacional.",
     publishedAt: "2026-03-25",
+    timeline: "3_to_6_months",
     analysis: {
       diagnostico_resumido:
         "Operação madura no produto, amadora no back-office: vendas crescem mas o atendimento pós-venda, devoluções e gestão de estoque ainda dependem de planilhas manuais. É o momento exato pra profissionalizar antes do próximo salto.",
@@ -155,7 +173,12 @@ export const examples: DiagnosisExample[] = [
             "Bot resolve 70% das dúvidas (status do pedido, prazo, troca, tamanho) e escala apenas casos sensíveis. Reduz tempo médio de resposta de 4h para <5min nas dúvidas operacionais.",
           impacto_estimado: "70% das tickets resolvidas sem humano",
           complexidade: "média",
-          ferramentas_sugeridas: ["Claude", "n8n", "API da plataforma de e-commerce"],
+          ferramentas_sugeridas: [
+            "Claude",
+            "n8n",
+            "API da plataforma de e-commerce",
+          ],
+          prazo_implementacao: "3-4 semanas",
         },
         {
           titulo: "Reposição inteligente de estoque",
@@ -163,19 +186,17 @@ export const examples: DiagnosisExample[] = [
             "Análise diária de venda + sazonalidade + lead time do fornecedor sugere o que repor e quando. Reduz tanto stock-out quanto capital travado em estoque parado.",
           impacto_estimado: "redução de 30% em capital travado",
           complexidade: "alta",
-          ferramentas_sugeridas: [
-            "Python + pandas",
-            "Supabase",
-            "Integração com ERP",
-          ],
+          ferramentas_sugeridas: ["Python + pandas", "Supabase", "Integração com ERP"],
+          prazo_implementacao: "6-8 semanas",
         },
         {
           titulo: "Recuperação automatizada de carrinho abandonado",
           descricao:
-            "Sequência de 3 mensagens (e-mail + WhatsApp + retargeting) personalizada por categoria de produto e ticket. Recupera 8-12% do carrinho perdido — receita pura.",
+            "Sequência de 3 mensagens (e-mail + WhatsApp + retargeting) personalizada por categoria de produto e ticket. Recupera 8-12% do carrinho perdido.",
           impacto_estimado: "10% de recuperação de carrinho",
           complexidade: "baixa",
           ferramentas_sugeridas: ["Klaviyo", "n8n", "WhatsApp Business API"],
+          prazo_implementacao: "1-2 semanas",
         },
       ],
       quick_win: {
@@ -187,11 +208,17 @@ export const examples: DiagnosisExample[] = [
           "Ativar para 100% dos abandonos a partir da próxima semana.",
           "Medir conversão e iterar copy nas semanas seguintes.",
         ],
+        ferramentas_necessarias: ["Klaviyo", "Plataforma de e-commerce"],
       },
       estimativa_roi: {
-        horas_recuperaveis_mes: 60,
-        valor_estimado_mensal: "R$ 6.000 a R$ 15.000 (operação) + 8-12% receita extra",
+        horas_recuperaveis_mes: "60",
+        valor_estimado_mensal:
+          "R$ 6.000 a R$ 15.000 (operação) + 8-12% receita extra de recuperação",
         tempo_payback: "1 mês",
+        disclaimer:
+          "Considera apenas eficiência operacional + recuperação de carrinho. Estoque inteligente tem ROI separado e mais variável.",
+        metodologia:
+          "Hora x custo do time atual + projeção de carrinho recuperado em volume declarado.",
       },
       proximo_passo_recomendado: {
         abordagem: "consultoria_pontual",

@@ -18,6 +18,16 @@ type Props = {
 
 export const revalidate = 600;
 
+function splitMarkdownAtMidpoint(markdown: string): { before: string; after: string } {
+  const paragraphs = markdown.split(/\n\n+/);
+  if (paragraphs.length <= 3) return { before: markdown, after: "" };
+  const mid = Math.max(2, Math.floor(paragraphs.length / 2));
+  return {
+    before: paragraphs.slice(0, mid).join("\n\n"),
+    after: paragraphs.slice(mid).join("\n\n"),
+  };
+}
+
 export async function generateStaticParams() {
   const articles = await listArticles();
   return articles.map((a) => ({ slug: a.slug }));
@@ -52,9 +62,7 @@ export default async function ArticlePage({ params }: Props) {
   if (!article) notFound();
 
   const related = await getRelatedArticles(article);
-  const midpoint = Math.max(2, Math.floor(article.blocks.length / 2));
-  const beforeCta = article.blocks.slice(0, midpoint);
-  const afterCta = article.blocks.slice(midpoint);
+  const { before: beforeCta, after: afterCta } = splitMarkdownAtMidpoint(article.markdown);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -128,9 +136,9 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         </header>
 
-        <ArticleRenderer blocks={beforeCta} />
-        {afterCta.length > 0 && <InlineDiagnosisCTA />}
-        <ArticleRenderer blocks={afterCta} />
+        <ArticleRenderer markdown={beforeCta} />
+        {afterCta && <InlineDiagnosisCTA />}
+        {afterCta && <ArticleRenderer markdown={afterCta} />}
 
         <footer className="mt-16 pt-10 border-t border-border">
           <SocialShare slug={article.slug} title={article.title} />

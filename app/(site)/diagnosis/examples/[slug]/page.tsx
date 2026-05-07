@@ -62,6 +62,7 @@ export default async function DiagnosisExamplePage({ params }: Props) {
         name={example.title.replace("Diagnóstico anonimizado: ", "")}
         createdAt={example.publishedAt}
         analysis={example.analysis}
+        timeline={example.timeline}
         context="example"
       />
 

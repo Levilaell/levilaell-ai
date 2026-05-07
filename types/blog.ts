@@ -22,14 +22,6 @@ export type ArticleSummary = {
   metaDescription?: string;
 };
 
-export type ArticleBlock =
-  | { type: "paragraph"; text: string }
-  | { type: "heading"; level: 2 | 3; text: string }
-  | { type: "list"; ordered?: boolean; items: string[] }
-  | { type: "quote"; text: string; cite?: string }
-  | { type: "callout"; tone: "info" | "warning" | "success"; text: string }
-  | { type: "code"; language: string; code: string };
-
 export type Article = ArticleSummary & {
-  blocks: ArticleBlock[];
+  markdown: string;
 };

@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { newsletterSchema } from "@/types/forms";
-import { getSupabaseService, isSupabaseConfigured } from "@/lib/supabase";
+import { saveSubscriber } from "@/lib/supabase";
 import { sendEmail, isResendConfigured } from "@/lib/resend";
-import {
-  newsletterWelcomeEmail,
-  internalNotificationEmail,
-} from "@/lib/email-templates";
-import { siteConfig } from "@/lib/site";
+import { newsletterWelcomeEmail } from "@/lib/email-templates";
 
 export const runtime = "nodejs";
 
@@ -31,24 +27,11 @@ export async function POST(request: Request) {
   }
   const data = parsed.data;
 
-  if (isSupabaseConfigured()) {
-    const supabase = getSupabaseService();
-    if (supabase) {
-      const { error } = await supabase
-        .from("subscribers")
-        .upsert(
-          {
-            email: data.email,
-            name: data.name,
-            source: data.source ?? null,
-          },
-          { onConflict: "email" },
-        );
-      if (error) {
-        console.error("[newsletter] supabase upsert error:", error);
-      }
-    }
-  }
+  await saveSubscriber({
+    email: data.email,
+    name: data.name,
+    source: data.source ?? null,
+  });
 
   if (isResendConfigured()) {
     const welcome = newsletterWelcomeEmail({ name: data.name });
@@ -58,23 +41,8 @@ export async function POST(request: Request) {
       html: welcome.html,
       text: welcome.text,
     });
-
-    const internal = internalNotificationEmail({
-      kind: "newsletter",
-      payload: {
-        name: data.name,
-        email: data.email,
-        source: data.source ?? "unknown",
-      },
-    });
-    await sendEmail({
-      to: siteConfig.email.internal,
-      subject: internal.subject,
-      html: internal.html,
-      text: internal.text,
-    });
   } else {
-    console.info("[newsletter] stubbed delivery", {
+    console.info("[newsletter] resend off — não enviado", {
       to: data.email,
       source: data.source,
     });

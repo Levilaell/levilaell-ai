@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSupabaseService, isSupabaseConfigured } from "@/lib/supabase";
+import { getDiagnosisById, isSupabaseConfigured } from "@/lib/supabase";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -15,31 +15,20 @@ export async function GET(_request: Request, { params }: Params) {
       { status: 404 },
     );
   }
-  const supabase = getSupabaseService();
-  if (!supabase) {
-    return NextResponse.json({ error: "Storage indisponível." }, { status: 503 });
-  }
 
-  const { data, error } = await supabase
-    .from("diagnoses")
-    .select("id, created_at, name, ai_analysis, status")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-  if (!data) {
+  const record = await getDiagnosisById(id);
+  if (!record) {
     return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
   }
-  if (data.status !== "completed" || !data.ai_analysis) {
-    return NextResponse.json({ status: data.status }, { status: 202 });
+  if (record.status !== "completed" || !record.analysis) {
+    return NextResponse.json({ status: record.status }, { status: 202 });
   }
 
   return NextResponse.json({
-    id: data.id,
-    createdAt: data.created_at,
-    name: data.name,
-    analysis: data.ai_analysis,
+    id: record.id,
+    createdAt: record.createdAt,
+    name: record.name,
+    timeline: record.q8_timeline,
+    analysis: record.analysis,
   });
 }

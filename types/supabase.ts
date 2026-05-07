@@ -15,35 +15,57 @@ type DiagnosisRow = {
   email: string;
   whatsapp: string | null;
   company: string | null;
-  q1_company_type: string;
-  q2_industry: string;
+  q1_size: string;
+  q2_business_model: string;
+  q2_business_model_other: string | null;
   q3_pain_areas: PainArea[];
   q4_tech_maturity: string;
   q5_hours_weekly: string;
   q6_automation_history: string;
   q7_main_goal: string;
+  q8_timeline: string;
+  q9_budget: string;
+  q10_revenue: string | null;
+  q10_employees: number | null;
   ai_analysis: DiagnosisAnalysis | null;
   status: "processing" | "completed" | "failed";
+  error_message: string | null;
   lead_score: number | null;
 };
 
-type DiagnosisInsert = {
+type DiagnosisInsert = Omit<
+  DiagnosisRow,
+  "id" | "created_at" | "ai_analysis" | "error_message" | "lead_score"
+> & {
   id?: string;
   created_at?: string;
-  name: string;
-  email: string;
-  whatsapp?: string | null;
-  company?: string | null;
-  q1_company_type: string;
-  q2_industry: string;
-  q3_pain_areas: PainArea[];
-  q4_tech_maturity: string;
-  q5_hours_weekly: string;
-  q6_automation_history: string;
-  q7_main_goal: string;
-  ai_analysis?: DiagnosisAnalysis | null;
-  status?: "processing" | "completed" | "failed";
-  lead_score?: number | null;
+  ai_analysis?: DiagnosisRow["ai_analysis"];
+  error_message?: DiagnosisRow["error_message"];
+  lead_score?: DiagnosisRow["lead_score"];
+};
+
+type EmailSequenceRow = {
+  id: string;
+  diagnosis_id: string | null;
+  email_number: number;
+  scheduled_at: string;
+  sent_at: string | null;
+  status: "scheduled" | "sent" | "failed" | "cancelled";
+  error_message: string | null;
+  body_html: string | null;
+  body_subject: string | null;
+};
+
+type EmailSequenceInsert = {
+  id?: string;
+  diagnosis_id: string;
+  email_number: number;
+  scheduled_at: string;
+  sent_at?: string | null;
+  status?: "scheduled" | "sent" | "failed" | "cancelled";
+  error_message?: string | null;
+  body_html?: string | null;
+  body_subject?: string | null;
 };
 
 type SubscriberRow = {
@@ -71,6 +93,7 @@ type ContactRow = {
   name: string;
   email: string;
   company: string | null;
+  service_interest: string | null;
   subject: string | null;
   message: string;
   created_at: string;
@@ -82,6 +105,7 @@ type ContactInsert = {
   name: string;
   email: string;
   company?: string | null;
+  service_interest?: string | null;
   subject?: string | null;
   message: string;
   created_at?: string;
@@ -112,6 +136,28 @@ type PublicExampleInsert = {
   created_at?: string;
 };
 
+type TrackingEventRow = {
+  id: string;
+  event_type: string;
+  event_data: Json | null;
+  session_id: string | null;
+  user_agent: string | null;
+  referrer: string | null;
+  page_path: string | null;
+  created_at: string;
+};
+
+type TrackingEventInsert = {
+  id?: string;
+  event_type: string;
+  event_data?: Json | null;
+  session_id?: string | null;
+  user_agent?: string | null;
+  referrer?: string | null;
+  page_path?: string | null;
+  created_at?: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -119,6 +165,12 @@ export type Database = {
         Row: DiagnosisRow;
         Insert: DiagnosisInsert;
         Update: Partial<DiagnosisInsert>;
+        Relationships: [];
+      };
+      email_sequences: {
+        Row: EmailSequenceRow;
+        Insert: EmailSequenceInsert;
+        Update: Partial<EmailSequenceInsert>;
         Relationships: [];
       };
       subscribers: {
@@ -137,6 +189,12 @@ export type Database = {
         Row: PublicExampleRow;
         Insert: PublicExampleInsert;
         Update: Partial<PublicExampleInsert>;
+        Relationships: [];
+      };
+      tracking_events: {
+        Row: TrackingEventRow;
+        Insert: TrackingEventInsert;
+        Update: Partial<TrackingEventInsert>;
         Relationships: [];
       };
     };
