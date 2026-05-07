@@ -1,7 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowUpRight, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSchedulingTarget } from "@/lib/calcom";
+import {
+  getCalcomRedirectUrl,
+  getCalcomUrl,
+  getSchedulingTarget,
+} from "@/lib/calcom";
+import { track } from "@/lib/tracking";
 import { cn } from "@/lib/utils";
 
 type CalcomVariant = "primary" | "secondary" | "white";
@@ -25,6 +32,13 @@ type Props = {
   size?: "default" | "lg" | "xl";
   variant?: CalcomVariant;
   className?: string;
+  /**
+   * Quando passado, o botão usa o redirector interno (/r/calcom/[id]) que
+   * cancela a sequência de e-mails antes de jogar o lead pro Cal.com.
+   */
+  diagnosisId?: string;
+  /** Origem usada no tracking event (ex: "result_page", "services_cta") */
+  source?: string;
 };
 
 export function SchedulingButton({
@@ -33,9 +47,28 @@ export function SchedulingButton({
   size = "lg",
   variant = "primary",
   className,
+  diagnosisId,
+  source,
 }: Props) {
-  const target = getSchedulingTarget(subject);
-  const Icon = target.isMailto ? Mail : ArrowUpRight;
+  const fallback = getSchedulingTarget(subject);
+  const calcomBase = getCalcomUrl();
+  const useRedirector = Boolean(diagnosisId && calcomBase);
+  const href = useRedirector
+    ? getCalcomRedirectUrl(diagnosisId!)
+    : fallback.href;
+  const isMailto = !useRedirector && fallback.isMailto;
+  const Icon = isMailto ? Mail : ArrowUpRight;
+
+  function handleClick() {
+    track({
+      type: "calcom_clicked",
+      data: {
+        source: source ?? null,
+        diagnosis_id: diagnosisId ?? null,
+        is_mailto: isMailto,
+      },
+    });
+  }
 
   return (
     <Button
@@ -45,9 +78,10 @@ export function SchedulingButton({
       className={cn("rounded-xl", variantClasses[variant], className)}
     >
       <Link
-        href={target.href}
-        target={target.isMailto ? undefined : "_blank"}
-        rel={target.isMailto ? undefined : "noopener noreferrer"}
+        href={href}
+        target={isMailto ? undefined : "_blank"}
+        rel={isMailto ? undefined : "noopener noreferrer"}
+        onClick={handleClick}
       >
         <Icon className="size-4" aria-hidden />
         <span>{label}</span>
@@ -56,5 +90,5 @@ export function SchedulingButton({
   );
 }
 
-// Alias for the new convention requested in the brief.
+// Alias mais explícito.
 export const CalcomButton = SchedulingButton;

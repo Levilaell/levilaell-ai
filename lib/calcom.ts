@@ -24,3 +24,12 @@ export function getSchedulingTarget(
     isMailto: true,
   };
 }
+
+/**
+ * URL de redirect interno que cancela a sequência de e-mails do lead antes
+ * de mandar pro Cal.com. Use em e-mails da sequência (2-6) e no result page,
+ * onde o diagnosisId é conhecido.
+ */
+export function getCalcomRedirectUrl(diagnosisId: string): string {
+  return `${siteConfig.url}/r/calcom/${encodeURIComponent(diagnosisId)}`;
+}

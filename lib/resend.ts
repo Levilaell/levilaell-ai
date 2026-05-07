@@ -20,6 +20,8 @@ export type EmailPayload = {
   text?: string;
   from?: string;
   replyTo?: string;
+  /** Headers customizados (List-Unsubscribe etc) — Resend repassa pro SMTP. */
+  headers?: Record<string, string>;
 };
 
 export async function sendEmail(payload: EmailPayload): Promise<{
@@ -47,6 +49,7 @@ export async function sendEmail(payload: EmailPayload): Promise<{
       html: payload.html,
       text: payload.text,
       replyTo: payload.replyTo,
+      headers: payload.headers,
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true, id: data?.id };

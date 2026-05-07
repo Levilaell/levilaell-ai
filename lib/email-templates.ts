@@ -23,9 +23,12 @@ const baseStyles = `
 </style>
 `;
 
-function shell(content: string): string {
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${baseStyles}</head><body><div class="container">${content}<div class="footer">© ${new Date().getFullYear()} ${siteConfig.name} — <a href="${siteConfig.url}">${siteConfig.domain}</a><br><a href="${siteConfig.social.linkedin}">LinkedIn</a> · <a href="${siteConfig.social.github}">GitHub</a></div></div></body></html>`;
+export function emailShell(content: string, footerExtra: string = ""): string {
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${baseStyles}</head><body><div class="container">${content}<div class="footer">© ${new Date().getFullYear()} ${siteConfig.name} — <a href="${siteConfig.url}">${siteConfig.domain}</a><br><a href="${siteConfig.social.linkedin}">LinkedIn</a> · <a href="${siteConfig.social.github}">GitHub</a>${footerExtra}</div></div></body></html>`;
 }
+
+// Alias interno mantém referências antigas funcionando.
+const shell = emailShell;
 
 const approachLabels: Record<RecommendedApproach, string> = {
   diy: "Faça você mesmo",
@@ -40,6 +43,18 @@ const timelineBadges: Record<string, string> = {
   "3_to_6_months": "📅 Médio prazo",
   no_urgency: "🌱 Exploratório",
 };
+
+const timelineContexts: Record<string, string> = {
+  this_week: "Você marcou esse projeto como urgente. Aqui está seu plano:",
+  next_month: "Você marcou esse projeto pra rodar no próximo mês:",
+  "3_to_6_months": "Você marcou esse projeto pros próximos 3-6 meses:",
+  no_urgency: "Você marcou esse projeto como exploratório:",
+};
+
+/** Pega só o primeiro nome — "Levi Lael Coelho Silva" → "Levi". */
+export function firstName(full: string): string {
+  return (full || "").trim().split(/\s+/)[0] || "";
+}
 
 // ---------------------------------------------------------------------------
 // Diagnosis report (entregue imediatamente após o submit)
@@ -70,9 +85,11 @@ export function diagnosisReportEmail(args: {
     .map((s) => `<li>${escapeHtml(s.replace(/^\s*\d+\.\s*/, ""))}</li>`)
     .join("");
 
-  const timelineHtml = timeline && timelineBadges[timeline]
-    ? `<span class="badge">${timelineBadges[timeline]}</span>`
-    : "";
+  const fName = firstName(name);
+  const timelineHeader =
+    timeline && timelineContexts[timeline] && timelineBadges[timeline]
+      ? `<p style="color:#52525b; font-size:14px; margin-bottom:16px"><strong>${timelineBadges[timeline]}</strong> · ${escapeHtml(timelineContexts[timeline])}</p>`
+      : "";
 
   const disclaimerHtml = analysis.estimativa_roi.disclaimer
     ? `<p class="disclaimer">${escapeHtml(analysis.estimativa_roi.disclaimer)}</p>`
@@ -80,8 +97,8 @@ export function diagnosisReportEmail(args: {
 
   const html = shell(`
     <div class="card">
-      ${timelineHtml}
-      <h1>Olá, ${escapeHtml(name)}. Seu relatório está aqui.</h1>
+      ${timelineHeader}
+      <h1>Olá, ${escapeHtml(fName)}. Seu relatório está aqui.</h1>
       <p>${escapeHtml(analysis.diagnostico_resumido)}</p>
 
       <h2>Top 3 oportunidades</h2>
@@ -120,9 +137,9 @@ export function diagnosisReportEmail(args: {
     </div>
   `);
 
-  const text = `Olá, ${name}.\n\n${analysis.diagnostico_resumido}\n\nVer relatório: ${reportUrl}\n\n— Levi Lael`;
+  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\nVer relatório: ${reportUrl}\n\n— Levi Lael`;
   return {
-    subject: `Seu diagnóstico de operação está pronto, ${name}`,
+    subject: `Seu diagnóstico de operação está pronto, ${fName}`,
     html,
     text,
   };
@@ -136,13 +153,13 @@ export function newsletterWelcomeEmail(args: { name: string }): {
   html: string;
   text: string;
 } {
-  const { name } = args;
+  const fName = firstName(args.name);
   // TODO(levi): Replace with real PDF URL once uploaded to Supabase Storage
   const downloadUrl = `${siteConfig.url}/lead-magnets/mapa-operacao-inteligente.pdf`;
 
   const html = shell(`
     <div class="card">
-      <h1>Bem-vindo, ${escapeHtml(name)}.</h1>
+      <h1>Bem-vindo, ${escapeHtml(fName)}.</h1>
       <p>Você acabou de assinar a newsletter de quem leva operação a sério. Toda terça, um insight prático sobre IA, automação e profissionalização.</p>
       <h2>🎁 Seu Mapa de Operação Inteligente</h2>
       <p>Conforme prometido, segue o framework em PDF que uso com clientes para mapear oportunidades de automação:</p>
@@ -151,7 +168,7 @@ export function newsletterWelcomeEmail(args: { name: string }): {
     </div>
   `);
 
-  const text = `Bem-vindo, ${name}.\n\nDownload do Mapa: ${downloadUrl}\n\n— Levi Lael`;
+  const text = `Bem-vindo, ${fName}.\n\nDownload do Mapa: ${downloadUrl}\n\n— Levi Lael`;
   return {
     subject: "Bem-vindo. Seu Mapa de Operação Inteligente está aqui.",
     html,
@@ -167,17 +184,17 @@ export function contactConfirmationEmail(args: { name: string }): {
   html: string;
   text: string;
 } {
-  const { name } = args;
+  const fName = firstName(args.name);
   const html = shell(`
     <div class="card">
-      <h1>Recebi sua mensagem, ${escapeHtml(name)}.</h1>
+      <h1>Recebi sua mensagem, ${escapeHtml(fName)}.</h1>
       <p>Respondo em até 24-48h em dia útil. Se for urgente, me chama no e-mail direto: <a href="mailto:${siteConfig.email.contact}">${siteConfig.email.contact}</a>.</p>
       <div class="meta">— Levi Lael</div>
     </div>
   `);
 
-  const text = `Recebi sua mensagem, ${name}. Respondo em 24-48h.\n\n— Levi Lael`;
-  return { subject: `Recebi sua mensagem, ${name}`, html, text };
+  const text = `Recebi sua mensagem, ${fName}. Respondo em 24-48h.\n\n— Levi Lael`;
+  return { subject: `Recebi sua mensagem, ${fName}`, html, text };
 }
 
 // ---------------------------------------------------------------------------
@@ -277,9 +294,9 @@ export function internalContactEmail(args: {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Helpers (export pra ser reutilizado pelos templates de follow-up sequence)
 // ---------------------------------------------------------------------------
-function escapeHtml(input: string): string {
+export function escapeHtml(input: string): string {
   return String(input)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
