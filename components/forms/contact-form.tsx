@@ -26,11 +26,12 @@ const subjectOptions = [
 ] as const;
 
 const serviceMessage: Record<string, string> = {
-  diagnosis: "Tenho interesse no Diagnóstico Estratégico. Conta mais sobre o escopo.",
   automation:
-    "Tenho interesse em Automação Sob Medida. Quero discutir um projeto específico.",
-  partnership:
-    "Tenho interesse na Operação Inteligente como parceria contínua. Vamos conversar?",
+    "Tenho interesse em Automação Sob Demanda. Quero discutir um projeto específico.",
+  "ai-sprint":
+    "Tenho interesse no Sprint de IA (R$ 7.500, 2 semanas). Conta mais sobre o escopo.",
+  "dedicated-dev":
+    "Tenho interesse em Desenvolvedor Dedicado (40h/mês). Vamos conversar?",
 };
 
 export function ContactForm() {
@@ -46,6 +47,7 @@ export function ContactForm() {
       email: "",
       company: "",
       subject: "question",
+      service_interest: "",
       message: "",
     },
   });
@@ -54,6 +56,7 @@ export function ContactForm() {
     const service = params.get("service");
     if (service && serviceMessage[service]) {
       form.setValue("subject", "partnership");
+      form.setValue("service_interest", service);
       form.setValue("message", serviceMessage[service]);
     }
   }, [params, form]);
