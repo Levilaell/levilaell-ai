@@ -55,7 +55,14 @@ export function verifyUnsubscribeToken(token: string): string | null {
   return id;
 }
 
+/** URL pra humano (renderiza UI confirmando cancelamento). */
 export function unsubscribeUrl(diagnosisId: string): string {
   const token = signUnsubscribeToken(diagnosisId);
   return `${siteConfig.url}/unsubscribe/${token}`;
+}
+
+/** URL pro bot do Gmail/Yahoo (POST one-click, RFC 8058). Não renderiza UI. */
+export function unsubscribeApiUrl(diagnosisId: string): string {
+  const token = signUnsubscribeToken(diagnosisId);
+  return `${siteConfig.url}/api/unsubscribe/${token}`;
 }

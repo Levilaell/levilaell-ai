@@ -22,7 +22,7 @@ import {
   getCalcomRedirectUrl,
   getCalcomUrl,
 } from "@/lib/calcom";
-import { unsubscribeUrl } from "@/lib/unsubscribe";
+import { unsubscribeApiUrl, unsubscribeUrl } from "@/lib/unsubscribe";
 import type { DiagnosisAnalysis } from "@/types/diagnosis";
 
 export type SequenceRow = {
@@ -64,6 +64,7 @@ export async function runFollowUpEmail(
   // Usamos redirector interno que cancela a sequence ao clicar.
   const calcomUrl = getCalcomRedirectUrl(diag.id);
   const unsubUrl = unsubscribeUrl(diag.id);
+  const unsubApi = unsubscribeApiUrl(diag.id);
 
   // Renderização: prefere cache se existe.
   let subject: string;
@@ -141,7 +142,9 @@ export async function runFollowUpEmail(
     html,
     text,
     headers: {
-      "List-Unsubscribe": `<${unsubUrl}>, <mailto:${process.env.RESEND_FROM_EMAIL?.match(/<([^>]+)>/)?.[1] ?? "hello@levilael.com.br"}?subject=unsubscribe>`,
+      // RFC 8058: header aponta pra endpoint que aceita POST one-click.
+      // Mailto fica como segundo recurso pra clientes que não suportam HTTP.
+      "List-Unsubscribe": `<${unsubApi}>, <mailto:${process.env.RESEND_FROM_EMAIL?.match(/<([^>]+)>/)?.[1] ?? "hello@levilael.com.br"}?subject=unsubscribe>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
     },
   });

@@ -60,22 +60,29 @@ const components: Components = {
     }
     return <blockquote>{children}</blockquote>;
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  code: ({ inline, className, children, ...rest }: any) => {
-    if (inline) {
+  // react-markdown v10 removeu o prop `inline`: agora detecção de inline vs
+  // fenced block é feita pela presença de className `language-*` (fenced) ou
+  // ausência (inline ou inferido como inline).
+  // Extrair `node` aqui — é o AST da remark-rehype e não pode vazar pro DOM
+  // como atributo HTML (vira "node=[object Object]").
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  code: ({ node, className, children, ...rest }) => {
+    const match = /language-(\w+)/.exec(className ?? "");
+    if (!match) {
       return (
         <code className={className} {...rest}>
           {children}
         </code>
       );
     }
-    const lang = /language-(\w+)/.exec(className ?? "")?.[1];
     return (
-      <CodeBlock language={lang} {...rest}>
+      <CodeBlock language={match[1]}>
         {String(children).replace(/\n$/, "")}
       </CodeBlock>
     );
   },
+  // CodeBlock já gera seu próprio <pre>. Aqui só desempacotamos o wrapping
+  // <pre> que o react-markdown coloca em volta de fenced blocks.
   pre: ({ children }) => <>{children}</>,
 };
 
