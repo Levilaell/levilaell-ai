@@ -28,6 +28,7 @@ import {
   type DiagnosisDraft,
   type StoredResult,
 } from "@/lib/diagnosis-storage";
+import { track } from "@/lib/tracking";
 import type { DiagnosisSubmission, DiagnosisAnalysis } from "@/types/diagnosis";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,7 @@ export function DiagnosisForm() {
       setAnswers(draft.answers);
     }
     setHydrated(true);
+    track({ type: "diagnosis_started", data: { resumed: Boolean(draft) } });
   }, []);
 
   useEffect(() => {
@@ -56,6 +58,21 @@ export function DiagnosisForm() {
     const draft: DiagnosisDraft = { step, answers };
     saveDraft(draft);
   }, [hydrated, step, answers]);
+
+  // Abandono: dispara beforeunload se ainda não submeteu
+  useEffect(() => {
+    if (!hydrated) return;
+    function handler() {
+      if (submitState === "submitting") return;
+      if (Object.keys(answers).length === 0) return;
+      track({
+        type: "diagnosis_abandoned",
+        data: { last_step: step },
+      });
+    }
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hydrated, step, answers, submitState]);
 
   const isLeadStep = step >= DIAGNOSIS_QUESTIONS.length;
   const currentQuestion = DIAGNOSIS_QUESTIONS[step];
@@ -85,6 +102,17 @@ export function DiagnosisForm() {
   }
 
   function handleNext() {
+    if (currentQuestion) {
+      const value = answers[currentQuestion.field as keyof Answers];
+      track({
+        type: "diagnosis_question_answered",
+        data: {
+          question: currentQuestion.id,
+          field: currentQuestion.field,
+          value: Array.isArray(value) ? value : (value ?? null),
+        },
+      });
+    }
     setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
   }
 
@@ -121,6 +149,10 @@ export function DiagnosisForm() {
       };
       saveResult(result);
       clearDraft();
+      track({
+        type: "diagnosis_completed",
+        data: { id: data.id, timeline: data.timeline },
+      });
       router.push(`/diagnosis/result/${data.id}`);
     } catch (err) {
       setSubmitState("error");

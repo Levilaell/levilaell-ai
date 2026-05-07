@@ -10,7 +10,7 @@ const steps = [
   },
   {
     title:
-      "Claude (IA da Anthropic) analisa as respostas e identifica padrões, gargalos e oportunidades específicas do seu caso",
+      "IA analisa as respostas e identifica padrões, gargalos e oportunidades específicas do seu caso",
     detail: "análise feita por modelo especializado em consultoria",
   },
   {

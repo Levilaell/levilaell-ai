@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DiagnosisResult } from "@/components/diagnosis/diagnosis-result";
 import { DiagnosisResultFallback } from "@/components/diagnosis/diagnosis-result-fallback";
+import { TrackOnMount } from "@/components/tracking/track-on-mount";
 import { getDiagnosisById } from "@/lib/supabase";
 
 type Props = {
@@ -26,6 +27,10 @@ export default async function DiagnosisResultPage({ params }: Props) {
 
   return (
     <div className="container-prose py-12 md:py-16">
+      <TrackOnMount
+        type="diagnosis_result_viewed"
+        data={{ id, status: record?.status ?? "unknown" }}
+      />
       <Button
         asChild
         variant="ghost"
@@ -42,6 +47,7 @@ export default async function DiagnosisResultPage({ params }: Props) {
           createdAt={record.createdAt}
           analysis={record.analysis!}
           timeline={record.q8_timeline}
+          diagnosisId={id}
         />
       ) : (
         <DiagnosisResultFallback id={id} />

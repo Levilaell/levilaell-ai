@@ -13,14 +13,17 @@ export function Hero() {
               Engenharia de operações com IA
             </div>
             <h1 className="heading-display">
-              Engenharia de operações com IA e automação para empresas que querem{" "}
+              Engenharia de operações com IA e automação para empresas que
+              querem{" "}
               <span className="bg-foreground text-background px-2 rounded-md whitespace-nowrap">
                 crescer sem inchar
               </span>{" "}
               a equipe.
             </h1>
             <p className="text-lead mt-6 max-w-2xl">
-              Faça o diagnóstico gratuito e descubra, em 2 minutos, onde sua operação está perdendo tempo, dinheiro e oportunidades — com uma análise gerada por IA personalizada para o seu negócio.
+              Faça o diagnóstico gratuito e descubra, em 2 minutos, onde sua
+              operação está perdendo tempo, dinheiro e oportunidades — com uma
+              análise gerada por IA personalizada para o seu negócio.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="xl" variant="brand" className="rounded-xl">
@@ -29,21 +32,15 @@ export function Hero() {
                   <ArrowRight className="size-4" aria-hidden />
                 </Link>
               </Button>
-              <Button asChild size="xl" variant="outline" className="rounded-xl">
+              <Button
+                asChild
+                size="xl"
+                variant="outline"
+                className="rounded-xl"
+              >
                 <Link href="/services">Ver serviços</Link>
               </Button>
             </div>
-            <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
-              <li className="inline-flex items-center gap-1.5">
-                <Clock className="size-3.5" aria-hidden /> 2 minutos
-              </li>
-              <li className="inline-flex items-center gap-1.5">
-                <Sparkles className="size-3.5" aria-hidden /> Sem cadastro pra começar
-              </li>
-              <li className="inline-flex items-center gap-1.5">
-                <Mail className="size-3.5" aria-hidden /> Relatório completo no seu e-mail
-              </li>
-            </ul>
           </div>
 
           <div className="lg:col-span-2">
@@ -58,7 +55,10 @@ export function Hero() {
 function DiagnosisPreview() {
   return (
     <div className="relative">
-      <div className="absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-brand/40 via-brand/10 to-transparent blur-2xl opacity-60" aria-hidden />
+      <div
+        className="absolute -inset-2 rounded-[2rem] bg-gradient-to-br from-brand/40 via-brand/10 to-transparent blur-2xl opacity-60"
+        aria-hidden
+      />
       <div className="relative rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
           <span>DIAGNÓSTICO · Q1/8</span>
@@ -71,7 +71,9 @@ function DiagnosisPreview() {
         <p className="mt-6 text-sm font-mono uppercase tracking-widest text-muted-foreground">
           Pergunta 1
         </p>
-        <h3 className="mt-2 heading-3">O que melhor descreve sua empresa hoje?</h3>
+        <h3 className="mt-2 heading-3">
+          O que melhor descreve sua empresa hoje?
+        </h3>
 
         <ul className="mt-5 space-y-2.5">
           {[

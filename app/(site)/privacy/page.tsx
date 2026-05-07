@@ -106,9 +106,20 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="heading-3">6. Cookies</h2>
+          <h2 className="heading-3">6. Cookies e tracking</h2>
           <p className="mt-3">
             Usamos cookies estritamente necessários (sessão) e analíticos (Vercel Analytics, anônimos). Não usamos cookies de marketing nem rastreamento de terceiros.
+          </p>
+          <p className="mt-3">
+            Nosso tracking interno é <strong>first-party</strong> — registramos
+            pageviews, cliques em CTAs e progresso de formulário sob um session
+            ID temporário (UUID em sessionStorage, expira ao fechar a aba). Não
+            fazemos browser fingerprinting, não armazenamos IP em texto puro, e
+            respeitamos o sinal{" "}
+            <code className="font-mono text-sm bg-muted px-1 rounded">
+              navigator.doNotTrack
+            </code>{" "}
+            do navegador.
           </p>
         </section>
 

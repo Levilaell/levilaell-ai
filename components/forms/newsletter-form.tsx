@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { newsletterSchema, type NewsletterInput } from "@/types/forms";
+import { track } from "@/lib/tracking";
 
 type Props = {
   source?: string;
@@ -38,6 +39,7 @@ export function NewsletterForm({ source = "newsletter_page", variant = "default"
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error ?? `Erro ${res.status}`);
         }
+        track({ type: "newsletter_signup", data: { source } });
         setSuccess(true);
         form.reset();
       } catch (err) {

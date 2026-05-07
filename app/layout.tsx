@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/site";
+import { PageViewTracker } from "@/components/tracking/page-view-tracker";
 
 import "./globals.css";
 
@@ -72,6 +74,9 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans min-h-screen flex flex-col`}
       >
         {children}
+        <Suspense fallback={null}>
+          <PageViewTracker />
+        </Suspense>
         <Analytics />
       </body>
     </html>

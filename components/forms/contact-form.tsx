@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { contactSchema, type ContactInput } from "@/types/forms";
+import { track } from "@/lib/tracking";
 
 const subjectOptions = [
   { value: "partnership", label: "Parceria" },
@@ -74,6 +75,13 @@ export function ContactForm() {
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error ?? `Erro ${res.status}`);
         }
+        track({
+          type: "contact_submitted",
+          data: {
+            subject: values.subject,
+            service_interest: values.service_interest || null,
+          },
+        });
         setSuccess(true);
         form.reset();
       } catch (err) {

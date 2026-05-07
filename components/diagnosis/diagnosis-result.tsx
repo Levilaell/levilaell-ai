@@ -35,6 +35,7 @@ type Props = {
   analysis: DiagnosisAnalysis;
   timeline?: string;
   context?: "personal" | "example";
+  diagnosisId?: string;
 };
 
 export function DiagnosisResult({
@@ -43,6 +44,7 @@ export function DiagnosisResult({
   analysis,
   timeline,
   context = "personal",
+  diagnosisId,
 }: Props) {
   const isNotYet =
     analysis.proximo_passo_recomendado.abordagem === "ainda_nao_e_hora";
@@ -253,6 +255,8 @@ export function DiagnosisResult({
               variant="white"
               subject={`Diagnóstico — ${name}`}
               label="Agendar call gratuita"
+              diagnosisId={diagnosisId}
+              source="result_page"
             />
           </div>
         </section>

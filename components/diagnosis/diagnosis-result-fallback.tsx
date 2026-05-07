@@ -53,6 +53,7 @@ export function DiagnosisResultFallback({ id }: { id: string }) {
       createdAt={stored.createdAt}
       analysis={stored.analysis}
       timeline={stored.timeline}
+      diagnosisId={id}
     />
   );
 }
