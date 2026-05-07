@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { ArrowRight, Clock, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 
 export function FinalCTA() {
   return (
@@ -17,10 +17,10 @@ export function FinalCTA() {
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Button asChild size="xl" variant="brand" className="rounded-xl">
-            <Link href="/diagnosis">
+            <TrackedLink href="/diagnosis" trackLabel="home_final_diagnosis">
               Iniciar diagnóstico gratuito
               <ArrowRight className="size-4" aria-hidden />
-            </Link>
+            </TrackedLink>
           </Button>
         </div>
         <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-zinc-400 dark:text-zinc-600">

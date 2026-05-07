@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SchedulingButton } from "@/components/ui/scheduling-button";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -158,9 +158,12 @@ export default function ServicesPage() {
                 variant={p.featured ? "brand" : "outline"}
                 className="mt-7 rounded-xl"
               >
-                <Link href={`/contact?service=${p.serviceParam}`}>
+                <TrackedLink
+                  href={`/contact?service=${p.serviceParam}`}
+                  trackLabel={`services_card_${p.serviceParam}`}
+                >
                   {p.cta} <ArrowRight className="size-4" aria-hidden />
-                </Link>
+                </TrackedLink>
               </Button>
             </article>
           ))}
@@ -222,10 +225,13 @@ export default function ServicesPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="xl" variant="brand" className="rounded-xl">
-              <Link href="/diagnosis">
+              <TrackedLink
+                href="/diagnosis"
+                trackLabel="services_final_diagnosis"
+              >
                 Iniciar diagnóstico
                 <ArrowRight className="size-4" aria-hidden />
-              </Link>
+              </TrackedLink>
             </Button>
             <SchedulingButton
               size="xl"

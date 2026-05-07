@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 
 export const metadata: Metadata = {
   title: "Sobre",
@@ -151,13 +151,15 @@ export default function AboutPage() {
           <h2 className="heading-2">Vamos conversar?</h2>
           <div className="flex flex-wrap justify-center gap-3">
             <Button asChild size="xl" variant="brand" className="rounded-xl">
-              <Link href="/diagnosis">
+              <TrackedLink href="/diagnosis" trackLabel="about_final_diagnosis">
                 Fazer diagnóstico
                 <ArrowRight className="size-4" aria-hidden />
-              </Link>
+              </TrackedLink>
             </Button>
             <Button asChild size="xl" variant="outline" className="rounded-xl">
-              <Link href="/services">Ver serviços</Link>
+              <TrackedLink href="/services" trackLabel="about_final_services">
+                Ver serviços
+              </TrackedLink>
             </Button>
           </div>
         </div>

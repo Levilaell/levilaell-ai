@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 
 export function InlineDiagnosisCTA() {
   return (
@@ -16,10 +16,10 @@ export function InlineDiagnosisCTA() {
       </p>
       <div className="mt-5">
         <Button asChild size="lg" variant="brand" className="rounded-xl">
-          <Link href="/diagnosis">
+          <TrackedLink href="/diagnosis" trackLabel="blog_inline_diagnosis">
             Iniciar diagnóstico
             <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          </TrackedLink>
         </Button>
       </div>
     </aside>

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DiagnosisResult } from "@/components/diagnosis/diagnosis-result";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 import { examples, examplesBySlug } from "@/content/examples";
 
 type Props = {
@@ -73,9 +74,12 @@ export default async function DiagnosisExamplePage({ params }: Props) {
         </p>
         <div className="mt-8 flex justify-center">
           <Button asChild size="xl" variant="brand" className="rounded-xl">
-            <Link href="/diagnosis">
+            <TrackedLink
+              href="/diagnosis"
+              trackLabel={`example_${slug}_diagnosis`}
+            >
               Iniciar diagnóstico <ArrowRight className="size-4" aria-hidden />
-            </Link>
+            </TrackedLink>
           </Button>
         </div>
       </section>

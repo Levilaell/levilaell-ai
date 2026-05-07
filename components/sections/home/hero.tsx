@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { ArrowRight, Clock, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 
 export function Hero() {
   return (
@@ -27,10 +27,10 @@ export function Hero() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button asChild size="xl" variant="brand" className="rounded-xl">
-                <Link href="/diagnosis">
+                <TrackedLink href="/diagnosis" trackLabel="home_hero_diagnosis">
                   Iniciar diagnóstico
                   <ArrowRight className="size-4" aria-hidden />
-                </Link>
+                </TrackedLink>
               </Button>
               <Button
                 asChild
@@ -38,7 +38,9 @@ export function Hero() {
                 variant="outline"
                 className="rounded-xl"
               >
-                <Link href="/services">Ver serviços</Link>
+                <TrackedLink href="/services" trackLabel="home_hero_services">
+                  Ver serviços
+                </TrackedLink>
               </Button>
             </div>
           </div>

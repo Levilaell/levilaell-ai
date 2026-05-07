@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ArticleCard } from "@/components/blog/article-card";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 import { listArticles } from "@/lib/notion";
 
 export async function BlogSidebar() {
@@ -31,10 +31,10 @@ export async function BlogSidebar() {
           Onde sua operação está perdendo tempo?
         </h3>
         <Button asChild size="default" variant="brand" className="rounded-lg w-full">
-          <Link href="/diagnosis">
+          <TrackedLink href="/diagnosis" trackLabel="blog_sidebar_diagnosis">
             Iniciar diagnóstico
             <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          </TrackedLink>
         </Button>
       </div>
 

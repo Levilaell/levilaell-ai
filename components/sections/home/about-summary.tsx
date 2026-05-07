@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 
 export function AboutSummary() {
   return (
@@ -35,10 +35,10 @@ export function AboutSummary() {
             </div>
             <div className="mt-8">
               <Button asChild size="lg" variant="outline" className="rounded-xl">
-                <Link href="/about">
+                <TrackedLink href="/about" trackLabel="home_about_more">
                   Conheça minha história
                   <ArrowRight className="size-4" aria-hidden />
-                </Link>
+                </TrackedLink>
               </Button>
             </div>
           </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -45,7 +46,9 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-3">
           <Button asChild size="default" variant="brand" className="rounded-lg hidden sm:inline-flex">
-            <Link href="/diagnosis">Diagnóstico gratuito</Link>
+            <TrackedLink href="/diagnosis" trackLabel="header_diagnosis">
+              Diagnóstico gratuito
+            </TrackedLink>
           </Button>
           <button
             type="button"
@@ -72,9 +75,13 @@ export function SiteHeader() {
               </Link>
             ))}
             <Button asChild size="lg" variant="brand" className="mt-3 rounded-lg sm:hidden">
-              <Link href="/diagnosis" onClick={() => setOpen(false)}>
+              <TrackedLink
+                href="/diagnosis"
+                trackLabel="header_mobile_diagnosis"
+                onClick={() => setOpen(false)}
+              >
                 Diagnóstico gratuito →
-              </Link>
+              </TrackedLink>
             </Button>
           </nav>
         </div>

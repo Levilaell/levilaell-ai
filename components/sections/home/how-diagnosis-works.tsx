@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { TrackedLink } from "@/components/tracking/tracked-link";
 
 const steps = [
   {
@@ -54,10 +54,13 @@ export function HowDiagnosisWorks() {
         </ol>
         <div className="mt-12 flex justify-center">
           <Button asChild size="xl" variant="brand" className="rounded-xl">
-            <Link href="/diagnosis">
+            <TrackedLink
+              href="/diagnosis"
+              trackLabel="home_how_works_diagnosis"
+            >
               Quero meu diagnóstico
               <ArrowRight className="size-4" aria-hidden />
-            </Link>
+            </TrackedLink>
           </Button>
         </div>
       </div>
