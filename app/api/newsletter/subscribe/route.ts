@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { newsletterSchema } from "@/types/forms";
-import { saveSubscriber } from "@/lib/supabase";
+import { isSupabaseConfigured, saveSubscriber } from "@/lib/supabase";
 import { sendEmail, isResendConfigured } from "@/lib/resend";
 import { newsletterWelcomeEmail } from "@/lib/email-templates";
 
@@ -27,11 +27,27 @@ export async function POST(request: Request) {
   }
   const data = parsed.data;
 
-  await saveSubscriber({
-    email: data.email,
-    name: data.name,
-    source: data.source ?? null,
-  });
+  if (isSupabaseConfigured()) {
+    try {
+      await saveSubscriber({
+        email: data.email,
+        name: data.name,
+        source: data.source ?? null,
+      });
+    } catch (err) {
+      console.error(
+        "[DB_ERROR] newsletter subscribe failed",
+        err instanceof Error ? err.message : err,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Não consegui registrar sua inscrição agora. Tenta de novo em alguns segundos.",
+        },
+        { status: 503 },
+      );
+    }
+  }
 
   if (isResendConfigured()) {
     const welcome = newsletterWelcomeEmail({ name: data.name });

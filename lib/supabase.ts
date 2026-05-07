@@ -50,13 +50,59 @@ export type SaveDiagnosisInput = DiagnosisAnswers & {
   company?: string;
 };
 
+export class SupabaseWriteError extends Error {
+  code: string;
+  details: string;
+  hint: string;
+  constructor(label: string, err: unknown) {
+    const e = err as {
+      code?: string;
+      message?: string;
+      details?: string;
+      hint?: string;
+    };
+    const message = `[DB_ERROR] ${label}: ${e.message ?? "unknown"}${
+      e.code ? ` (code=${e.code})` : ""
+    }`;
+    super(message);
+    this.name = "SupabaseWriteError";
+    this.code = e.code ?? "";
+    this.details = e.details ?? "";
+    this.hint = e.hint ?? "";
+  }
+}
+
 export async function saveDiagnosis(
   input: SaveDiagnosisInput,
-): Promise<{ id: string } | null> {
+): Promise<{ id: string }> {
   const supabase = getSupabaseService();
-  if (!supabase) return null;
+  if (!supabase) {
+    throw new Error(
+      "[DB_ERROR] saveDiagnosis: Supabase service client não configurado.",
+    );
+  }
 
   const leadScore = calculateLeadScore(input);
+
+  // Log com payload sanitizado — sem PII (nome / email / whatsapp em texto).
+  console.log("[DB] saveDiagnosis insert", {
+    has_id: Boolean(input.id),
+    has_name: Boolean(input.name),
+    has_email: Boolean(input.email),
+    has_whatsapp: Boolean(input.whatsapp),
+    has_company: Boolean(input.company),
+    q1_size: input.q1_size,
+    q2_business_model: input.q2_business_model,
+    pain_areas_count: input.q3_pain_areas?.length ?? 0,
+    q4_tech_maturity: input.q4_tech_maturity,
+    q5_hours_weekly: input.q5_hours_weekly,
+    q8_timeline: input.q8_timeline,
+    q9_budget: input.q9_budget,
+    q10_revenue: input.q10_revenue ?? null,
+    has_q10_employees: typeof input.q10_employees === "number",
+    lead_score: leadScore,
+  });
+
   const { data, error } = await supabase
     .from("diagnoses")
     .insert({
@@ -85,9 +131,15 @@ export async function saveDiagnosis(
     .single();
 
   if (error) {
-    console.error("[supabase] saveDiagnosis error:", error);
-    return null;
+    console.error("[DB_ERROR] saveDiagnosis insert failed", {
+      code: (error as { code?: string }).code,
+      message: error.message,
+      details: (error as { details?: string }).details,
+      hint: (error as { hint?: string }).hint,
+    });
+    throw new SupabaseWriteError("saveDiagnosis", error);
   }
+  console.log("[DB] saveDiagnosis ok", { id: data.id });
   return { id: data.id };
 }
 
@@ -98,9 +150,21 @@ export async function updateDiagnosisStatus(
     ai_analysis?: DiagnosisAnalysis | null;
     error_message?: string | null;
   },
-): Promise<boolean> {
+): Promise<void> {
   const supabase = getSupabaseService();
-  if (!supabase) return false;
+  if (!supabase) {
+    console.warn(
+      "[DB] updateDiagnosisStatus skipped — Supabase service client não configurado.",
+    );
+    return;
+  }
+
+  console.log("[DB] updateDiagnosisStatus", {
+    id,
+    status: patch.status,
+    has_analysis: Boolean(patch.ai_analysis),
+    has_error: Boolean(patch.error_message),
+  });
 
   const { error } = await supabase
     .from("diagnoses")
@@ -112,10 +176,14 @@ export async function updateDiagnosisStatus(
     .eq("id", id);
 
   if (error) {
-    console.error("[supabase] updateDiagnosisStatus error:", error);
-    return false;
+    console.error("[DB_ERROR] updateDiagnosisStatus failed", {
+      id,
+      code: (error as { code?: string }).code,
+      message: error.message,
+      details: (error as { details?: string }).details,
+    });
+    throw new SupabaseWriteError("updateDiagnosisStatus", error);
   }
-  return true;
 }
 
 export type DiagnosisFetched = {
@@ -163,9 +231,19 @@ export type SaveSubscriberInput = {
 
 export async function saveSubscriber(
   input: SaveSubscriberInput,
-): Promise<boolean> {
+): Promise<void> {
   const supabase = getSupabaseService();
-  if (!supabase) return false;
+  if (!supabase) {
+    throw new Error(
+      "[DB_ERROR] saveSubscriber: Supabase service client não configurado.",
+    );
+  }
+
+  console.log("[DB] saveSubscriber upsert", {
+    has_email: Boolean(input.email),
+    has_name: Boolean(input.name),
+    source: input.source ?? null,
+  });
 
   const { error } = await supabase.from("subscribers").upsert(
     {
@@ -178,10 +256,12 @@ export async function saveSubscriber(
   );
 
   if (error) {
-    console.error("[supabase] saveSubscriber error:", error);
-    return false;
+    console.error("[DB_ERROR] saveSubscriber failed", {
+      code: (error as { code?: string }).code,
+      message: error.message,
+    });
+    throw new SupabaseWriteError("saveSubscriber", error);
   }
-  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -196,9 +276,22 @@ export type SaveContactInput = {
   message: string;
 };
 
-export async function saveContact(input: SaveContactInput): Promise<boolean> {
+export async function saveContact(input: SaveContactInput): Promise<void> {
   const supabase = getSupabaseService();
-  if (!supabase) return false;
+  if (!supabase) {
+    throw new Error(
+      "[DB_ERROR] saveContact: Supabase service client não configurado.",
+    );
+  }
+
+  console.log("[DB] saveContact insert", {
+    has_name: Boolean(input.name),
+    has_email: Boolean(input.email),
+    has_company: Boolean(input.company),
+    service_interest: input.service_interest ?? null,
+    subject: input.subject ?? null,
+    message_length: input.message.length,
+  });
 
   const { error } = await supabase.from("contacts").insert({
     name: input.name,
@@ -210,10 +303,12 @@ export async function saveContact(input: SaveContactInput): Promise<boolean> {
   });
 
   if (error) {
-    console.error("[supabase] saveContact error:", error);
-    return false;
+    console.error("[DB_ERROR] saveContact failed", {
+      code: (error as { code?: string }).code,
+      message: error.message,
+    });
+    throw new SupabaseWriteError("saveContact", error);
   }
-  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,6 +323,7 @@ export type TrackEventInput = {
   page_path?: string | null;
 };
 
+// Fire-and-forget: nunca trava o request principal por falha de tracking.
 export async function trackEvent(input: TrackEventInput): Promise<boolean> {
   const supabase = getSupabaseService();
   if (!supabase) return false;
@@ -242,7 +338,11 @@ export async function trackEvent(input: TrackEventInput): Promise<boolean> {
   });
 
   if (error) {
-    console.error("[supabase] trackEvent error:", error);
+    console.error("[DB_ERROR] trackEvent failed (silent)", {
+      event_type: input.event_type,
+      code: (error as { code?: string }).code,
+      message: error.message,
+    });
     return false;
   }
   return true;
@@ -279,9 +379,19 @@ export type EmailSequenceItem = {
 export async function scheduleEmailSequence(
   diagnosisId: string,
   items: EmailSequenceItem[],
-): Promise<boolean> {
+): Promise<void> {
   const supabase = getSupabaseService();
-  if (!supabase) return false;
+  if (!supabase) {
+    throw new Error(
+      "[DB_ERROR] scheduleEmailSequence: Supabase service client não configurado.",
+    );
+  }
+
+  console.log("[DB] scheduleEmailSequence insert", {
+    diagnosis_id: diagnosisId,
+    count: items.length,
+    numbers: items.map((i) => i.email_number),
+  });
 
   const rows = items.map((item) => ({
     diagnosis_id: diagnosisId,
@@ -292,25 +402,30 @@ export async function scheduleEmailSequence(
 
   const { error } = await supabase.from("email_sequences").insert(rows);
   if (error) {
-    console.error("[supabase] scheduleEmailSequence error:", error);
-    return false;
+    console.error("[DB_ERROR] scheduleEmailSequence failed", {
+      diagnosis_id: diagnosisId,
+      code: (error as { code?: string }).code,
+      message: error.message,
+    });
+    throw new SupabaseWriteError("scheduleEmailSequence", error);
   }
-  return true;
 }
 
 export async function cancelEmailSequence(
   diagnosisId: string,
-): Promise<boolean> {
+): Promise<void> {
   const supabase = getSupabaseService();
-  if (!supabase) return false;
+  if (!supabase) return;
   const { error } = await supabase
     .from("email_sequences")
     .update({ status: "cancelled" })
     .eq("diagnosis_id", diagnosisId)
     .eq("status", "scheduled");
   if (error) {
-    console.error("[supabase] cancelEmailSequence error:", error);
-    return false;
+    console.error("[DB_ERROR] cancelEmailSequence failed", {
+      diagnosis_id: diagnosisId,
+      message: error.message,
+    });
+    throw new SupabaseWriteError("cancelEmailSequence", error);
   }
-  return true;
 }

@@ -10,6 +10,7 @@ import {
   updateDiagnosisStatus,
   scheduleEmailSequence,
   isSupabaseConfigured,
+  SupabaseWriteError,
 } from "@/lib/supabase";
 import { sendEmail, isResendConfigured } from "@/lib/resend";
 import {
@@ -19,6 +20,7 @@ import {
 import { describeAnswers } from "@/lib/diagnosis-prompt";
 import { buildEmailSequenceItems } from "@/lib/email-sequence";
 import { siteConfig } from "@/lib/site";
+import { calculateLeadScore } from "@/lib/lead-score";
 import type {
   DiagnosisAnalysis,
   DiagnosisAnswers,
@@ -73,20 +75,40 @@ export async function POST(request: Request) {
   };
 
   // 1) Persist initial row (status=processing) ------------------------------
-  let diagnosisId: string | null = null;
-  let leadScoreSnapshot: number | null = null;
+  // Quando Supabase está configurado: failure aqui é fatal (lead se perderia
+  // sem registro; preferimos devolver 503 e o usuário tenta de novo).
+  // Quando Supabase NÃO está configurado: caímos pra fallback local (dev mode).
+  let diagnosisId: string;
   if (isSupabaseConfigured()) {
-    const saved = await saveDiagnosis({
-      ...answers,
-      name: data.name,
-      email: data.email,
-      whatsapp: data.whatsapp || undefined,
-      company: data.company || undefined,
-    });
-    if (saved) diagnosisId = saved.id;
+    try {
+      const saved = await saveDiagnosis({
+        ...answers,
+        name: data.name,
+        email: data.email,
+        whatsapp: data.whatsapp || undefined,
+        company: data.company || undefined,
+      });
+      diagnosisId = saved.id;
+    } catch (err) {
+      console.error(
+        "[DB_ERROR] submit aborted — saveDiagnosis failed",
+        err instanceof Error ? err.message : err,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Não consegui registrar seu diagnóstico agora. Tente novamente em alguns segundos.",
+        },
+        { status: 503 },
+      );
+    }
+  } else {
+    diagnosisId = randomUUID();
+    console.warn(
+      "[diagnosis] Supabase OFF — usando UUID local. Lead NÃO será persistido.",
+      { id: diagnosisId },
+    );
   }
-  // Fallback ID quando Supabase não está configurado (dev).
-  if (!diagnosisId) diagnosisId = randomUUID();
 
   // 2) Run Anthropic --------------------------------------------------------
   let analysis: DiagnosisAnalysis;
@@ -100,24 +122,43 @@ export async function POST(request: Request) {
           ? err.message
           : "Erro desconhecido.";
     if (isSupabaseConfigured()) {
-      await updateDiagnosisStatus(diagnosisId, {
-        status: "failed",
-        error_message: message,
-      });
+      try {
+        await updateDiagnosisStatus(diagnosisId, {
+          status: "failed",
+          error_message: message,
+        });
+      } catch (updateErr) {
+        console.error(
+          "[DB_ERROR] failed to mark diagnosis as failed",
+          updateErr instanceof Error ? updateErr.message : updateErr,
+        );
+      }
     }
     console.error("[diagnosis] anthropic failed:", err);
     return NextResponse.json(
-      { error: "Não consegui gerar a análise agora. Tente novamente em alguns segundos." },
+      {
+        error:
+          "Não consegui gerar a análise agora. Tente novamente em alguns segundos.",
+      },
       { status: 502 },
     );
   }
 
   // 3) Update with completed analysis --------------------------------------
   if (isSupabaseConfigured()) {
-    await updateDiagnosisStatus(diagnosisId, {
-      status: "completed",
-      ai_analysis: analysis,
-    });
+    try {
+      await updateDiagnosisStatus(diagnosisId, {
+        status: "completed",
+        ai_analysis: analysis,
+      });
+    } catch (err) {
+      // Não é fatal: a análise foi gerada e segue pro e-mail. Apenas o status
+      // ficou em 'processing' no banco. Logar e continuar.
+      console.error(
+        "[DB_ERROR] update completed status failed (continuando)",
+        err instanceof SupabaseWriteError ? err.message : err,
+      );
+    }
   }
 
   // 4) Email 1 (relatório) — fire-and-forget but wait briefly --------------
@@ -142,7 +183,7 @@ export async function POST(request: Request) {
       email: data.email,
       whatsapp: data.whatsapp || null,
       company: data.company || null,
-      leadScore: leadScoreSnapshot,
+      leadScore: calculateLeadScore(answers),
       analysis,
       contextLabels: {
         size: labels.size,
@@ -168,8 +209,17 @@ export async function POST(request: Request) {
 
   // 5) Schedule emails 2-6 (cron picks up later) ---------------------------
   if (isSupabaseConfigured()) {
-    const items = buildEmailSequenceItems(new Date(createdAt));
-    await scheduleEmailSequence(diagnosisId, items);
+    try {
+      const items = buildEmailSequenceItems(new Date(createdAt));
+      await scheduleEmailSequence(diagnosisId, items);
+    } catch (err) {
+      // Não é fatal: o email 1 já foi disparado. A sequência pode ser
+      // reagendada manualmente via admin se necessário.
+      console.error(
+        "[DB_ERROR] scheduleEmailSequence failed (continuando)",
+        err instanceof SupabaseWriteError ? err.message : err,
+      );
+    }
   }
 
   return NextResponse.json({

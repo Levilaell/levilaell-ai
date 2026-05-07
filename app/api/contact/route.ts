@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { contactSchema } from "@/types/forms";
-import { saveContact } from "@/lib/supabase";
+import { isSupabaseConfigured, saveContact } from "@/lib/supabase";
 import { sendEmail, isResendConfigured } from "@/lib/resend";
 import {
   contactConfirmationEmail,
@@ -26,14 +26,30 @@ export async function POST(request: Request) {
   }
   const data = parsed.data;
 
-  await saveContact({
-    name: data.name,
-    email: data.email,
-    company: data.company || null,
-    service_interest: data.service_interest || null,
-    subject: data.subject,
-    message: data.message,
-  });
+  if (isSupabaseConfigured()) {
+    try {
+      await saveContact({
+        name: data.name,
+        email: data.email,
+        company: data.company || null,
+        service_interest: data.service_interest || null,
+        subject: data.subject,
+        message: data.message,
+      });
+    } catch (err) {
+      console.error(
+        "[DB_ERROR] contact save failed",
+        err instanceof Error ? err.message : err,
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Não consegui registrar sua mensagem agora. Tente de novo em alguns segundos ou mande direto pra hello@levilael.com.br.",
+        },
+        { status: 503 },
+      );
+    }
+  }
 
   if (isResendConfigured()) {
     const userEmail = contactConfirmationEmail({ name: data.name });
