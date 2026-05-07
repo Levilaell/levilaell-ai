@@ -9,42 +9,48 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Serviços",
   description:
-    "Três formas de trabalhar comigo: diagnóstico estratégico, automação sob medida e operação inteligente como parceria contínua.",
+    "Três formas de trabalhar comigo: automação sob demanda, sprint de IA dedicado e desenvolvedor dedicado mensal.",
   alternates: { canonical: "/services" },
 };
 
 const packages = [
   {
-    icon: "🎯",
-    title: "Diagnóstico Estratégico",
+    icon: "🛠️",
+    title: "Automação Sob Demanda",
     description:
-      "Análise profunda da sua operação com mapa de oportunidades priorizado e roadmap de 90 dias.",
-    price: "A partir de R$ 3.000",
-    timeline: "Entrega em 2 semanas",
-    cta: "Quero o diagnóstico",
-    serviceParam: "diagnosis",
+      "Você me traz o problema; eu construo a solução técnica. Pode ser uma integração específica, um agente de IA, um pipeline de dados, um webhook handler robusto, ou qualquer sistema que automatize um processo seu.",
+    price: "A partir de R$ 2.500",
+    timeline: "Entrega em 1-2 semanas",
+    idealFor:
+      "Empresas que já sabem o que precisam construir e querem alguém técnico pra entregar bem feito.",
+    cta: "Quero automatizar",
+    serviceParam: "automation",
     featured: false,
   },
   {
-    icon: "⚙️",
-    title: "Automação Sob Medida",
+    icon: "🚀",
+    title: "Sprint de IA",
     description:
-      "Implementação de automações específicas que você (ou o diagnóstico) já identificou.",
-    price: "A partir de R$ 8.000",
-    timeline: "Entrega em 3-6 semanas",
-    cta: "Quero automatizar",
-    serviceParam: "automation",
+      "Sprint focado pra colocar UM caso de uso de IA rodando em produção na sua empresa. Inclui: arquitetura, implementação, deploy, telemetria de custo e documentação técnica.",
+    price: "R$ 7.500",
+    timeline: "Entrega em 2 semanas",
+    idealFor:
+      "Empresas que querem IA real (não POC) num caso de uso específico — atendimento, análise de documentos, geração de conteúdo, etc.",
+    cta: "Quero o sprint",
+    serviceParam: "ai-sprint",
     featured: true,
   },
   {
-    icon: "🚀",
-    title: "Operação Inteligente",
+    icon: "👨‍💻",
+    title: "Desenvolvedor Dedicado",
     description:
-      "Parceria contínua: eu cuido da estratégia, implementação e evolução da sua operação automatizada.",
-    price: "A partir de R$ 6.000/mês",
-    timeline: "Mínimo 3 meses",
+      "Trabalho 40h/mês com você como desenvolvedor remoto dedicado: construo, mantenho, evoluo seus sistemas de automação e IA. Reuniões semanais. Stack 100% sua.",
+    price: "R$ 5.000/mês",
+    timeline: "Mínimo 2 meses",
+    idealFor:
+      "Empresas com várias necessidades técnicas contínuas que preferem horas dedicadas em vez de projetos fechados.",
     cta: "Quero parceria",
-    serviceParam: "partnership",
+    serviceParam: "dedicated-dev",
     featured: false,
   },
 ] as const;
@@ -76,7 +82,7 @@ const process = [
   {
     title: "Diagnóstico",
     detail:
-      "Toda parceria começa com diagnóstico — gratuito ou pago, dependendo da profundidade.",
+      "Toda parceria começa com o diagnóstico gratuito do site. Em 2 minutos, a IA identifica onde faz sentido começar.",
   },
   {
     title: "Proposta clara",
@@ -102,7 +108,7 @@ export default function ServicesPage() {
         <SectionHeading
           eyebrow="Serviços"
           title="Três formas de trabalhar comigo."
-          description="Da automação pontual à transformação completa da sua operação."
+          description="Da automação pontual à parceria contínua como desenvolvedor dedicado."
           as="h1"
           align="center"
         />
@@ -142,6 +148,10 @@ export default function ServicesPage() {
                   <dd className="font-medium">{p.timeline}</dd>
                 </div>
               </dl>
+              <p className="mt-5 text-xs text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Ideal para:</strong>{" "}
+                {p.idealFor}
+              </p>
               <Button
                 asChild
                 size="lg"
@@ -219,7 +229,7 @@ export default function ServicesPage() {
             </Button>
             <SchedulingButton
               size="xl"
-              variant="outline"
+              variant="white"
               subject="Conversa sobre serviços — Levi Lael"
               label="Agendar call gratuita"
             />

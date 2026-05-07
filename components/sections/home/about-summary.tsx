@@ -21,7 +21,7 @@ export function AboutSummary() {
             <h2 className="heading-2">Eu sou Levi Lael.</h2>
             <div className="mt-6 space-y-5 text-base md:text-lg text-foreground/85 leading-relaxed">
               <p>
-                Engenheiro de operações com IA e automação. Background em código, especialista em traduzir caos operacional em sistemas que rodam sozinhos.
+                Engenheiro de operações com IA e automação. Construo sistemas que automatizam processos repetitivos — em produção, com clientes pagantes, sem quebrar.
               </p>
               <p>
                 Eu não vendo "automação". Eu vendo{" "}

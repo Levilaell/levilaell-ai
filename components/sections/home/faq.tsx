@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Accordion,
   AccordionContent,
@@ -6,7 +7,12 @@ import {
 } from "@/components/ui/accordion";
 import { SectionHeading } from "@/components/ui/section-heading";
 
-const faq = [
+type FAQItem = {
+  q: string;
+  a: React.ReactNode;
+};
+
+const faq: FAQItem[] = [
   {
     q: "O diagnóstico é realmente gratuito?",
     a: "Sim, sem letra miúda. Você responde, recebe o relatório, e decide se quer ir adiante. Eu ofereço gratuitamente porque é a melhor forma de te mostrar valor antes de pedir qualquer coisa.",
@@ -17,7 +23,20 @@ const faq = [
   },
   {
     q: "Quanto custa um projeto de automação?",
-    a: "Depende do escopo, mas projetos começam em torno de R$ 3.000 (automações pontuais) e podem chegar a R$ 30.000+ (transformações operacionais completas). O diagnóstico já te dá uma estimativa específica.",
+    a: (
+      <>
+        Depende do escopo. Automações pontuais começam em R$ 2.500. Sprints de
+        IA dedicados ficam em R$ 7.500. Trabalho contínuo como desenvolvedor
+        dedicado, R$ 5.000/mês. Detalhes na página de{" "}
+        <Link
+          href="/services"
+          className="text-foreground underline decoration-brand decoration-2 underline-offset-4 hover:decoration-brand/60"
+        >
+          serviços
+        </Link>
+        .
+      </>
+    ),
   },
   {
     q: "Vocês usam IA em tudo? E se eu não confiar em IA?",

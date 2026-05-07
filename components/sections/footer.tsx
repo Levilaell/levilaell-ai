@@ -1,9 +1,5 @@
 import Link from "next/link";
-import {
-  GithubIcon,
-  LinkedinIcon,
-  YoutubeIcon,
-} from "@/components/ui/social-icons";
+import { GithubIcon, LinkedinIcon } from "@/components/ui/social-icons";
 import { siteConfig } from "@/lib/site";
 
 const navColumns = [
@@ -19,7 +15,10 @@ const navColumns = [
     title: "Conteúdo",
     links: [
       { label: "Blog", href: "/blog" },
-      { label: "Exemplos de diagnóstico", href: "/diagnosis/examples/clinicas-pequenas-saude" },
+      {
+        label: "Exemplos de diagnóstico",
+        href: "/diagnosis/examples/clinicas-pequenas-saude",
+      },
       { label: "Sobre", href: "/about" },
     ],
   },
@@ -28,6 +27,7 @@ const navColumns = [
     links: [
       { label: "E-mail", href: `mailto:${siteConfig.email.contact}` },
       { label: "Formulário", href: "/contact" },
+      { label: "Privacidade", href: "/privacy" },
     ],
   },
 ];
@@ -64,15 +64,6 @@ export function SiteFooter() {
               >
                 <GithubIcon className="size-5" />
               </a>
-              <a
-                href={siteConfig.social.youtube}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="YouTube"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <YoutubeIcon className="size-5" />
-              </a>
             </div>
           </div>
 
@@ -102,7 +93,12 @@ export function SiteFooter() {
             © {new Date().getFullYear()} Levi Lael · Todos os direitos reservados.
           </p>
           <p className="text-xs text-muted-foreground">
-            Feito com Next.js + Claude + n8n.
+            <Link
+              href="/privacy"
+              className="hover:text-foreground transition-colors"
+            >
+              Privacidade
+            </Link>
           </p>
         </div>
       </div>

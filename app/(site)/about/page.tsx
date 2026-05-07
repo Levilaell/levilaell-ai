@@ -56,18 +56,30 @@ export default function AboutPage() {
 
       <section className="container-prose pb-16 md:pb-20">
         <h2 className="heading-2">Como cheguei aqui</h2>
-        <div className="mt-8 space-y-10">
+        <div className="mt-10 space-y-12">
           <Act
             title="Ato 1 — O começo"
-            placeholder="{{TODO: Levi to write 3-4 sentences about technical origin — quando começou a programar, de onde vem o background técnico, primeiro contato com automação.}}"
+            paragraphs={[
+              "Comecei a programar antes de saber por quê. Era o tipo de adolescente que abria computador pra ver como funcionava por dentro — e quase sempre fechava com peça sobrando.",
+              "Em 2023 entrei como estagiário numa agência, fazendo HTML e CSS pra clientes. Foi onde percebi que código não era o trabalho real: o trabalho real era operação. As pessoas não me pagavam pra escrever divs — me pagavam pra resolver problemas que se repetiam todo dia.",
+              "Ali nasceu a obsessão que me trouxe até aqui: por que tanta empresa contrata gente pra fazer trabalho que software faria melhor?",
+            ]}
           />
           <Act
             title="Ato 2 — A virada"
-            placeholder="{{TODO: Levi to write 3-4 sentences about turning point — momento em que parou de só programar e começou a pensar em operação. Cliente, projeto ou insight que mudou a perspectiva.}}"
+            paragraphs={[
+              "Em 2024 saí pra construir coisas próprias. Comecei com pipelines de conteúdo automatizados — sistemas que geravam vídeos longos e artigos completos sem intervenção humana, com controle de custo por execução. O foco não era o conteúdo. Era provar que dava pra rodar IA em produção sem quebrar e sem queimar dinheiro.",
+              "Em 2025 levei isso pro mercado: construí o CaixaHub, um SaaS financeiro pra PMEs brasileiras que integrava com 100+ bancos via Open Finance. Sozinho. Webhook handlers com retry exponencial, OCR de boleto com revisão humana, motor de categorização que aprendia com cada correção. Cheguei a ter clientes pagantes antes de pausar a operação.",
+              "Foi ali que a tese travou: a maior parte dos projetos de \"IA\" hoje são demos. Funcionam no palco e quebram em produção. A diferença entre demo e sistema é a parte chata — idempotência, retry, telemetria de custo, orquestração multi-provedor. É exatamente o que o mercado não quer construir e por isso me contrata pra construir.",
+            ]}
           />
           <Act
             title="Ato 3 — Hoje"
-            placeholder="{{TODO: Levi to write 3-4 sentences about current mission — o que faz hoje, com quem trabalha, qual a visão de futuro pro próximo ano.}}"
+            paragraphs={[
+              "Hoje, com a FastDevBuilds, construo sistemas que automatizam prospecção B2B de ponta a ponta — descoberta de leads, qualificação por IA, abordagem personalizada, geração de demos de site em menos de 90 segundos. Tudo com controle de custo unitário e arquitetura que aguenta volume real.",
+              "Mas além dos meus projetos, ofereço algo diferente pro mercado: empresas que querem IA em produção, não em apresentação. Eu pego um processo manual, decomponho em pipeline orquestrado por LLM, e devolvo um sistema que roda sozinho — com retry logic, observabilidade de custo, e código que não vira dívida técnica daqui a 6 meses.",
+              "Trabalho com quem entende que sua próxima contratação não precisa ser uma pessoa. Precisa ser um sistema. Se você está nesse momento, vamos conversar.",
+            ]}
           />
         </div>
       </section>
@@ -154,13 +166,21 @@ export default function AboutPage() {
   );
 }
 
-function Act({ title, placeholder }: { title: string; placeholder: string }) {
+function Act({
+  title,
+  paragraphs,
+}: {
+  title: string;
+  paragraphs: string[];
+}) {
   return (
-    <article className="rounded-2xl border border-dashed border-border bg-card/40 p-6 md:p-7">
-      <h3 className="heading-3">{title}</h3>
-      <p className="mt-3 text-sm md:text-base font-mono text-muted-foreground leading-relaxed">
-        {placeholder}
-      </p>
+    <article>
+      <h3 className="heading-3 mb-4">{title}</h3>
+      <div className="space-y-4 text-base md:text-lg leading-relaxed text-foreground/85">
+        {paragraphs.map((p, i) => (
+          <p key={i}>{p}</p>
+        ))}
+      </div>
     </article>
   );
 }
