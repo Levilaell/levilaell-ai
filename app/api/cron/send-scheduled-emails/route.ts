@@ -9,7 +9,7 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const BATCH_LIMIT = 50;
+const BATCH_LIMIT = 10;
 
 export async function GET(request: Request) {
   if (!isAuthorizedCron(request)) {
