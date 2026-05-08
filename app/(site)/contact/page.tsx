@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Contato",
   description:
-    "Para parcerias, dúvidas ou imprensa. Para diagnósticos e propostas, prefira a ferramenta de diagnóstico — é mais rápido.",
+    "Para parcerias, dúvidas ou imprensa. Para diagnósticos, prefira a ferramenta de diagnóstico — é mais rápido.",
   alternates: { canonical: "/contact" },
 };
 
@@ -19,8 +19,7 @@ export default function ContactPage() {
       </p>
       <h1 className="heading-1">Vamos conversar.</h1>
       <p className="text-lead mt-5">
-        Para parcerias, dúvidas ou outros assuntos. Para diagnósticos e
-        propostas, prefira a{" "}
+        Para parcerias, dúvidas ou outros assuntos. Para diagnósticos, prefira a{" "}
         <Link
           href="/diagnosis"
           className="text-foreground underline decoration-brand decoration-2 underline-offset-4 font-medium"
