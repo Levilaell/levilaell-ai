@@ -1,4 +1,5 @@
 import type { DiagnosisAnalysis, RecommendedApproach } from "@/types/diagnosis";
+import { getCalcomRedirectUrl, getCalcomUrl } from "@/lib/calcom";
 import { siteConfig } from "@/lib/site";
 
 const baseStyles = `
@@ -51,6 +52,31 @@ const timelineContexts: Record<string, string> = {
   no_urgency: "Você marcou esse projeto como exploratório:",
 };
 
+type EmailCtaCopy = { intro: string; button: string };
+
+const emailCtaByApproach: Record<RecommendedApproach, EmailCtaCopy> = {
+  diy: {
+    intro:
+      "Se travar na implementação, te explico o caminho mais curto numa call de 30 min. Sem pitch.",
+    button: "Tirar dúvidas em uma call",
+  },
+  ainda_nao_e_hora: {
+    intro:
+      "Mesmo se automação não é prioridade agora, a gente pode mapear quando vai ser. Sem pitch.",
+    button: "Agendar 20 min",
+  },
+  consultoria_pontual: {
+    intro:
+      "Quer aprofundar esse plano com apoio especializado? Agenda uma call de 30 min sem compromisso.",
+    button: "Agendar call gratuita",
+  },
+  parceria_continua: {
+    intro:
+      "Se faz sentido trabalhar contínuo, a gente alinha escopo, ritmo e custo numa call.",
+    button: "Agendar call estratégica",
+  },
+};
+
 /** Pega só o primeiro nome — "Levi Lael Coelho Silva" → "Levi". */
 export function firstName(full: string): string {
   return (full || "").trim().split(/\s+/)[0] || "";
@@ -95,6 +121,17 @@ export function diagnosisReportEmail(args: {
     ? `<p class="disclaimer">${escapeHtml(analysis.estimativa_roi.disclaimer)}</p>`
     : "";
 
+  const ctaCopy =
+    emailCtaByApproach[analysis.proximo_passo_recomendado.abordagem];
+  const calcomBase = getCalcomUrl();
+  const schedulingHref = calcomBase
+    ? getCalcomRedirectUrl(diagnosisId)
+    : `mailto:${siteConfig.email.contact}?subject=${encodeURIComponent(`Diagnóstico — ${name}`)}`;
+  const ctaBlockHtml = `
+    <p style="margin-top: 24px">${escapeHtml(ctaCopy.intro)}</p>
+    <p style="margin-top: 8px"><a class="cta" href="${schedulingHref}">${escapeHtml(ctaCopy.button)}</a></p>
+  `;
+
   const html = shell(`
     <div class="card">
       ${timelineHeader}
@@ -128,16 +165,18 @@ export function diagnosisReportEmail(args: {
         <p style="margin-top: 8px">${escapeHtml(analysis.alerta_estrategico)}</p>
       </div>
 
-      <p style="margin-top: 24px"><a class="cta" href="${reportUrl}">Ver relatório completo online</a></p>
+      ${ctaBlockHtml}
+
+      <p style="margin-top: 16px"><a class="cta-light" href="${reportUrl}">Ver relatório completo online</a></p>
 
       <div class="meta">
-        Quer aprofundar esse plano? Responda este e-mail ou agende uma call de 30 minutos.<br>
+        Ou responde este e-mail — leio todos.<br>
         — Levi Lael
       </div>
     </div>
   `);
 
-  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\nVer relatório: ${reportUrl}\n\n— Levi Lael`;
+  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\n${ctaCopy.intro}\nAgendar: ${schedulingHref}\n\nVer relatório online: ${reportUrl}\n\n— Levi Lael`;
   return {
     subject: `Seu diagnóstico de operação está pronto, ${fName}`,
     html,

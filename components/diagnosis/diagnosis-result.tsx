@@ -19,6 +19,39 @@ const approachLabels: Record<RecommendedApproach, string> = {
   ainda_nao_e_hora: "Automação ainda não é prioridade",
 };
 
+type CtaCopy = { eyebrow: string; title: string; subtitle: string; button: string };
+
+const ctaByApproach: Record<RecommendedApproach, CtaCopy> = {
+  diy: {
+    eyebrow: "Próxima conversa",
+    title: "Travou na implementação?",
+    subtitle:
+      "Te explico o caminho mais curto numa call de 30 minutos. Sem pitch.",
+    button: "Tirar dúvidas em uma call",
+  },
+  ainda_nao_e_hora: {
+    eyebrow: "Conversa exploratória",
+    title: "Quer pensar isso comigo?",
+    subtitle:
+      "Mesmo se automação não é prioridade agora, a gente pode mapear quando vai ser. Sem pitch.",
+    button: "Agendar 20 min",
+  },
+  consultoria_pontual: {
+    eyebrow: "Próxima conversa",
+    title: "Quer implementar isso com apoio especializado?",
+    subtitle:
+      "Eu ofereço uma call de 30 minutos sem compromisso para discutir esse plano em profundidade.",
+    button: "Agendar call gratuita",
+  },
+  parceria_continua: {
+    eyebrow: "Próxima conversa",
+    title: "Vamos discutir uma parceria",
+    subtitle:
+      "Quando faz sentido trabalhar contínuo, a gente alinha escopo, ritmo e custo numa call.",
+    button: "Agendar call estratégica",
+  },
+};
+
 const timelineMeta: Record<
   string,
   { label: string; emoji: string; tone: "alert" | "info" | "warning" | "success" }
@@ -238,29 +271,30 @@ export function DiagnosisResult({
         </Callout>
       </Section>
 
-      {context === "personal" && !isNotYet && (
-        <section className="rounded-2xl border border-border bg-zinc-950 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-950 p-8 md:p-12 text-center">
-          <p className="font-mono text-xs uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-4">
-            Próxima conversa
-          </p>
-          <h2 className="heading-2">
-            Quer implementar isso com apoio especializado?
-          </h2>
-          <p className="text-lead mt-4 max-w-xl mx-auto !text-zinc-300 dark:!text-zinc-700">
-            Eu ofereço uma call de 30 minutos sem compromisso para discutir esse plano em profundidade.
-          </p>
-          <div className="mt-8 flex justify-center">
-            <SchedulingButton
-              size="xl"
-              variant="white"
-              subject={`Diagnóstico — ${name}`}
-              label="Agendar call gratuita"
-              diagnosisId={diagnosisId}
-              source="result_page"
-            />
-          </div>
-        </section>
-      )}
+      {context === "personal" && (() => {
+        const cta = ctaByApproach[analysis.proximo_passo_recomendado.abordagem];
+        return (
+          <section className="rounded-2xl border border-border bg-zinc-950 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-950 p-8 md:p-12 text-center">
+            <p className="font-mono text-xs uppercase tracking-widest text-zinc-400 dark:text-zinc-600 mb-4">
+              {cta.eyebrow}
+            </p>
+            <h2 className="heading-2">{cta.title}</h2>
+            <p className="text-lead mt-4 max-w-xl mx-auto !text-zinc-300 dark:!text-zinc-700">
+              {cta.subtitle}
+            </p>
+            <div className="mt-8 flex justify-center">
+              <SchedulingButton
+                size="xl"
+                variant="white"
+                subject={`Diagnóstico — ${name}`}
+                label={cta.button}
+                diagnosisId={diagnosisId}
+                source="result_page"
+              />
+            </div>
+          </section>
+        );
+      })()}
     </article>
   );
 }
