@@ -192,6 +192,30 @@ function PrimaryAction({
     );
   }
   if (status === "failed") {
+    // Blog: se já tinha edited_content/notion_page_id, foi falha de publish.
+    // Oferecer "Tentar publicar" em vez de "Tentar gerar" (que apagaria o
+    // conteúdo via claimForGeneration).
+    const isBlogPublishFail =
+      item.channel === "blog" &&
+      (item.notion_page_id !== null || item.edited_content !== null);
+    if (isBlogPublishFail) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onPublish}
+          disabled={isPublishing}
+          className="rounded-lg"
+        >
+          {isPublishing ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <RotateCw className="size-4" aria-hidden />
+          )}
+          Tentar publicar
+        </Button>
+      );
+    }
     return (
       <Button
         size="sm"
@@ -205,7 +229,7 @@ function PrimaryAction({
         ) : (
           <RotateCw className="size-4" aria-hidden />
         )}
-        Tentar de novo
+        Tentar gerar
       </Button>
     );
   }

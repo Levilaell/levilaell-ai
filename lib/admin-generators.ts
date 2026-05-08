@@ -11,13 +11,22 @@ import {
   X_TOOL_SCHEMA,
 } from "@/lib/admin-prompts/x";
 import {
+  buildBlogPrompt,
+  BLOG_TOOL_NAME,
+  BLOG_TOOL_SCHEMA,
+} from "@/lib/admin-prompts/blog";
+import {
+  blogGeneratedSchema,
   xGeneratedSchema,
+  type BlogMetadata,
   type PipelineRow,
   type XMetadata,
 } from "@/types/admin";
 
 const MAX_OUTPUT_TOKENS_X = 2_000;
+const MAX_OUTPUT_TOKENS_BLOG = 8_000;
 const MAX_RETRIES = 2;
+const MAX_RETRIES_BLOG = 3; // artigo é caro pra perder por 429
 
 /**
  * Roda a geração para uma entry já claimed (status='generating').
@@ -37,11 +46,13 @@ export async function runGeneration(entry: PipelineRow): Promise<void> {
       await runX(entry);
       return;
     }
+    if (entry.channel === "blog") {
+      await runBlog(entry);
+      return;
+    }
     await markFailed(
       entry.id,
-      `Canal ${entry.channel} ainda não suportado (Phase ${
-        entry.channel === "blog" ? "3" : "4"
-      }).`,
+      `Canal ${entry.channel} ainda não suportado (Phase 4).`,
     );
   } catch (err) {
     console.error("[admin-generators] unhandled", {
@@ -129,6 +140,102 @@ async function runX(entry: PipelineRow): Promise<void> {
       const backoff = 1000 * 2 ** (attempt - 1);
       console.warn(
         `[admin-generators] x retry ${attempt}/${MAX_RETRIES} em ${backoff}ms`,
+        err instanceof Error ? err.message : err,
+      );
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+  }
+
+  await markFailed(
+    entry.id,
+    lastError instanceof Error ? lastError.message : "Falha ao chamar Claude.",
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Blog channel
+// ---------------------------------------------------------------------------
+async function runBlog(entry: PipelineRow): Promise<void> {
+  const client = getAdminClient();
+  if (!client) {
+    await markFailed(
+      entry.id,
+      "ANTHROPIC_API_KEY ausente — não consegui chamar Claude.",
+    );
+    return;
+  }
+
+  if (!entry.keyword || !entry.pillar) {
+    await markFailed(
+      entry.id,
+      "Blog precisa de keyword e pillar definidos no tema antes de gerar.",
+    );
+    return;
+  }
+
+  const metadata = entry.metadata as unknown as BlogMetadata;
+  const prompt = buildBlogPrompt({
+    topic: entry.topic,
+    notes: entry.notes,
+    keyword: entry.keyword,
+    pillar: entry.pillar as "1" | "2" | "3",
+    metadata,
+  });
+
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_RETRIES_BLOG; attempt++) {
+    try {
+      const startedAt = Date.now();
+      const response = await client.messages.create({
+        model: ANTHROPIC_MODEL,
+        max_tokens: MAX_OUTPUT_TOKENS_BLOG,
+        tools: [BLOG_TOOL_SCHEMA],
+        tool_choice: { type: "tool", name: BLOG_TOOL_NAME },
+        messages: [{ role: "user", content: prompt }],
+      });
+
+      const toolUse = response.content.find(
+        (b): b is Extract<typeof b, { type: "tool_use" }> =>
+          b.type === "tool_use",
+      );
+      if (!toolUse) {
+        throw new GenerationError("Claude não retornou tool_use.");
+      }
+
+      const parsed = blogGeneratedSchema.safeParse(toolUse.input);
+      if (!parsed.success) {
+        throw new GenerationError(
+          `Schema inválido: ${parsed.error.issues
+            .map((i) => `${i.path.join(".")}: ${i.message}`)
+            .join("; ")}`,
+        );
+      }
+
+      const cost = estimateCostBRL({
+        input_tokens: response.usage.input_tokens,
+        output_tokens: response.usage.output_tokens,
+      });
+
+      await markGenerated(entry.id, {
+        generated_content: parsed.data,
+        tokens_used: cost.totalTokens,
+        cost_estimate_brl: cost.costBRL,
+      });
+
+      console.info(
+        `[admin-generators] blog ok · id=${entry.id} · in=${response.usage.input_tokens} out=${response.usage.output_tokens} · ${Date.now() - startedAt}ms · ${parsed.data.content_markdown.length} chars`,
+      );
+      return;
+    } catch (err) {
+      lastError = err;
+      const status = (err as { status?: number }).status;
+      const retryable =
+        attempt < MAX_RETRIES_BLOG &&
+        (!status || status === 429 || status === 500 || status === 502 || status === 503);
+      if (!retryable) break;
+      const backoff = 2000 * 2 ** (attempt - 1); // 2s, 4s, 8s
+      console.warn(
+        `[admin-generators] blog retry ${attempt}/${MAX_RETRIES_BLOG} em ${backoff}ms`,
         err instanceof Error ? err.message : err,
       );
       await new Promise((r) => setTimeout(r, backoff));

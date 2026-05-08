@@ -86,7 +86,7 @@ const DEFAULTS: FormValues = {
   x_quantity: 3,
   blog_pillar: "1",
   blog_keyword: "",
-  blog_target_words: 1200,
+  blog_target_words: 2000,
   newsletter_tone: "tecnico",
 };
 
@@ -250,7 +250,7 @@ function NewTopicForm({
               <Input
                 id="blog-target"
                 type="number"
-                min={400}
+                min={1000}
                 max={3000}
                 step={100}
                 {...form.register("blog_target_words", {

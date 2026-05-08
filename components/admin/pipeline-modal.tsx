@@ -35,6 +35,7 @@ import {
   relativeTime,
 } from "@/lib/admin-format";
 import { cn } from "@/lib/utils";
+import { BlogContentSection } from "@/components/admin/blog-review";
 
 const X_LIMIT = 280;
 const X_SOFT_LIMIT = 240;
@@ -46,9 +47,11 @@ type Props = {
 };
 
 export function PipelineModal({ item, onClose, onUpdated }: Props) {
+  // Blog tem MUITO campo editável + editor de markdown — vai pra full.
+  const size: "xl" | "full" = item?.channel === "blog" ? "full" : "xl";
   return (
     <Dialog open={Boolean(item)} onOpenChange={(o) => !o && onClose()}>
-      <DialogPopup size="xl">
+      <DialogPopup size={size}>
         {item ? (
           <ModalBody
             key={item.id + item.updated_at}
@@ -112,6 +115,12 @@ function ModalBody({
 
       {item.channel === "x" ? (
         <XContentSection item={item} onUpdated={onUpdated} onClose={onClose} />
+      ) : item.channel === "blog" ? (
+        <BlogContentSection
+          item={item}
+          onUpdated={onUpdated}
+          onClose={onClose}
+        />
       ) : (
         <ChannelPlaceholder channel={item.channel} />
       )}
@@ -640,13 +649,12 @@ function PostCard({
 }
 
 // ---------------------------------------------------------------------------
-// Outros canais — placeholder até Phase 3/4
+// Outros canais — placeholder até Phase 4 (newsletter)
 // ---------------------------------------------------------------------------
 function ChannelPlaceholder({ channel }: { channel: PipelineRow["channel"] }) {
-  const phase = channel === "blog" ? "3" : "4";
   return (
     <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-      Renderização do canal {CHANNEL_LABELS[channel]} entra na Phase {phase}.
+      Renderização do canal {CHANNEL_LABELS[channel]} entra na Phase 4.
     </div>
   );
 }
