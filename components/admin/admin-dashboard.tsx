@@ -11,8 +11,7 @@ import type {
   StatusFilter,
 } from "@/components/admin/pipeline-filters";
 import { NewTopicModal } from "@/components/admin/new-topic-modal";
-import { DetailsModal } from "@/components/admin/details-modal";
-import { ReviewModalX } from "@/components/admin/review-modal-x";
+import { PipelineModal } from "@/components/admin/pipeline-modal";
 import type { PipelineRow } from "@/types/admin";
 
 const POLL_INTERVAL_MS = 5_000;
@@ -26,8 +25,7 @@ export function AdminDashboard({ initialItems }: Props) {
   const [channel, setChannel] = useState<ChannelFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [newOpen, setNewOpen] = useState(false);
-  const [detailsItem, setDetailsItem] = useState<PipelineRow | null>(null);
-  const [reviewItem, setReviewItem] = useState<PipelineRow | null>(null);
+  const [modalItem, setModalItem] = useState<PipelineRow | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [busyByItem, setBusyByItem] = useState<Record<string, "generate" | "publish" | undefined>>(
@@ -81,6 +79,8 @@ export function AdminDashboard({ initialItems }: Props) {
 
   const replaceItem = useCallback((entry: PipelineRow) => {
     setItems((prev) => prev.map((i) => (i.id === entry.id ? entry : i)));
+    // Mantém o modal apontado pro item atualizado caso ele continue aberto.
+    setModalItem((current) => (current && current.id === entry.id ? entry : current));
   }, []);
 
   const onCreated = (entry: PipelineRow) => {
@@ -125,12 +125,7 @@ export function AdminDashboard({ initialItems }: Props) {
   };
 
   const onReview = (item: PipelineRow) => {
-    if (item.channel === "x") {
-      setReviewItem(item);
-    } else {
-      // Phase 3-4: blog/newsletter review modals.
-      alert(`Review modal pra ${item.channel} entra na próxima fase.`);
-    }
+    setModalItem(item);
   };
 
   const onPublish = async (item: PipelineRow) => {
@@ -212,7 +207,7 @@ export function AdminDashboard({ initialItems }: Props) {
                 key={item.id}
                 item={item}
                 onDeleted={onDeleted}
-                onOpenDetails={setDetailsItem}
+                onOpenDetails={setModalItem}
                 onGenerate={onGenerate}
                 onReview={onReview}
                 onPublish={onPublish}
@@ -229,13 +224,9 @@ export function AdminDashboard({ initialItems }: Props) {
         onOpenChange={setNewOpen}
         onCreated={onCreated}
       />
-      <DetailsModal
-        item={detailsItem}
-        onOpenChange={(open) => !open && setDetailsItem(null)}
-      />
-      <ReviewModalX
-        item={reviewItem}
-        onClose={() => setReviewItem(null)}
+      <PipelineModal
+        item={modalItem}
+        onClose={() => setModalItem(null)}
         onUpdated={replaceItem}
       />
     </>
