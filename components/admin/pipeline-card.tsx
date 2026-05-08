@@ -1,19 +1,46 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Eye, Loader2, Trash2 } from "lucide-react";
+import {
+  Check,
+  Eye,
+  Loader2,
+  Play,
+  RotateCw,
+  Send,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PipelineStatusBadge } from "@/components/admin/pipeline-status-badge";
-import { CHANNEL_EMOJI, CHANNEL_LABELS, formatBRL, relativeTime } from "@/lib/admin-format";
+import {
+  CHANNEL_EMOJI,
+  CHANNEL_LABELS,
+  formatBRL,
+  relativeTime,
+} from "@/lib/admin-format";
 import type { PipelineRow } from "@/types/admin";
 
 type Props = {
   item: PipelineRow;
   onDeleted: (id: string) => void;
   onOpenDetails: (item: PipelineRow) => void;
+  onGenerate: (item: PipelineRow) => void;
+  onReview: (item: PipelineRow) => void;
+  onPublish: (item: PipelineRow) => void;
+  isGenerating: boolean;
+  isPublishing: boolean;
 };
 
-export function PipelineCard({ item, onDeleted, onOpenDetails }: Props) {
+export function PipelineCard({
+  item,
+  onDeleted,
+  onOpenDetails,
+  onGenerate,
+  onReview,
+  onPublish,
+  isGenerating,
+  isPublishing,
+}: Props) {
   const [isDeleting, startDelete] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +92,12 @@ export function PipelineCard({ item, onDeleted, onOpenDetails }: Props) {
           )}
           <p className="mt-1.5 text-xs text-muted-foreground">
             {relativeTime(item.created_at)}
+            {item.published_at && (
+              <>
+                <span className="mx-1.5">·</span>
+                publicado {relativeTime(item.published_at)}
+              </>
+            )}
             {item.cost_estimate_brl > 0 && (
               <>
                 <span className="mx-1.5">·</span>
@@ -86,6 +119,14 @@ export function PipelineCard({ item, onDeleted, onOpenDetails }: Props) {
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
+          <PrimaryAction
+            item={item}
+            isGenerating={isGenerating}
+            isPublishing={isPublishing}
+            onGenerate={() => onGenerate(item)}
+            onReview={() => onReview(item)}
+            onPublish={() => onPublish(item)}
+          />
           <Button
             size="icon-sm"
             variant="ghost"
@@ -111,9 +152,117 @@ export function PipelineCard({ item, onDeleted, onOpenDetails }: Props) {
         </div>
       </div>
 
-      {error && (
-        <p className="mt-2 text-xs text-destructive">{error}</p>
-      )}
+      {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
     </article>
   );
+}
+
+function PrimaryAction({
+  item,
+  isGenerating,
+  isPublishing,
+  onGenerate,
+  onReview,
+  onPublish,
+}: {
+  item: PipelineRow;
+  isGenerating: boolean;
+  isPublishing: boolean;
+  onGenerate: () => void;
+  onReview: () => void;
+  onPublish: () => void;
+}) {
+  const status = item.status;
+  if (status === "queued") {
+    return (
+      <Button
+        size="sm"
+        variant="brand"
+        onClick={onGenerate}
+        disabled={isGenerating}
+        className="rounded-lg"
+      >
+        {isGenerating ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <Play className="size-4" aria-hidden />
+        )}
+        Gerar
+      </Button>
+    );
+  }
+  if (status === "failed") {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={onGenerate}
+        disabled={isGenerating}
+        className="rounded-lg"
+      >
+        {isGenerating ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <RotateCw className="size-4" aria-hidden />
+        )}
+        Tentar de novo
+      </Button>
+    );
+  }
+  if (status === "generating") {
+    return (
+      <Button size="sm" variant="ghost" disabled className="rounded-lg">
+        <Loader2 className="size-4 animate-spin" aria-hidden />
+        Gerando…
+      </Button>
+    );
+  }
+  if (status === "generated") {
+    return (
+      <Button
+        size="sm"
+        variant="brand"
+        onClick={onReview}
+        className="rounded-lg"
+      >
+        <Eye className="size-4" aria-hidden />
+        Revisar
+      </Button>
+    );
+  }
+  if (status === "approved") {
+    return (
+      <Button
+        size="sm"
+        variant="brand"
+        onClick={onPublish}
+        disabled={isPublishing}
+        className="rounded-lg"
+      >
+        {isPublishing ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : (
+          <Send className="size-4" aria-hidden />
+        )}
+        {item.channel === "x" ? "Marcar postado" : "Publicar"}
+      </Button>
+    );
+  }
+  if (status === "publishing") {
+    return (
+      <Button size="sm" variant="ghost" disabled className="rounded-lg">
+        <Loader2 className="size-4 animate-spin" aria-hidden />
+        Publicando…
+      </Button>
+    );
+  }
+  if (status === "published") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-lg px-2 text-xs text-emerald-700">
+        <Check className="size-3.5" aria-hidden />
+        Publicado
+      </span>
+    );
+  }
+  return null;
 }

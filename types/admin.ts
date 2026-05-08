@@ -174,3 +174,17 @@ export const listPipelineQuerySchema = z.object({
 });
 
 export type ListPipelineQuery = z.infer<typeof listPipelineQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Generated content schemas — usados pra validar tool_use do Claude e o
+// payload editado que vem do front.
+// ---------------------------------------------------------------------------
+export const xGeneratedSchema = z.object({
+  posts: z.array(z.string().min(1).max(280)).min(1).max(10),
+});
+
+export type XGeneratedOutput = z.infer<typeof xGeneratedSchema>;
+
+export const xEditedSchema = z.object({
+  posts: z.array(z.string().min(1).max(280)).min(1).max(10),
+});

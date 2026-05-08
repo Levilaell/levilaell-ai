@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Inbox, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminHeader } from "@/components/admin/admin-header";
@@ -12,7 +12,10 @@ import type {
 } from "@/components/admin/pipeline-filters";
 import { NewTopicModal } from "@/components/admin/new-topic-modal";
 import { DetailsModal } from "@/components/admin/details-modal";
+import { ReviewModalX } from "@/components/admin/review-modal-x";
 import type { PipelineRow } from "@/types/admin";
+
+const POLL_INTERVAL_MS = 5_000;
 
 type Props = {
   initialItems: PipelineRow[];
@@ -24,8 +27,12 @@ export function AdminDashboard({ initialItems }: Props) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [newOpen, setNewOpen] = useState(false);
   const [detailsItem, setDetailsItem] = useState<PipelineRow | null>(null);
+  const [reviewItem, setReviewItem] = useState<PipelineRow | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [busyByItem, setBusyByItem] = useState<Record<string, "generate" | "publish" | undefined>>(
+    {},
+  );
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -34,6 +41,14 @@ export function AdminDashboard({ initialItems }: Props) {
       return true;
     });
   }, [items, channel, status]);
+
+  const hasInFlight = useMemo(
+    () =>
+      items.some(
+        (i) => i.status === "generating" || i.status === "publishing",
+      ),
+    [items],
+  );
 
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -53,12 +68,85 @@ export function AdminDashboard({ initialItems }: Props) {
     }
   }, []);
 
+  // Polling — só corre enquanto algo estiver gerando ou publicando.
+  const refreshRef = useRef(refresh);
+  useEffect(() => {
+    refreshRef.current = refresh;
+  }, [refresh]);
+  useEffect(() => {
+    if (!hasInFlight) return;
+    const id = setInterval(() => refreshRef.current(), POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [hasInFlight]);
+
+  const replaceItem = useCallback((entry: PipelineRow) => {
+    setItems((prev) => prev.map((i) => (i.id === entry.id ? entry : i)));
+  }, []);
+
   const onCreated = (entry: PipelineRow) => {
     setItems((prev) => [entry, ...prev]);
   };
 
   const onDeleted = (id: string) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const setBusy = (id: string, kind: "generate" | "publish" | undefined) => {
+    setBusyByItem((prev) => {
+      if (!kind) {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      return { ...prev, [id]: kind };
+    });
+  };
+
+  const onGenerate = async (item: PipelineRow) => {
+    setBusy(item.id, "generate");
+    try {
+      const res = await fetch(`/api/admin/pipeline/${item.id}/generate`, {
+        method: "POST",
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error ?? `Erro ${res.status}`);
+      replaceItem({
+        ...item,
+        status: "generating",
+        error_message: null,
+        generated_content: null,
+        edited_content: null,
+      });
+    } catch (err) {
+      setRefreshError(err instanceof Error ? err.message : "Falha ao gerar.");
+    } finally {
+      setBusy(item.id, undefined);
+    }
+  };
+
+  const onReview = (item: PipelineRow) => {
+    if (item.channel === "x") {
+      setReviewItem(item);
+    } else {
+      // Phase 3-4: blog/newsletter review modals.
+      alert(`Review modal pra ${item.channel} entra na próxima fase.`);
+    }
+  };
+
+  const onPublish = async (item: PipelineRow) => {
+    setBusy(item.id, "publish");
+    try {
+      const res = await fetch(`/api/admin/pipeline/${item.id}/publish`, {
+        method: "POST",
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error ?? `Erro ${res.status}`);
+      replaceItem(body.entry as PipelineRow);
+    } catch (err) {
+      setRefreshError(err instanceof Error ? err.message : "Falha ao publicar.");
+    } finally {
+      setBusy(item.id, undefined);
+    }
   };
 
   return (
@@ -74,6 +162,12 @@ export function AdminDashboard({ initialItems }: Props) {
             <p className="mt-1 text-sm text-muted-foreground">
               Fila → IA → revisão → publicação. {items.length} item
               {items.length === 1 ? "" : "s"} no total.
+              {hasInFlight && (
+                <span className="ml-2 inline-flex items-center gap-1 text-xs text-blue-700">
+                  <Loader2 className="size-3 animate-spin" aria-hidden />
+                  atualizando ao vivo
+                </span>
+              )}
             </p>
           </div>
           <Button
@@ -119,6 +213,11 @@ export function AdminDashboard({ initialItems }: Props) {
                 item={item}
                 onDeleted={onDeleted}
                 onOpenDetails={setDetailsItem}
+                onGenerate={onGenerate}
+                onReview={onReview}
+                onPublish={onPublish}
+                isGenerating={busyByItem[item.id] === "generate"}
+                isPublishing={busyByItem[item.id] === "publish"}
               />
             ))}
           </div>
@@ -133,6 +232,11 @@ export function AdminDashboard({ initialItems }: Props) {
       <DetailsModal
         item={detailsItem}
         onOpenChange={(open) => !open && setDetailsItem(null)}
+      />
+      <ReviewModalX
+        item={reviewItem}
+        onClose={() => setReviewItem(null)}
+        onUpdated={replaceItem}
       />
     </>
   );

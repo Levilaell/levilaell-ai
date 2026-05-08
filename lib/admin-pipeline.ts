@@ -147,16 +147,24 @@ export async function deletePipelineEntry(id: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 2 helper — claim atômico para evitar double-generation
+// Phase 2 helper — claim atômico para evitar double-generation. Aceita
+// 'generated' também: usado quando o usuário pede "regenerar" no review modal.
 // ---------------------------------------------------------------------------
+const CLAIMABLE: PipelineStatus[] = ["queued", "failed", "generated"];
+
 export async function claimForGeneration(
   id: string,
 ): Promise<PipelineRow | null> {
   const { data, error } = await service()
     .from("content_pipeline")
-    .update({ status: "generating" })
+    .update({
+      status: "generating",
+      error_message: null,
+      generated_content: null,
+      edited_content: null,
+    })
     .eq("id", id)
-    .in("status", ["queued", "failed"] satisfies PipelineStatus[])
+    .in("status", CLAIMABLE)
     .select("*")
     .maybeSingle();
   if (error) {
