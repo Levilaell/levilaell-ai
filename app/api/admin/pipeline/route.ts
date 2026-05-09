@@ -9,6 +9,7 @@ import {
   createPipelineSchema,
   listPipelineQuerySchema,
 } from "@/types/admin";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +67,10 @@ export async function POST(request: Request) {
 
   try {
     const entry = await createPipelineEntry(parsed.data);
+    void trackAdminEvent("admin_pipeline_created", {
+      pipeline_id: entry.id,
+      channel: entry.channel,
+    });
     return NextResponse.json({ entry }, { status: 201 });
   } catch (err) {
     return errorResponse(err);

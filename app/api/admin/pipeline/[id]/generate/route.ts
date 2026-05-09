@@ -3,9 +3,15 @@ import { isAdminAuthorized } from "@/lib/admin-auth";
 import { isAnthropicReady } from "@/lib/admin-anthropic";
 import {
   claimForGeneration,
+  getPipelineById,
   PipelineError,
 } from "@/lib/admin-pipeline";
 import { runGeneration } from "@/lib/admin-generators";
+import {
+  CostLimitExceededError,
+  checkCostLimit,
+} from "@/lib/admin-cost";
+import type { Channel } from "@/types/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +39,38 @@ export async function POST(request: Request, ctx: { params: Params }) {
   const { id } = await ctx.params;
   if (!UUID_RE.test(id)) {
     return NextResponse.json({ error: "ID inválido." }, { status: 400 });
+  }
+
+  // Cost guardrail ANTES do claim — se ultrapassar limite, item segue 'queued'.
+  let preview;
+  try {
+    preview = await getPipelineById(id);
+  } catch (err) {
+    if (err instanceof PipelineError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+    return NextResponse.json({ error: "Erro ao ler item." }, { status: 500 });
+  }
+  if (!preview) {
+    return NextResponse.json({ error: "Não encontrado." }, { status: 404 });
+  }
+  try {
+    await checkCostLimit(preview.channel as Channel);
+  } catch (err) {
+    if (err instanceof CostLimitExceededError) {
+      return NextResponse.json(
+        {
+          error: err.message,
+          cost: { scope: err.scope, used: err.used, limit: err.limit },
+        },
+        { status: 402 },
+      );
+    }
+    console.error("[generate] cost check failed", err);
+    return NextResponse.json(
+      { error: "Erro ao validar limite de custo." },
+      { status: 500 },
+    );
   }
 
   let entry;

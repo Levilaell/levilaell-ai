@@ -22,6 +22,8 @@ import {
   type PipelineRow,
   type XMetadata,
 } from "@/types/admin";
+import { trackAdminEvent } from "@/lib/admin-tracking";
+import { sendEditorialReadyEmail } from "@/lib/admin-notifications";
 
 const MAX_OUTPUT_TOKENS_X = 2_000;
 const MAX_OUTPUT_TOKENS_BLOG = 8_000;
@@ -119,16 +121,34 @@ async function runX(entry: PipelineRow): Promise<void> {
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,
       });
+      const durationMs = Date.now() - startedAt;
 
       await markGenerated(entry.id, {
         generated_content: parsed.data,
         tokens_used: cost.totalTokens,
         cost_estimate_brl: cost.costBRL,
+        generated_in_ms: durationMs,
       });
 
       console.info(
-        `[admin-generators] x ok · id=${entry.id} · in=${response.usage.input_tokens} out=${response.usage.output_tokens} · ${Date.now() - startedAt}ms`,
+        `[admin-generators] x ok · id=${entry.id} · in=${response.usage.input_tokens} out=${response.usage.output_tokens} · ${durationMs}ms`,
       );
+      void trackAdminEvent("admin_pipeline_generated", {
+        pipeline_id: entry.id,
+        channel: "x",
+        cost_brl: cost.costBRL,
+        tokens: cost.totalTokens,
+        duration_ms: durationMs,
+        generation_count: entry.generation_count,
+      });
+      void sendEditorialReadyEmail({
+        pipelineId: entry.id,
+        channel: "x",
+        topic: entry.topic,
+        durationMs,
+        costBRL: cost.costBRL,
+        tokens: cost.totalTokens,
+      });
       return;
     } catch (err) {
       lastError = err;
@@ -215,16 +235,34 @@ async function runBlog(entry: PipelineRow): Promise<void> {
         input_tokens: response.usage.input_tokens,
         output_tokens: response.usage.output_tokens,
       });
+      const durationMs = Date.now() - startedAt;
 
       await markGenerated(entry.id, {
         generated_content: parsed.data,
         tokens_used: cost.totalTokens,
         cost_estimate_brl: cost.costBRL,
+        generated_in_ms: durationMs,
       });
 
       console.info(
-        `[admin-generators] blog ok · id=${entry.id} · in=${response.usage.input_tokens} out=${response.usage.output_tokens} · ${Date.now() - startedAt}ms · ${parsed.data.content_markdown.length} chars`,
+        `[admin-generators] blog ok · id=${entry.id} · in=${response.usage.input_tokens} out=${response.usage.output_tokens} · ${durationMs}ms · ${parsed.data.content_markdown.length} chars`,
       );
+      void trackAdminEvent("admin_pipeline_generated", {
+        pipeline_id: entry.id,
+        channel: "blog",
+        cost_brl: cost.costBRL,
+        tokens: cost.totalTokens,
+        duration_ms: durationMs,
+        generation_count: entry.generation_count,
+      });
+      void sendEditorialReadyEmail({
+        pipelineId: entry.id,
+        channel: "blog",
+        topic: entry.topic,
+        durationMs,
+        costBRL: cost.costBRL,
+        tokens: cost.totalTokens,
+      });
       return;
     } catch (err) {
       lastError = err;
@@ -270,6 +308,10 @@ async function markFailed(id: string, message: string): Promise<void> {
       error,
     });
   }
+  void trackAdminEvent("admin_pipeline_failed", {
+    pipeline_id: id,
+    reason: message,
+  });
 }
 
 async function markGenerated(
@@ -278,6 +320,7 @@ async function markGenerated(
     generated_content: unknown;
     tokens_used: number;
     cost_estimate_brl: number;
+    generated_in_ms: number;
   },
 ): Promise<void> {
   const supabase = getSupabaseService();
@@ -294,6 +337,7 @@ async function markGenerated(
       generated_at: new Date().toISOString(),
       tokens_used: patch.tokens_used,
       cost_estimate_brl: patch.cost_estimate_brl,
+      generated_in_ms: patch.generated_in_ms,
       error_message: null,
     })
     .eq("id", id);

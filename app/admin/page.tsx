@@ -5,7 +5,15 @@ import { AdminDashboard } from "@/components/admin/admin-dashboard";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   if (!isSupabaseConfigured()) {
     return <ConfigError reason="Supabase não configurado." />;
   }
@@ -13,7 +21,15 @@ export default async function AdminPage() {
   const result = await loadInitial();
   if (!result.ok) return <ConfigError reason={result.reason} />;
 
-  return <AdminDashboard initialItems={result.items} />;
+  const sp = await searchParams;
+  const idParam = typeof sp.id === "string" && UUID_RE.test(sp.id) ? sp.id : null;
+
+  return (
+    <AdminDashboard
+      initialItems={result.items}
+      initialSelectedId={idParam}
+    />
+  );
 }
 
 async function loadInitial(): Promise<

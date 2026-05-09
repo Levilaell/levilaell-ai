@@ -7,6 +7,7 @@ import {
   PipelineError,
 } from "@/lib/admin-pipeline";
 import { patchPipelineSchema } from "@/types/admin";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +73,18 @@ export async function PATCH(request: Request, ctx: { params: Params }) {
 
   try {
     const entry = await patchPipelineEntry(g.id, parsed.data);
+    if (parsed.data.status === "approved") {
+      void trackAdminEvent("admin_pipeline_approved", {
+        pipeline_id: entry.id,
+        channel: entry.channel,
+        cost_brl: Number(entry.cost_estimate_brl),
+      });
+    } else if (parsed.data.status === "rejected") {
+      void trackAdminEvent("admin_pipeline_rejected", {
+        pipeline_id: entry.id,
+        channel: entry.channel,
+      });
+    }
     return NextResponse.json({ entry });
   } catch (err) {
     return errorResponse(err);

@@ -149,19 +149,24 @@ export async function deletePipelineEntry(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 // Phase 2 helper — claim atômico para evitar double-generation. Aceita
 // 'generated' também: usado quando o usuário pede "regenerar" no review modal.
+// Phase 5: bumpa generation_count (1 = primeira geração, ≥2 = regerado).
+// PostgREST não suporta `col = col + 1` via UPDATE; lemos o valor pós-claim
+// e re-escrevemos +1. Race é teórica em single-user; aceitamos.
 // ---------------------------------------------------------------------------
 const CLAIMABLE: PipelineStatus[] = ["queued", "failed", "generated"];
 
 export async function claimForGeneration(
   id: string,
 ): Promise<PipelineRow | null> {
-  const { data, error } = await service()
+  const supabase = service();
+  const { data: claimed, error } = await supabase
     .from("content_pipeline")
     .update({
       status: "generating",
       error_message: null,
       generated_content: null,
       edited_content: null,
+      generated_in_ms: null,
     })
     .eq("id", id)
     .in("status", CLAIMABLE)
@@ -171,5 +176,19 @@ export async function claimForGeneration(
     console.error("[admin-pipeline] claim failed", { id, error });
     throw new PipelineError(error.message, 500);
   }
-  return data ?? null;
+  if (!claimed) return null;
+
+  const newCount = (claimed.generation_count ?? 0) + 1;
+  const { error: bumpErr } = await supabase
+    .from("content_pipeline")
+    .update({ generation_count: newCount })
+    .eq("id", id);
+  if (bumpErr) {
+    console.warn("[admin-pipeline] generation_count bump failed (continuando)", {
+      id,
+      bumpErr,
+    });
+    return claimed;
+  }
+  return { ...claimed, generation_count: newCount };
 }

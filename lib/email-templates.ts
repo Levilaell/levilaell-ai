@@ -333,6 +333,47 @@ export function internalContactEmail(args: {
 }
 
 // ---------------------------------------------------------------------------
+// Editorial — IA terminou geração, conteúdo aguarda revisão.
+// Roda fire-and-forget no fim de runX/runBlog. Reusa o shell padrão.
+// ---------------------------------------------------------------------------
+export function editorialReadyEmail(args: {
+  pipelineId: string;
+  channel: "blog" | "newsletter" | "x";
+  topic: string;
+  durationMs: number;
+  costBRL: number;
+  tokens: number;
+}): { subject: string; html: string; text: string } {
+  const { pipelineId, channel, topic, durationMs, costBRL, tokens } = args;
+  const channelLabel =
+    channel === "blog"
+      ? "Blog"
+      : channel === "x"
+        ? "X (Twitter)"
+        : "Newsletter";
+  const reviewUrl = `${siteConfig.url}/admin?id=${pipelineId}`;
+  const seconds = (durationMs / 1000).toFixed(1).replace(".", ",");
+  const cost = costBRL.toFixed(4).replace(".", ",");
+
+  const subject = `🎯 Conteúdo pronto pra revisão: ${topic}`;
+  const html = shell(`
+    <div class="card">
+      <span class="badge">${escapeHtml(channelLabel)}</span>
+      <h1>IA terminou de gerar.</h1>
+      <p>${escapeHtml(topic)}</p>
+      <p>
+        Tempo: <strong>${seconds}s</strong><br>
+        Custo: <strong>R$ ${cost}</strong><br>
+        Tokens: <strong>${tokens.toLocaleString("pt-BR")}</strong>
+      </p>
+      <p style="margin-top: 24px"><a class="cta" href="${reviewUrl}">Revisar e aprovar</a></p>
+    </div>
+  `);
+  const text = `IA terminou de gerar — ${channelLabel}: ${topic}\nTempo: ${seconds}s · R$ ${cost} · ${tokens} tokens\nRevisar: ${reviewUrl}`;
+  return { subject, html, text };
+}
+
+// ---------------------------------------------------------------------------
 // Helpers (export pra ser reutilizado pelos templates de follow-up sequence)
 // ---------------------------------------------------------------------------
 export function escapeHtml(input: string): string {

@@ -19,6 +19,7 @@ import {
   type PipelineUpdate,
 } from "@/types/admin";
 import { siteConfig } from "@/lib/site";
+import { trackAdminEvent } from "@/lib/admin-tracking";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -85,6 +86,10 @@ async function publishXChannel(entry: PipelineRow) {
   const transit = await patchPipelineEntry(entry.id, { status: "publishing" });
   const published = await patchPipelineEntry(transit.id, {
     status: "published",
+  });
+  void trackAdminEvent("admin_pipeline_published", {
+    pipeline_id: published.id,
+    channel: "x",
   });
   return NextResponse.json({ entry: published });
 }
@@ -176,6 +181,12 @@ async function publishBlogChannel(entry: PipelineRow) {
   revalidatePath(`/blog/category/${pillarSlug}`);
 
   const published = await patchPipelineEntry(entry.id, { status: "published" });
+
+  void trackAdminEvent("admin_pipeline_published", {
+    pipeline_id: published.id,
+    channel: "blog",
+    notion_page_id: result.pageId,
+  });
 
   return NextResponse.json({
     entry: published,

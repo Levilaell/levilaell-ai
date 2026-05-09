@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Inbox, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminHeader } from "@/components/admin/admin-header";
@@ -18,19 +24,37 @@ const POLL_INTERVAL_MS = 5_000;
 
 type Props = {
   initialItems: PipelineRow[];
+  initialSelectedId?: string | null;
 };
 
-export function AdminDashboard({ initialItems }: Props) {
+export function AdminDashboard({ initialItems, initialSelectedId }: Props) {
   const [items, setItems] = useState<PipelineRow[]>(initialItems);
   const [channel, setChannel] = useState<ChannelFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [newOpen, setNewOpen] = useState(false);
-  const [modalItem, setModalItem] = useState<PipelineRow | null>(null);
+  const [modalItem, setModalItem] = useState<PipelineRow | null>(() => {
+    if (!initialSelectedId) return null;
+    return initialItems.find((i) => i.id === initialSelectedId) ?? null;
+  });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [busyByItem, setBusyByItem] = useState<Record<string, "generate" | "publish" | undefined>>(
     {},
   );
+
+  // Cost summary do mês computada das próprias linhas já carregadas. Custo é
+  // sempre 0 antes de gerar; só itens gerados/publicados pesam. Sem query
+  // extra no servidor — barata e suficiente pro warning bar.
+  const costMonthBRL = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    ).getTime();
+    return items.reduce((acc, it) => {
+      if (new Date(it.created_at).getTime() < monthStart) return acc;
+      return acc + Number(it.cost_estimate_brl ?? 0);
+    }, 0);
+  }, [items]);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -146,7 +170,10 @@ export function AdminDashboard({ initialItems }: Props) {
 
   return (
     <>
-      <AdminHeader onNewTopicClick={() => setNewOpen(true)} />
+      <AdminHeader
+        onNewTopicClick={() => setNewOpen(true)}
+        costMonthBRL={costMonthBRL}
+      />
 
       <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
         <div className="flex items-end justify-between gap-4">

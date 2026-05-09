@@ -31,17 +31,30 @@ type DiagnosisRow = {
   status: "processing" | "completed" | "failed";
   error_message: string | null;
   lead_score: number | null;
+  contacted_at: string | null;
+  qualified_at: string | null;
+  lead_notes: string | null;
 };
 
 type DiagnosisInsert = Omit<
   DiagnosisRow,
-  "id" | "created_at" | "ai_analysis" | "error_message" | "lead_score"
+  | "id"
+  | "created_at"
+  | "ai_analysis"
+  | "error_message"
+  | "lead_score"
+  | "contacted_at"
+  | "qualified_at"
+  | "lead_notes"
 > & {
   id?: string;
   created_at?: string;
   ai_analysis?: DiagnosisRow["ai_analysis"];
   error_message?: DiagnosisRow["error_message"];
   lead_score?: DiagnosisRow["lead_score"];
+  contacted_at?: DiagnosisRow["contacted_at"];
+  qualified_at?: DiagnosisRow["qualified_at"];
+  lead_notes?: DiagnosisRow["lead_notes"];
 };
 
 type EmailSequenceRow = {
@@ -188,6 +201,8 @@ type ContentPipelineRow = {
   tokens_used: number;
   cost_estimate_brl: number;
   error_message: string | null;
+  generated_in_ms: number | null;
+  generation_count: number;
 };
 
 type ContentPipelineInsert = {
@@ -212,6 +227,8 @@ type ContentPipelineInsert = {
   tokens_used?: number;
   cost_estimate_brl?: number;
   error_message?: string | null;
+  generated_in_ms?: number | null;
+  generation_count?: number;
 };
 
 type NewsletterSendRow = {
