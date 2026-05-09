@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:integrations": "tsx scripts/test-integrations.ts"
+    "test:integrations": "tsx scripts/test-integrations.ts",
+    "debug:notion": "tsx scripts/debug-notion-schema.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.94.0",

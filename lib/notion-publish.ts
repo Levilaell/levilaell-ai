@@ -44,7 +44,10 @@ function getClient(): Client {
       { status: 503 },
     );
   }
-  return new Client({ auth: key });
+  // SDK 5.x default = "2025-09-03"; nessa versão databases.retrieve não
+  // devolve properties (movidas pra data_sources). Pin na mesma versão de
+  // lib/notion.ts pra os dois consumirem o mesmo schema.
+  return new Client({ auth: key, notionVersion: "2022-06-28" });
 }
 
 // ---------------------------------------------------------------------------
