@@ -98,13 +98,16 @@ export function ContactForm() {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 dark:bg-emerald-950/30 dark:border-emerald-900">
         <div className="flex items-start gap-3">
-          <CheckCircle2 className="size-5 text-emerald-700 dark:text-emerald-300 mt-0.5" aria-hidden />
+          <CheckCircle2
+            className="size-5 text-emerald-700 dark:text-emerald-300 mt-0.5"
+            aria-hidden
+          />
           <div>
             <p className="font-semibold text-emerald-950 dark:text-emerald-100">
               Recebi sua mensagem.
             </p>
             <p className="text-sm text-emerald-900/80 dark:text-emerald-100/80 mt-1">
-              Respondo em até 24-48h em dia útil.
+              Respondo em até 6h em dia útil.
             </p>
           </div>
         </div>
@@ -116,7 +119,9 @@ export function ContactForm() {
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="contact-name">Nome <span className="text-destructive">*</span></Label>
+          <Label htmlFor="contact-name">
+            Nome <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="contact-name"
             {...form.register("name")}
@@ -129,7 +134,9 @@ export function ContactForm() {
           )}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="contact-email">E-mail <span className="text-destructive">*</span></Label>
+          <Label htmlFor="contact-email">
+            E-mail <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="contact-email"
             type="email"
@@ -146,7 +153,9 @@ export function ContactForm() {
 
       <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="contact-company">Empresa <span className="text-muted-foreground">(opcional)</span></Label>
+          <Label htmlFor="contact-company">
+            Empresa <span className="text-muted-foreground">(opcional)</span>
+          </Label>
           <Input
             id="contact-company"
             {...form.register("company")}

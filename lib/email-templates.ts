@@ -144,9 +144,11 @@ export function diagnosisReportEmail(args: {
       <h2>Quick win (1 semana)</h2>
       <p><strong>${escapeHtml(analysis.quick_win.titulo)}</strong></p>
       <ol>${stepsHtml}</ol>
-      ${analysis.quick_win.ferramentas_necessarias.length > 0
-        ? `<p><strong>Ferramentas:</strong> ${analysis.quick_win.ferramentas_necessarias.map(escapeHtml).join(", ")}</p>`
-        : ""}
+      ${
+        analysis.quick_win.ferramentas_necessarias.length > 0
+          ? `<p><strong>Ferramentas:</strong> ${analysis.quick_win.ferramentas_necessarias.map(escapeHtml).join(", ")}</p>`
+          : ""
+      }
 
       <h2>Estimativa de retorno</h2>
       <p>
@@ -227,12 +229,12 @@ export function contactConfirmationEmail(args: { name: string }): {
   const html = shell(`
     <div class="card">
       <h1>Recebi sua mensagem, ${escapeHtml(fName)}.</h1>
-      <p>Respondo em até 24-48h em dia útil. Se for urgente, me chama no e-mail direto: <a href="mailto:${siteConfig.email.contact}">${siteConfig.email.contact}</a>.</p>
+      <p>Respondo em até 6h em dia útil. Se for urgente, me chama no e-mail direto: <a href="mailto:${siteConfig.email.contact}">${siteConfig.email.contact}</a>.</p>
       <div class="meta">— Levi Lael</div>
     </div>
   `);
 
-  const text = `Recebi sua mensagem, ${fName}. Respondo em 24-48h.\n\n— Levi Lael`;
+  const text = `Recebi sua mensagem, ${fName}. Respondo em 6h.\n\n— Levi Lael`;
   return { subject: `Recebi sua mensagem, ${fName}`, html, text };
 }
 
@@ -255,7 +257,16 @@ export function internalDiagnosisEmail(args: {
     revenue: string;
   };
 }): { subject: string; html: string; text: string } {
-  const { diagnosisId, name, email, whatsapp, company, leadScore, analysis, contextLabels } = args;
+  const {
+    diagnosisId,
+    name,
+    email,
+    whatsapp,
+    company,
+    leadScore,
+    analysis,
+    contextLabels,
+  } = args;
   const reportUrl = `${siteConfig.url}/diagnosis/result/${diagnosisId}`;
   const op1 = analysis.tres_oportunidades[0];
   const subject = `🎯 Novo diagnóstico: ${name}${company ? ` (${company})` : ""}${leadScore !== null ? ` · score ${leadScore}` : ""}`;
