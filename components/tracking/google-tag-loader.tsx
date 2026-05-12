@@ -11,6 +11,11 @@ import { hasMarketingConsent } from "@/lib/tracking/consent";
  * PageViewTracker. Tracker pula o primeiro mount via useRef e só dispara
  * page_view em route changes subsequentes.
  *
+ * Strategy beforeInteractive (mesmo motivo do MetaPixelLoader): garante
+ * que window.gtag exista antes do useEffect dos componentes rodar. Sem
+ * isso, eventos first-mount como viewLandingPage e beginDiagnosis caem
+ * num race onde gtag é undefined e o wrapper droppa silentemente.
+ *
  * Consent gated via useState/useEffect pra evitar hydration mismatch
  * (mesma razão do MetaPixelLoader).
  */
@@ -40,12 +45,12 @@ export function GoogleTagLoader() {
     <>
       <Script
         id="gtag-base"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=${primaryId}`}
       />
       <Script
         id="gtag-config"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: `
 window.dataLayer = window.dataLayer || [];

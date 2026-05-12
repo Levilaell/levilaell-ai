@@ -4,8 +4,10 @@
  *
  * Política:
  *   • event_id quando fornecido → habilita deduplication com CAPI.
- *   • Guard de consent + presença de window.fbq (snippet pode não ter
- *     terminado de carregar). Sem fbq, push fica na fila do snippet base.
+ *   • Guards: consent + presença de window.fbq. MetaPixelLoader usa
+ *     strategy="beforeInteractive", então fbq existe antes do useEffect
+ *     rodar. O guard de window.fbq aqui é defensivo — protege caso o
+ *     script falhe (CSP, ad blocker, network) e mantém o silent-fail.
  *   • Não throws — silent fail. Tracking interno cobre dashboard próprio.
  */
 import { hasMarketingConsent } from "@/lib/tracking/consent";

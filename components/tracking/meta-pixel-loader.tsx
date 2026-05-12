@@ -11,6 +11,13 @@ import { hasMarketingConsent } from "@/lib/tracking/consent";
  * garantida. PageViewTracker pula esse primeiro mount via useRef flag e
  * só dispara em route changes subsequentes.
  *
+ * Strategy beforeInteractive (não afterInteractive): o snippet do Meta é
+ * desenhado pra rodar inline no <head>, definindo window.fbq de forma
+ * síncrona antes de qualquer useEffect montar. Sem isso, eventos disparados
+ * em first-mount (ViewContent no LpPageTracker, InitiateCheckout no
+ * diagnosis form) caem num race onde window.fbq ainda é undefined e o
+ * wrapper silentemente droppa a call. Custo: ~1kb bloqueando hidratação.
+ *
  * Consent: gated via useState/useEffect pra evitar hydration mismatch
  * (hasMarketingConsent retorna falso no SSR / true no client com DNT off).
  * Os wrappers metaPixel/googleTracking checam consent em cada call — o
@@ -30,7 +37,7 @@ export function MetaPixelLoader() {
   return (
     <Script
       id="meta-pixel"
-      strategy="afterInteractive"
+      strategy="beforeInteractive"
       dangerouslySetInnerHTML={{
         __html: `
 !function(f,b,e,v,n,t,s)
