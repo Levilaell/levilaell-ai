@@ -74,3 +74,20 @@ export function track(input: TrackInput): void {
     // silent
   }
 }
+
+export type LpEventType =
+  | "lp_viewed"
+  | "lp_cta_clicked"
+  | "lp_section_viewed"
+  | "lp_faq_expanded";
+
+/**
+ * Wrapper tipado pra eventos de landing page. Força `lp_slug` no data
+ * pra garantir que todo evento de LP é rastreável até a página de origem.
+ */
+export function trackLpEvent(
+  event: LpEventType,
+  data: { lp_slug: string } & Record<string, unknown>,
+): void {
+  track({ type: event, data });
+}
