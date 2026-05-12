@@ -13,6 +13,12 @@ function getClient(): Resend | null {
   return client;
 }
 
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer | string;
+  contentType?: string;
+};
+
 export type EmailPayload = {
   to: string | string[];
   subject: string;
@@ -22,6 +28,7 @@ export type EmailPayload = {
   replyTo?: string;
   /** Headers customizados (List-Unsubscribe etc) — Resend repassa pro SMTP. */
   headers?: Record<string, string>;
+  attachments?: EmailAttachment[];
 };
 
 export async function sendEmail(payload: EmailPayload): Promise<{
@@ -50,6 +57,11 @@ export async function sendEmail(payload: EmailPayload): Promise<{
       text: payload.text,
       replyTo: payload.replyTo,
       headers: payload.headers,
+      attachments: payload.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+        contentType: a.contentType,
+      })),
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true, id: data?.id };

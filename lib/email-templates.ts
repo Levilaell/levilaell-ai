@@ -84,6 +84,11 @@ export function firstName(full: string): string {
 
 // ---------------------------------------------------------------------------
 // Diagnosis report (entregue imediatamente após o submit)
+//
+// Antes: email continha todo o relatório (top 3, quick win, ROI, próximo
+// passo, alerta) em HTML. Lead recebia "muro de texto" que pouca gente
+// rolava até o fim. Agora: email curto + relatório completo em PDF anexo.
+// PDF é forwardable (lead manda pro sócio/decisor) e abre limpo no celular.
 // ---------------------------------------------------------------------------
 export function diagnosisReportEmail(args: {
   name: string;
@@ -93,33 +98,12 @@ export function diagnosisReportEmail(args: {
 }): { subject: string; html: string; text: string } {
   const { name, diagnosisId, analysis, timeline } = args;
   const reportUrl = `${siteConfig.url}/diagnosis/result/${diagnosisId}`;
-
-  const opportunitiesHtml = analysis.tres_oportunidades
-    .map(
-      (op, i) => `
-        <h3>${i + 1}. ${escapeHtml(op.titulo)}</h3>
-        <p>${escapeHtml(op.descricao)}</p>
-        <p><strong>Impacto:</strong> ${escapeHtml(op.impacto_estimado)}<br>
-        <strong>Complexidade:</strong> ${escapeHtml(op.complexidade)}<br>
-        <strong>Prazo de implementação:</strong> ${escapeHtml(op.prazo_implementacao)}<br>
-        <strong>Ferramentas sugeridas:</strong> ${op.ferramentas_sugeridas.map(escapeHtml).join(", ")}</p>
-      `,
-    )
-    .join("");
-
-  const stepsHtml = analysis.quick_win.passo_a_passo
-    .map((s) => `<li>${escapeHtml(s.replace(/^\s*\d+\.\s*/, ""))}</li>`)
-    .join("");
-
   const fName = firstName(name);
+
   const timelineHeader =
     timeline && timelineContexts[timeline] && timelineBadges[timeline]
       ? `<p style="color:#52525b; font-size:14px; margin-bottom:16px"><strong>${timelineBadges[timeline]}</strong> · ${escapeHtml(timelineContexts[timeline])}</p>`
       : "";
-
-  const disclaimerHtml = analysis.estimativa_roi.disclaimer
-    ? `<p class="disclaimer">${escapeHtml(analysis.estimativa_roi.disclaimer)}</p>`
-    : "";
 
   const ctaCopy =
     emailCtaByApproach[analysis.proximo_passo_recomendado.abordagem];
@@ -127,10 +111,9 @@ export function diagnosisReportEmail(args: {
   const schedulingHref = calcomBase
     ? getCalcomRedirectUrl(diagnosisId)
     : `mailto:${siteConfig.email.contact}?subject=${encodeURIComponent(`Diagnóstico — ${name}`)}`;
-  const ctaBlockHtml = `
-    <p style="margin-top: 24px">${escapeHtml(ctaCopy.intro)}</p>
-    <p style="margin-top: 8px"><a class="cta" href="${schedulingHref}">${escapeHtml(ctaCopy.button)}</a></p>
-  `;
+
+  const approachLabel =
+    approachLabels[analysis.proximo_passo_recomendado.abordagem];
 
   const html = shell(`
     <div class="card">
@@ -138,38 +121,16 @@ export function diagnosisReportEmail(args: {
       <h1>Olá, ${escapeHtml(fName)}. Seu relatório está aqui.</h1>
       <p>${escapeHtml(analysis.diagnostico_resumido)}</p>
 
-      <h2>Top 3 oportunidades</h2>
-      ${opportunitiesHtml}
+      <p style="margin-top: 20px"><strong>Próximo passo recomendado:</strong> ${escapeHtml(approachLabel)}.</p>
 
-      <h2>Quick win (1 semana)</h2>
-      <p><strong>${escapeHtml(analysis.quick_win.titulo)}</strong></p>
-      <ol>${stepsHtml}</ol>
-      ${
-        analysis.quick_win.ferramentas_necessarias.length > 0
-          ? `<p><strong>Ferramentas:</strong> ${analysis.quick_win.ferramentas_necessarias.map(escapeHtml).join(", ")}</p>`
-          : ""
-      }
-
-      <h2>Estimativa de retorno</h2>
-      <p>
-        Horas recuperáveis/mês: <strong>${escapeHtml(String(analysis.estimativa_roi.horas_recuperaveis_mes))}</strong><br>
-        Valor estimado/mês: <strong>${escapeHtml(analysis.estimativa_roi.valor_estimado_mensal)}</strong><br>
-        Payback: <strong>${escapeHtml(analysis.estimativa_roi.tempo_payback)}</strong>
+      <p style="margin-top: 16px; padding: 14px; background: #fafafa; border: 1px solid #e4e4e7; border-radius: 8px; font-size: 14px">
+        📎 <strong>Relatório completo em PDF anexo</strong> — top 3 oportunidades, quick win de 1 semana, ROI estimado e alerta estratégico.
       </p>
-      ${disclaimerHtml}
 
-      <h2>Próximo passo recomendado</h2>
-      <p><strong>Abordagem:</strong> ${escapeHtml(approachLabels[analysis.proximo_passo_recomendado.abordagem])}</p>
-      <p>${escapeHtml(analysis.proximo_passo_recomendado.justificativa)}</p>
+      <p style="margin-top: 24px">${escapeHtml(ctaCopy.intro)}</p>
+      <p style="margin-top: 8px"><a class="cta" href="${schedulingHref}">${escapeHtml(ctaCopy.button)}</a></p>
 
-      <div class="alert">
-        <strong>Alerta estratégico</strong>
-        <p style="margin-top: 8px">${escapeHtml(analysis.alerta_estrategico)}</p>
-      </div>
-
-      ${ctaBlockHtml}
-
-      <p style="margin-top: 16px"><a class="cta-light" href="${reportUrl}">Ver relatório completo online</a></p>
+      <p style="margin-top: 16px"><a class="cta-light" href="${reportUrl}">Ver relatório online</a></p>
 
       <div class="meta">
         Ou responde este e-mail — leio todos.<br>
@@ -178,7 +139,7 @@ export function diagnosisReportEmail(args: {
     </div>
   `);
 
-  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\n${ctaCopy.intro}\nAgendar: ${schedulingHref}\n\nVer relatório online: ${reportUrl}\n\n— Levi Lael`;
+  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\nPróximo passo recomendado: ${approachLabel}.\n\nO relatório completo está no PDF anexo (top 3 oportunidades, quick win, ROI, alerta).\n\n${ctaCopy.intro}\nAgendar: ${schedulingHref}\n\nVer online: ${reportUrl}\n\n— Levi Lael`;
   return {
     subject: `Seu diagnóstico de operação está pronto, ${fName}`,
     html,

@@ -17,6 +17,10 @@ import {
   diagnosisReportEmail,
   internalDiagnosisEmail,
 } from "@/lib/email-templates";
+import {
+  renderDiagnosisPdf,
+  diagnosisPdfFilename,
+} from "@/lib/pdf/diagnosis-report";
 import { describeAnswers } from "@/lib/diagnosis-prompt";
 import { buildEmailSequenceItems } from "@/lib/email-sequence";
 import { siteConfig } from "@/lib/site";
@@ -184,6 +188,10 @@ export async function POST(request: Request) {
   // ÚNICO email awaited: é o relatório que o user está esperando. Se falhar,
   // o user navega pro /diagnosis/result/[id] e vê tudo na tela, mas o email
   // de backup falhou silenciosamente — aceitável.
+  //
+  // PDF é gerado server-side com @react-pdf/renderer (~1-2s) e anexado.
+  // Se a renderização do PDF falhar, manda email sem anexo — relatório
+  // continua acessível via link online.
   if (isResendConfigured()) {
     const userEmail = diagnosisReportEmail({
       name: data.name,
@@ -191,11 +199,36 @@ export async function POST(request: Request) {
       analysis,
       timeline: answers.q8_timeline,
     });
+
+    let pdfBuffer: Buffer | null = null;
+    try {
+      pdfBuffer = await renderDiagnosisPdf({
+        name: data.name,
+        analysis,
+        generatedAt: new Date(createdAt),
+        reportUrl: `${siteConfig.url}/diagnosis/result/${diagnosisId}`,
+      });
+    } catch (err) {
+      console.error(
+        "[diagnosis] PDF render failed — sending email without attachment",
+        err instanceof Error ? err.message : err,
+      );
+    }
+
     await sendEmail({
       to: data.email,
       subject: userEmail.subject,
       html: userEmail.html,
       text: userEmail.text,
+      attachments: pdfBuffer
+        ? [
+            {
+              filename: diagnosisPdfFilename(data.name, diagnosisId),
+              content: pdfBuffer,
+              contentType: "application/pdf",
+            },
+          ]
+        : undefined,
     });
   } else {
     console.info("[diagnosis] resend off — relatório não enviado", {
