@@ -4,6 +4,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/site";
 import { PageViewTracker } from "@/components/tracking/page-view-tracker";
+import { MetaPixelLoader } from "@/components/tracking/meta-pixel-loader";
 
 import "./globals.css";
 
@@ -77,6 +78,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <PageViewTracker />
         </Suspense>
+        <MetaPixelLoader />
         <Analytics />
       </body>
     </html>
