@@ -21,7 +21,6 @@ function normalize(input: string): string {
   }
   // Strip diacríticos: PT-BR Google Ads keywords vêm sem acento por
   // padrão (broad match), mas variantes editoriais costumam ter.
-  // Sem isso, "classificacao automatica" não casa com "classificação automática".
   return decoded
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
@@ -29,10 +28,6 @@ function normalize(input: string): string {
     .trim();
 }
 
-/**
- * Match bidirecional: incoming.includes(variant) OU variant.includes(incoming).
- * Vence a chave mais longa (especificidade).
- */
 function matchVariant(
   incoming: string,
   variants: Record<string, string>,
@@ -75,8 +70,6 @@ export function DynamicHeadline({
       if (!raw) continue;
       const matched = matchVariant(raw, variants);
       if (matched) {
-        // Lê window.location uma vez no mount; padrão correto pra
-        // sincronizar default SSR com URL real do client.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setHeadline(matched);
         return;

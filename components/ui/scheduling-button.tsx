@@ -41,7 +41,7 @@ type SchedulingClickResult = {
   onClick: () => void;
 };
 
-function useSchedulingClick({
+export function useSchedulingClick({
   subject,
   diagnosisId,
   source,

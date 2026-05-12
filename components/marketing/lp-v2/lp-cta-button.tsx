@@ -3,41 +3,43 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { trackLpEvent } from "@/lib/tracking";
 import { buildDiagnosisUrl, extractTrackingParams } from "@/lib/marketing/utm";
 
 type CtaPosition = "hero" | "final" | "inline";
+type CtaVariant = "brand" | "outline";
 
 interface LpCtaButtonProps {
   lpSlug: string;
   ctaPosition: CtaPosition;
   children: React.ReactNode;
   size?: "lg" | "xl";
+  variant?: CtaVariant;
   className?: string;
+  withArrow?: boolean;
 }
 
 /**
- * CTA primário das LPs. Preserva UTMs no href (server + client) e dispara
- * `lp_cta_clicked` ao click. Href atualiza no useEffect pra cobrir
- * middle/right-click (que não disparam onClick).
+ * CTA pra /diagnosis nas LPs. Preserva UTMs no href (server + client) e
+ * dispara `lp_cta_clicked` com `cta_target: 'diagnosis'`. Href atualiza
+ * no useEffect pra cobrir middle/right-click (que não disparam onClick).
  */
 export function LpCtaButton({
   lpSlug,
   ctaPosition,
   children,
   size = "xl",
+  variant = "brand",
   className,
+  withArrow = false,
 }: LpCtaButtonProps) {
-  // SSR / pré-mount: href base com from_lp. Após mount, substituído por
-  // versão completa com UTMs (protege middle-click e cmd-click).
   const [href, setHref] = useState(`/diagnosis?from_lp=${lpSlug}`);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Lê window.location uma vez no mount; padrão correto pra
-    // sincronizar href SSR com UTMs reais do client (cobre middle/right-click).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHref(buildDiagnosisUrl(lpSlug, window.location.search));
   }, [lpSlug]);
@@ -48,6 +50,7 @@ export function LpCtaButton({
     trackLpEvent("lp_cta_clicked", {
       lp_slug: lpSlug,
       cta_position: ctaPosition,
+      cta_target: "diagnosis",
       ...utmParams,
     });
   }
@@ -55,12 +58,13 @@ export function LpCtaButton({
   return (
     <Button
       asChild
-      variant="brand"
+      variant={variant}
       size={size}
-      className={cn("rounded-xl shadow-lg", className)}
+      className={cn("rounded-xl", className)}
     >
       <Link href={href} onClick={handleClick}>
-        {children}
+        <span>{children}</span>
+        {withArrow && <ArrowRight className="size-4" aria-hidden />}
       </Link>
     </Button>
   );

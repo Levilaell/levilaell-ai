@@ -11,10 +11,6 @@ interface LpSectionTrackerProps {
   className?: string;
 }
 
-/**
- * Wrapper que dispara `lp_section_viewed` quando 50% da section entra
- * no viewport. Fire-once por mount.
- */
 export function LpSectionTracker({
   lpSlug,
   sectionName,

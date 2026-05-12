@@ -14,7 +14,7 @@ export function LpAuthorBio() {
         <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
           Engenheiro full-stack que já levou sistemas de IA para produção em
           fintech e automação B2B. Stack: Next.js, Python, Anthropic, Supabase,
-          n8n. Filosofia: IA em produção, não em apresentação.
+          n8n. Filosofia: automação técnica sob medida, não SaaS pronto.
         </p>
         <div className="mt-6 flex items-center gap-4">
           <a
