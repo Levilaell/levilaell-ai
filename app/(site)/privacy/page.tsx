@@ -77,9 +77,15 @@ export default function PrivacyPage() {
             <li>
               <strong>Cal.com</strong> — apenas se você agendar uma call.
             </li>
+            <li>
+              <strong>Meta (Facebook/Instagram)</strong> — eventos de conversão para mensurar campanhas de anúncios. Identificadores (e-mail, telefone, nome) são hashados via SHA-256 antes do envio; o Meta não recebe esses dados em texto puro.
+            </li>
+            <li>
+              <strong>Google (Google Ads + Google Analytics 4)</strong> — eventos de conversão e mensuração de tráfego. E-mail (quando disponível) é enviado em texto puro ao Google, que aplica hash do lado deles antes de qualquer uso (Enhanced Conversions).
+            </li>
           </ul>
           <p className="mt-4 text-muted-foreground">
-            Nenhum desses parceiros usa seus dados para fins próprios além de prestar o serviço contratado.
+            Nenhum desses parceiros usa seus dados para fins próprios além de prestar o serviço contratado. O compartilhamento com Meta e Google ocorre apenas em eventos específicos (visualização de landing page, conclusão de diagnóstico, agendamento de call) — não há rastreamento contínuo da sua navegação para esses parceiros.
           </p>
         </section>
 
@@ -108,18 +114,32 @@ export default function PrivacyPage() {
         <section>
           <h2 className="heading-3">6. Cookies e tracking</h2>
           <p className="mt-3">
-            Usamos cookies estritamente necessários (sessão) e analíticos (Vercel Analytics, anônimos). Não usamos cookies de marketing nem rastreamento de terceiros.
-          </p>
-          <p className="mt-3">
-            Nosso tracking interno é <strong>first-party</strong> — registramos
+            <strong>Tracking interno (first-party):</strong> registramos
             pageviews, cliques em CTAs e progresso de formulário sob um session
             ID temporário (UUID em sessionStorage, expira ao fechar a aba). Não
-            fazemos browser fingerprinting, não armazenamos IP em texto puro, e
-            respeitamos o sinal{" "}
+            fazemos browser fingerprinting e não armazenamos IP em texto puro.
+          </p>
+          <p className="mt-3">
+            <strong>Tracking de marketing (third-party):</strong> usamos Meta
+            Pixel + Conversions API, Google Ads e Google Analytics 4 para
+            mensurar campanhas pagas. Esses serviços instalam cookies próprios
+            no seu navegador (<code className="font-mono text-sm bg-muted px-1 rounded">_fbp</code>,{" "}
+            <code className="font-mono text-sm bg-muted px-1 rounded">_fbc</code>,{" "}
+            <code className="font-mono text-sm bg-muted px-1 rounded">_ga</code>,{" "}
+            <code className="font-mono text-sm bg-muted px-1 rounded">_gcl_*</code>) com
+            duração de até 24 meses. Identificadores pessoais (e-mail, telefone)
+            enviados ao Meta são hashados via SHA-256 antes da transmissão.
+          </p>
+          <p className="mt-3">
+            <strong>Como controlar:</strong> respeitamos o sinal{" "}
             <code className="font-mono text-sm bg-muted px-1 rounded">
               navigator.doNotTrack
             </code>{" "}
-            do navegador.
+            do navegador — quando ativado, todo o tracking (interno e
+            third-party) é desligado. Você também pode bloquear cookies
+            específicos pelas configurações do navegador, ou usar extensões
+            como uBlock Origin. Um banner de consentimento granular está
+            planejado.
           </p>
         </section>
 
