@@ -36,6 +36,9 @@ export function LpCtaButton({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Lê window.location uma vez no mount; padrão correto pra
+    // sincronizar href SSR com UTMs reais do client (cobre middle/right-click).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHref(buildDiagnosisUrl(lpSlug, window.location.search));
   }, [lpSlug]);
 

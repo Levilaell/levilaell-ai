@@ -75,6 +75,9 @@ export function DynamicHeadline({
       if (!raw) continue;
       const matched = matchVariant(raw, variants);
       if (matched) {
+        // Lê window.location uma vez no mount; padrão correto pra
+        // sincronizar default SSR com URL real do client.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setHeadline(matched);
         return;
       }
