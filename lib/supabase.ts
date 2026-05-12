@@ -149,6 +149,7 @@ export async function updateDiagnosisStatus(
     status: DiagnosisStatus;
     ai_analysis?: DiagnosisAnalysis | null;
     error_message?: string | null;
+    lead_score?: number | null;
   },
 ): Promise<void> {
   const supabase = getSupabaseService();
@@ -164,15 +165,21 @@ export async function updateDiagnosisStatus(
     status: patch.status,
     has_analysis: Boolean(patch.ai_analysis),
     has_error: Boolean(patch.error_message),
+    lead_score: patch.lead_score ?? null,
   });
+
+  const update: Database["public"]["Tables"]["diagnoses"]["Update"] = {
+    status: patch.status,
+    ai_analysis: patch.ai_analysis ?? null,
+    error_message: patch.error_message ?? null,
+  };
+  if (patch.lead_score !== undefined) {
+    update.lead_score = patch.lead_score;
+  }
 
   const { error } = await supabase
     .from("diagnoses")
-    .update({
-      status: patch.status,
-      ai_analysis: patch.ai_analysis ?? null,
-      error_message: patch.error_message ?? null,
-    })
+    .update(update)
     .eq("id", id);
 
   if (error) {
@@ -190,6 +197,7 @@ export type DiagnosisFetched = {
   id: string;
   name: string;
   email: string;
+  whatsapp: string | null;
   createdAt: string;
   status: DiagnosisStatus;
   analysis: DiagnosisAnalysis | null;
@@ -204,7 +212,9 @@ export async function getDiagnosisById(
 
   const { data, error } = await supabase
     .from("diagnoses")
-    .select("id, name, email, created_at, status, ai_analysis, q8_timeline")
+    .select(
+      "id, name, email, whatsapp, created_at, status, ai_analysis, q8_timeline",
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -213,6 +223,7 @@ export async function getDiagnosisById(
     id: data.id,
     name: data.name,
     email: data.email,
+    whatsapp: data.whatsapp,
     createdAt: data.created_at,
     status: data.status,
     analysis: data.ai_analysis,

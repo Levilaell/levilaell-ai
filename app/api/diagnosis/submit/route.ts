@@ -21,6 +21,18 @@ import { describeAnswers } from "@/lib/diagnosis-prompt";
 import { buildEmailSequenceItems } from "@/lib/email-sequence";
 import { siteConfig } from "@/lib/site";
 import { calculateLeadScore } from "@/lib/lead-score";
+import { EVENT_VALUE_BRL, leadTier } from "@/lib/tracking/types";
+import {
+  sendCapiEvent,
+  parseFbCookies,
+  extractClientIp,
+} from "@/lib/server/meta-capi";
+import {
+  hashEmailServer,
+  hashPhoneServer,
+  hashNameServer,
+  firstNameFromServer,
+} from "@/lib/server/hash";
 import type {
   DiagnosisAnalysis,
   DiagnosisAnswers,
@@ -144,12 +156,16 @@ export async function POST(request: Request) {
     );
   }
 
-  // 3) Update with completed analysis --------------------------------------
+  // 3) Update with completed analysis + lead_score -------------------------
+  // lead_score sempre é gravado aqui (antes ficava nulo na coluna; admin
+  // recalculava on-the-fly). Calcular uma vez e reusar nas etapas seguintes.
+  const score = calculateLeadScore(answers);
   if (isSupabaseConfigured()) {
     try {
       await updateDiagnosisStatus(diagnosisId, {
         status: "completed",
         ai_analysis: analysis,
+        lead_score: score,
       });
     } catch (err) {
       // Não é fatal: a análise foi gerada e segue pro e-mail. Apenas o status
@@ -183,7 +199,7 @@ export async function POST(request: Request) {
       email: data.email,
       whatsapp: data.whatsapp || null,
       company: data.company || null,
-      leadScore: calculateLeadScore(answers),
+      leadScore: score,
       analysis,
       contextLabels: {
         size: labels.size,
@@ -222,11 +238,40 @@ export async function POST(request: Request) {
     }
   }
 
+  // 6) CAPI Lead (server-side espelho do Pixel) ----------------------------
+  // event_id = diagnosisId pra dedup com Pixel client (mesmo par
+  // event_name=Lead + event_id). Awaited com timeout 500ms via AbortController
+  // dentro do sendCapiEvent — falha nunca bloqueia/quebra response.
+  const tier = leadTier(score);
+  const leadValue =
+    tier === "hot" ? EVENT_VALUE_BRL.hot_lead : EVENT_VALUE_BRL.lead;
+  await sendCapiEvent({
+    event_name: "Lead",
+    event_id: diagnosisId,
+    event_time: Math.floor(Date.now() / 1000),
+    event_source_url: request.headers.get("referer") ?? siteConfig.url,
+    user_data: {
+      em: hashEmailServer(data.email),
+      ph: hashPhoneServer(data.whatsapp),
+      fn: hashNameServer(firstNameFromServer(data.name)),
+      client_ip_address: extractClientIp(request.headers),
+      client_user_agent: request.headers.get("user-agent") ?? undefined,
+      ...parseFbCookies(request.headers.get("cookie")),
+    },
+    custom_data: {
+      value: leadValue,
+      currency: "BRL",
+      lead_quality: tier,
+    },
+  });
+
   return NextResponse.json({
     id: diagnosisId,
+    event_id: diagnosisId,
     createdAt,
     name: data.name,
     timeline: answers.q8_timeline,
     analysis,
+    lead_score: score,
   });
 }

@@ -29,6 +29,9 @@ import {
   type StoredResult,
 } from "@/lib/diagnosis-storage";
 import { track } from "@/lib/tracking";
+import { metaPixel } from "@/lib/tracking/meta";
+import { googleTracking } from "@/lib/tracking/google";
+import { EVENT_VALUE_BRL, leadTier } from "@/lib/tracking/types";
 import type { DiagnosisSubmission, DiagnosisAnalysis } from "@/types/diagnosis";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +54,8 @@ export function DiagnosisForm() {
     }
     setHydrated(true);
     track({ type: "diagnosis_started", data: { resumed: Boolean(draft) } });
+    metaPixel.initiateCheckout();
+    googleTracking.beginDiagnosis();
   }, []);
 
   useEffect(() => {
@@ -135,10 +140,12 @@ export function DiagnosisForm() {
       }
       const data = (await res.json()) as {
         id: string;
+        event_id: string;
         analysis: DiagnosisAnalysis;
         createdAt: string;
         name: string;
         timeline?: string;
+        lead_score: number;
       };
       const result: StoredResult = {
         id: data.id,
@@ -151,8 +158,34 @@ export function DiagnosisForm() {
       clearDraft();
       track({
         type: "diagnosis_completed",
-        data: { id: data.id, timeline: data.timeline },
+        data: { id: data.id, timeline: data.timeline, lead_score: data.lead_score },
       });
+
+      // Pixel Lead + Google Ads/GA4 conversion. event_id = diagnosis_id casa
+      // com o dispatch CAPI server-side pra Meta deduplicar.
+      const tier = leadTier(data.lead_score);
+      const leadValue =
+        tier === "hot" ? EVENT_VALUE_BRL.hot_lead : EVENT_VALUE_BRL.lead;
+      await metaPixel.lead({
+        event_id: data.event_id,
+        value: leadValue,
+        email: answers.email,
+        phone: answers.whatsapp,
+        fullName: answers.name,
+        leadQuality: tier,
+      });
+      if (tier === "hot") {
+        googleTracking.generateHotLead({
+          value: leadValue,
+          email: answers.email,
+        });
+      } else {
+        googleTracking.generateLead({
+          value: leadValue,
+          email: answers.email,
+        });
+      }
+
       router.push(`/diagnosis/result/${data.id}`);
     } catch (err) {
       setSubmitState("error");
