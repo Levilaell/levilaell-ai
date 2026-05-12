@@ -5,19 +5,17 @@ import Script from "next/script";
 import { hasMarketingConsent } from "@/lib/tracking/consent";
 
 /**
- * Carrega gtag.js (base unificada Google Ads + GA4). GA4 dispara
- * page_view automático no config (não passamos send_page_view: false) —
- * isso garante a PageView do hard load independente de timing do
- * PageViewTracker. Tracker pula o primeiro mount via useRef e só dispara
- * page_view em route changes subsequentes.
+ * Carrega gtag.js afterInteractive. window.gtag + window.dataLayer +
+ * configs já foram setupados pelo GoogleTagStub no HTML estático
+ * server-rendered. gtag.js processa o dataLayer acumulado em ordem:
+ * 'js' → 'config' → eventos que useEffects pushed.
  *
- * Strategy beforeInteractive (mesmo motivo do MetaPixelLoader): garante
- * que window.gtag exista antes do useEffect dos componentes rodar. Sem
- * isso, eventos first-mount como viewLandingPage e beginDiagnosis caem
- * num race onde gtag é undefined e o wrapper droppa silentemente.
+ * Estratégia de URL: src usa GA4_ID se setado (mais comum), senão
+ * Google Ads ID. Os dois compartilham o mesmo gtag.js — só muda o ID
+ * primário no query string.
  *
- * Consent gated via useState/useEffect pra evitar hydration mismatch
- * (mesma razão do MetaPixelLoader).
+ * Consent gated via useState/useEffect (mesma razão do MetaPixelLoader).
+ * DNT users: nunca carrega gtag.js → dataLayer queue nunca processa.
  */
 export function GoogleTagLoader() {
   const gadsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
@@ -33,33 +31,11 @@ export function GoogleTagLoader() {
 
   const primaryId = ga4Id || gadsId!;
 
-  const configLines: string[] = [];
-  if (ga4Id) {
-    configLines.push(`gtag('config', '${ga4Id}');`);
-  }
-  if (gadsId && gadsId !== ga4Id) {
-    configLines.push(`gtag('config', '${gadsId}');`);
-  }
-
   return (
-    <>
-      <Script
-        id="gtag-base"
-        strategy="beforeInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${primaryId}`}
-      />
-      <Script
-        id="gtag-config"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-${configLines.join("\n")}
-`,
-        }}
-      />
-    </>
+    <Script
+      id="gtag-base"
+      src={`https://www.googletagmanager.com/gtag/js?id=${primaryId}`}
+      strategy="afterInteractive"
+    />
   );
 }

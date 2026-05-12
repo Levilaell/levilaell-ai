@@ -4,10 +4,14 @@
  *
  * Política:
  *   • event_id quando fornecido → habilita deduplication com CAPI.
- *   • Guards: consent + presença de window.fbq. MetaPixelLoader usa
- *     strategy="beforeInteractive", então fbq existe antes do useEffect
- *     rodar. O guard de window.fbq aqui é defensivo — protege caso o
- *     script falhe (CSP, ad blocker, network) e mantém o silent-fail.
+ *   • Guards: consent + presença de window.fbq. MetaPixelStub
+ *     (Server Component inline no body) define window.fbq como pusher
+ *     synchronously durante parse do HTML, antes da hidratação React.
+ *     useEffect calls a este wrapper encontram fbq pronto, push pra
+ *     fila local que vai ser replayed quando fbevents.js carregar
+ *     (via MetaPixelLoader, gated em consent).
+ *   • Guard de window.fbq aqui é defensivo — protege caso o stub falhe
+ *     (CSP, render error) e mantém o silent-fail.
  *   • Não throws — silent fail. Tracking interno cobre dashboard próprio.
  */
 import { hasMarketingConsent } from "@/lib/tracking/consent";

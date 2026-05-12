@@ -4,7 +4,9 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/site";
 import { PageViewTracker } from "@/components/tracking/page-view-tracker";
+import { MetaPixelStub } from "@/components/tracking/meta-pixel-stub";
 import { MetaPixelLoader } from "@/components/tracking/meta-pixel-loader";
+import { GoogleTagStub } from "@/components/tracking/google-tag-stub";
 import { GoogleTagLoader } from "@/components/tracking/google-tag-loader";
 
 import "./globals.css";
@@ -75,6 +77,8 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans min-h-screen flex flex-col`}
       >
+        <MetaPixelStub />
+        <GoogleTagStub />
         {children}
         <Suspense fallback={null}>
           <PageViewTracker />

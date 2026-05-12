@@ -5,23 +5,21 @@ import Script from "next/script";
 import { hasMarketingConsent } from "@/lib/tracking/consent";
 
 /**
- * Carrega o snippet base do Meta Pixel. Init + PageView inicial no próprio
- * snippet (padrão canônico Meta) pra não depender da ordem entre script
- * inject e useEffect do PageViewTracker — a PageView do hard load fica
- * garantida. PageViewTracker pula esse primeiro mount via useRef flag e
- * só dispara em route changes subsequentes.
+ * Carrega fbevents.js (o cliente real do Meta Pixel) afterInteractive.
+ * window.fbq + queue + init + PageView já foram setupados pelo
+ * MetaPixelStub no HTML estático server-rendered. Quando esse script
+ * termina de carregar, fbevents.js processa a fila acumulada em ordem
+ * (init → PageView → useEffect events).
  *
- * Strategy beforeInteractive (não afterInteractive): o snippet do Meta é
- * desenhado pra rodar inline no <head>, definindo window.fbq de forma
- * síncrona antes de qualquer useEffect montar. Sem isso, eventos disparados
- * em first-mount (ViewContent no LpPageTracker, InitiateCheckout no
- * diagnosis form) caem num race onde window.fbq ainda é undefined e o
- * wrapper silentemente droppa a call. Custo: ~1kb bloqueando hidratação.
+ * Consent gated via useState/useEffect:
+ *   • Server e initial client render retornam null (consented = false).
+ *   • useEffect lê DNT, atualiza consented.
+ *   • Próximo render: monta Script.
  *
- * Consent: gated via useState/useEffect pra evitar hydration mismatch
- * (hasMarketingConsent retorna falso no SSR / true no client com DNT off).
- * Os wrappers metaPixel/googleTracking checam consent em cada call — o
- * gate aqui só decide carregar o script de jeito que SSR == initial client.
+ * Sem hydration mismatch porque SSR e initial client render coincidem.
+ *
+ * DNT users: este componente nunca monta Script → fbevents.js nunca
+ * carrega → fila do stub nunca é flushada → zero dados enviados ao Meta.
  */
 export function MetaPixelLoader() {
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
@@ -36,22 +34,9 @@ export function MetaPixelLoader() {
 
   return (
     <Script
-      id="meta-pixel"
-      strategy="beforeInteractive"
-      dangerouslySetInnerHTML={{
-        __html: `
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src=v;s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script',
-'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '${pixelId}');
-fbq('track', 'PageView');
-`,
-      }}
+      id="meta-pixel-fbevents"
+      src="https://connect.facebook.net/en_US/fbevents.js"
+      strategy="afterInteractive"
     />
   );
 }
