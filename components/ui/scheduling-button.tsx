@@ -29,6 +29,68 @@ const baseVariant: Record<CalcomVariant, "brand" | "outline" | "default"> = {
   white: "default",
 };
 
+type SchedulingClickInput = {
+  subject?: string;
+  diagnosisId?: string;
+  source?: string;
+};
+
+type SchedulingClickResult = {
+  href: string;
+  isMailto: boolean;
+  onClick: () => void;
+};
+
+function useSchedulingClick({
+  subject,
+  diagnosisId,
+  source,
+}: SchedulingClickInput): SchedulingClickResult {
+  const fallback = getSchedulingTarget(subject);
+  const calcomBase = getCalcomUrl();
+  const useRedirector = Boolean(diagnosisId && calcomBase);
+  const href = useRedirector
+    ? getCalcomRedirectUrl(diagnosisId!)
+    : fallback.href;
+  const isMailto = !useRedirector && fallback.isMailto;
+
+  function onClick() {
+    track({
+      type: "calcom_clicked",
+      data: {
+        source: source ?? null,
+        diagnosis_id: diagnosisId ?? null,
+        is_mailto: isMailto,
+      },
+    });
+
+    if (isMailto) return;
+
+    const eventId =
+      diagnosisId ??
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `sched_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+
+    void metaPixel.schedule({
+      event_id: eventId,
+      value: EVENT_VALUE_BRL.schedule,
+    });
+    googleTracking.scheduleCall({ value: EVENT_VALUE_BRL.schedule });
+
+    if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
+      const payload = JSON.stringify({
+        event_id: eventId,
+        diagnosis_id: diagnosisId,
+      });
+      const blob = new Blob([payload], { type: "application/json" });
+      navigator.sendBeacon("/api/tracking/calcom", blob);
+    }
+  }
+
+  return { href, isMailto, onClick };
+}
+
 type Props = {
   subject?: string;
   label?: string;
@@ -53,55 +115,12 @@ export function SchedulingButton({
   diagnosisId,
   source,
 }: Props) {
-  const fallback = getSchedulingTarget(subject);
-  const calcomBase = getCalcomUrl();
-  const useRedirector = Boolean(diagnosisId && calcomBase);
-  const href = useRedirector
-    ? getCalcomRedirectUrl(diagnosisId!)
-    : fallback.href;
-  const isMailto = !useRedirector && fallback.isMailto;
+  const { href, isMailto, onClick } = useSchedulingClick({
+    subject,
+    diagnosisId,
+    source,
+  });
   const Icon = isMailto ? Mail : ArrowUpRight;
-
-  function handleClick() {
-    track({
-      type: "calcom_clicked",
-      data: {
-        source: source ?? null,
-        diagnosis_id: diagnosisId ?? null,
-        is_mailto: isMailto,
-      },
-    });
-
-    // Mailto não é evento de agendamento — skipa Pixel/gtag/CAPI.
-    if (isMailto) return;
-
-    // event_id determinístico quando temos diagnosisId (mesmo click no
-    // result page ou via SchedulingButton da home gera mesmo event_id).
-    // Sem diagnosisId (ex: visitante direto), UUID aleatório.
-    const eventId =
-      diagnosisId ??
-      (typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `sched_${Date.now()}_${Math.random().toString(36).slice(2)}`);
-
-    void metaPixel.schedule({
-      event_id: eventId,
-      value: EVENT_VALUE_BRL.schedule,
-    });
-    googleTracking.scheduleCall({ value: EVENT_VALUE_BRL.schedule });
-
-    // CAPI espelho server-side via beacon — sobrevive a navegação mesmo
-    // se target fosse same-tab (aqui é _blank, então cur tab continua viva
-    // de qualquer jeito).
-    if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
-      const payload = JSON.stringify({
-        event_id: eventId,
-        diagnosis_id: diagnosisId,
-      });
-      const blob = new Blob([payload], { type: "application/json" });
-      navigator.sendBeacon("/api/tracking/calcom", blob);
-    }
-  }
 
   return (
     <Button
@@ -114,12 +133,58 @@ export function SchedulingButton({
         href={href}
         target={isMailto ? undefined : "_blank"}
         rel={isMailto ? undefined : "noopener noreferrer"}
-        onClick={handleClick}
+        onClick={onClick}
       >
         <Icon className="size-4" aria-hidden />
         <span>{label}</span>
       </Link>
     </Button>
+  );
+}
+
+type LinkProps = {
+  subject?: string;
+  source?: string;
+  label?: string;
+  className?: string;
+  withIcon?: boolean;
+  onNavigate?: () => void;
+};
+
+/**
+ * Versão link textual do SchedulingButton — pra header, footer e outros
+ * lugares onde um botão cheio seria visualmente pesado.
+ */
+export function SchedulingLink({
+  subject,
+  source,
+  label = "Agendar call",
+  className,
+  withIcon = false,
+  onNavigate,
+}: LinkProps) {
+  const { href, isMailto, onClick } = useSchedulingClick({ subject, source });
+
+  return (
+    <Link
+      href={href}
+      target={isMailto ? undefined : "_blank"}
+      rel={isMailto ? undefined : "noopener noreferrer"}
+      onClick={() => {
+        onClick();
+        onNavigate?.();
+      }}
+      className={className}
+    >
+      {withIcon ? (
+        <span className="inline-flex items-center gap-1.5">
+          {label}
+          <ArrowUpRight className="size-3.5" aria-hidden />
+        </span>
+      ) : (
+        label
+      )}
+    </Link>
   );
 }
 

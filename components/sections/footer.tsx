@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { GithubIcon, LinkedinIcon } from "@/components/ui/social-icons";
 import { TrackedExternalLink } from "@/components/tracking/tracked-external-link";
+import { SchedulingLink } from "@/components/ui/scheduling-button";
 import { siteConfig } from "@/lib/site";
 
-const navColumns = [
+type FooterLink = { label: string; href: string } | { kind: "scheduling" };
+
+const navColumns: { title: string; links: FooterLink[] }[] = [
   {
     title: "Produtos",
     links: [
@@ -27,6 +30,7 @@ const navColumns = [
     title: "Contato",
     links: [
       { label: "E-mail", href: `mailto:${siteConfig.email.contact}` },
+      { kind: "scheduling" },
       { label: "Formulário", href: "/contact" },
       { label: "Privacidade", href: "/privacy" },
     ],
@@ -72,16 +76,26 @@ export function SiteFooter() {
                 {col.title}
               </h3>
               <ul className="space-y-2.5">
-                {col.links.map((l) => (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      className="text-sm text-foreground/80 hover:text-foreground transition-colors"
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map((l, i) =>
+                  "kind" in l ? (
+                    <li key={`scheduling-${i}`}>
+                      <SchedulingLink
+                        source="footer"
+                        subject="Conversa técnica — Levi Lael"
+                        className="text-sm text-foreground/80 hover:text-foreground transition-colors"
+                      />
+                    </li>
+                  ) : (
+                    <li key={l.href}>
+                      <Link
+                        href={l.href}
+                        className="text-sm text-foreground/80 hover:text-foreground transition-colors"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ),
+                )}
               </ul>
             </div>
           ))}

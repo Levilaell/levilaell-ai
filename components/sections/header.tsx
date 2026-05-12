@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SchedulingLink } from "@/components/ui/scheduling-button";
 import { TrackedLink } from "@/components/tracking/tracked-link";
 import { siteConfig } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <SchedulingLink
+            source="header"
+            subject="Conversa técnica — Levi Lael"
+            className="hidden lg:inline text-sm text-muted-foreground hover:text-foreground transition-colors"
+          />
           <Button asChild size="default" variant="brand" className="rounded-lg hidden sm:inline-flex">
             <TrackedLink href="/diagnosis" trackLabel="header_diagnosis">
               Diagnóstico gratuito
@@ -83,6 +89,12 @@ export function SiteHeader() {
                 Diagnóstico gratuito →
               </TrackedLink>
             </Button>
+            <SchedulingLink
+              source="header_mobile"
+              subject="Conversa técnica — Levi Lael"
+              className="mt-3 py-2 text-sm text-foreground/90 hover:text-foreground"
+              onNavigate={() => setOpen(false)}
+            />
           </nav>
         </div>
       )}
