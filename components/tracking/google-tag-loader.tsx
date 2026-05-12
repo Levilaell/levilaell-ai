@@ -1,33 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Script from "next/script";
 import { hasMarketingConsent } from "@/lib/tracking/consent";
 
 /**
- * Carrega gtag.js (Google Tag) — base unificada pra Google Ads + GA4.
- * O loader só inicializa as configs; PageView é disparado pelo
- * PageViewTracker em cada route change (send_page_view: false aqui).
+ * Carrega gtag.js (base unificada Google Ads + GA4). GA4 dispara
+ * page_view automático no config (não passamos send_page_view: false) —
+ * isso garante a PageView do hard load independente de timing do
+ * PageViewTracker. Tracker pula o primeiro mount via useRef e só dispara
+ * page_view em route changes subsequentes.
  *
- * Estratégia de URL:
- *   • Se GA4_ID existe, base script src usa GA4_ID (mais comum).
- *   • Senão, usa Google Ads ID.
- *   • Configs separadas pra cada produto que estiver definido.
- *
- * Guard: pula completamente se nenhuma das duas vars está setada ou se o
- * user não consentiu.
+ * Consent gated via useState/useEffect pra evitar hydration mismatch
+ * (mesma razão do MetaPixelLoader).
  */
 export function GoogleTagLoader() {
   const gadsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
   const ga4Id = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
+  const [consented, setConsented] = useState(false);
+
+  useEffect(() => {
+    setConsented(hasMarketingConsent());
+  }, []);
 
   if (!gadsId && !ga4Id) return null;
-  if (!hasMarketingConsent()) return null;
+  if (!consented) return null;
 
   const primaryId = ga4Id || gadsId!;
 
   const configLines: string[] = [];
   if (ga4Id) {
-    configLines.push(`gtag('config', '${ga4Id}', { send_page_view: false });`);
+    configLines.push(`gtag('config', '${ga4Id}');`);
   }
   if (gadsId && gadsId !== ga4Id) {
     configLines.push(`gtag('config', '${gadsId}');`);
