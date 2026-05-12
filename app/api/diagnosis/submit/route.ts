@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { randomUUID } from "node:crypto";
 import { diagnosisSubmissionSchema } from "@/types/forms";
 import {
@@ -40,7 +40,10 @@ import type {
 } from "@/types/diagnosis";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// 60s era apertado: Anthropic ~44s + saveDiagnosis/updateStatus + emails
+// já estourava 50s. Subindo pra 90s dá margem em horários ruins do
+// Anthropic e cobre cold starts do Fluid Compute.
+export const maxDuration = 90;
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -177,7 +180,10 @@ export async function POST(request: Request) {
     }
   }
 
-  // 4) Email 1 (relatório) — fire-and-forget but wait briefly --------------
+  // 4) Email 1 (relatório pro user) ----------------------------------------
+  // ÚNICO email awaited: é o relatório que o user está esperando. Se falhar,
+  // o user navega pro /diagnosis/result/[id] e vê tudo na tela, mas o email
+  // de backup falhou silenciosamente — aceitável.
   if (isResendConfigured()) {
     const userEmail = diagnosisReportEmail({
       name: data.name,
@@ -191,31 +197,6 @@ export async function POST(request: Request) {
       html: userEmail.html,
       text: userEmail.text,
     });
-
-    const labels = describeAnswers(answers);
-    const internal = internalDiagnosisEmail({
-      diagnosisId,
-      name: data.name,
-      email: data.email,
-      whatsapp: data.whatsapp || null,
-      company: data.company || null,
-      leadScore: score,
-      analysis,
-      contextLabels: {
-        size: labels.size,
-        businessModel: labels.businessModel,
-        timeline: labels.timeline,
-        budget: labels.budget,
-        revenue: labels.revenue,
-      },
-    });
-    await sendEmail({
-      to: siteConfig.email.internal,
-      subject: internal.subject,
-      html: internal.html,
-      text: internal.text,
-      replyTo: data.email,
-    });
   } else {
     console.info("[diagnosis] resend off — relatório não enviado", {
       id: diagnosisId,
@@ -223,46 +204,102 @@ export async function POST(request: Request) {
     });
   }
 
-  // 5) Schedule emails 2-6 (cron picks up later) ---------------------------
-  if (isSupabaseConfigured()) {
+  // 5) Tudo o que NÃO precisa bloquear response vai pra after() ------------
+  // after() do next/server roda callbacks DEPOIS do response ser flushado,
+  // garantindo execução completa mesmo em runtimes serverless onde o void
+  // promise normal poderia ser descartado no encerramento do request scope.
+  //
+  // Aqui vai: notificação interna pro Levi, schedule de emails 2-6, CAPI
+  // Lead. Tudo não-crítico pro UX do user — eles podem demorar 2-5s sem
+  // afetar a percepção de velocidade.
+  // Extrai headers/IP do request UPFRONT — após o response ser flushado,
+  // acessar request.headers em alguns runtimes é não-determinístico.
+  const referer = request.headers.get("referer");
+  const userAgent = request.headers.get("user-agent");
+  const cookieHeader = request.headers.get("cookie");
+  const clientIp = extractClientIp(request.headers);
+
+  after(async () => {
+    if (!isResendConfigured()) return;
+    try {
+      const labels = describeAnswers(answers);
+      const internal = internalDiagnosisEmail({
+        diagnosisId,
+        name: data.name,
+        email: data.email,
+        whatsapp: data.whatsapp || null,
+        company: data.company || null,
+        leadScore: score,
+        analysis,
+        contextLabels: {
+          size: labels.size,
+          businessModel: labels.businessModel,
+          timeline: labels.timeline,
+          budget: labels.budget,
+          revenue: labels.revenue,
+        },
+      });
+      await sendEmail({
+        to: siteConfig.email.internal,
+        subject: internal.subject,
+        html: internal.html,
+        text: internal.text,
+        replyTo: data.email,
+      });
+    } catch (err) {
+      console.error(
+        "[diagnosis] after() internal email failed",
+        err instanceof Error ? err.message : err,
+      );
+    }
+  });
+
+  after(async () => {
+    if (!isSupabaseConfigured()) return;
     try {
       const items = buildEmailSequenceItems(new Date(createdAt));
       await scheduleEmailSequence(diagnosisId, items);
     } catch (err) {
-      // Não é fatal: o email 1 já foi disparado. A sequência pode ser
-      // reagendada manualmente via admin se necessário.
       console.error(
-        "[DB_ERROR] scheduleEmailSequence failed (continuando)",
+        "[diagnosis] after() scheduleEmailSequence failed",
         err instanceof SupabaseWriteError ? err.message : err,
       );
     }
-  }
+  });
 
-  // 6) CAPI Lead (server-side espelho do Pixel) ----------------------------
-  // event_id = diagnosisId pra dedup com Pixel client (mesmo par
-  // event_name=Lead + event_id). Awaited com timeout 500ms via AbortController
-  // dentro do sendCapiEvent — falha nunca bloqueia/quebra response.
+  // CAPI Lead — event_id = diagnosisId pra dedup com Pixel client. Timeout
+  // interno do sendCapiEvent é 5s (subiu de 500ms). Fire-and-forget via
+  // after pra não custar nada no caminho crítico.
   const tier = leadTier(score);
   const leadValue =
     tier === "hot" ? EVENT_VALUE_BRL.hot_lead : EVENT_VALUE_BRL.lead;
-  await sendCapiEvent({
-    event_name: "Lead",
-    event_id: diagnosisId,
-    event_time: Math.floor(Date.now() / 1000),
-    event_source_url: request.headers.get("referer") ?? siteConfig.url,
-    user_data: {
-      em: hashEmailServer(data.email),
-      ph: hashPhoneServer(data.whatsapp),
-      fn: hashNameServer(firstNameFromServer(data.name)),
-      client_ip_address: extractClientIp(request.headers),
-      client_user_agent: request.headers.get("user-agent") ?? undefined,
-      ...parseFbCookies(request.headers.get("cookie")),
-    },
-    custom_data: {
-      value: leadValue,
-      currency: "BRL",
-      lead_quality: tier,
-    },
+  after(async () => {
+    try {
+      await sendCapiEvent({
+        event_name: "Lead",
+        event_id: diagnosisId,
+        event_time: Math.floor(Date.now() / 1000),
+        event_source_url: referer ?? siteConfig.url,
+        user_data: {
+          em: hashEmailServer(data.email),
+          ph: hashPhoneServer(data.whatsapp),
+          fn: hashNameServer(firstNameFromServer(data.name)),
+          client_ip_address: clientIp,
+          client_user_agent: userAgent ?? undefined,
+          ...parseFbCookies(cookieHeader),
+        },
+        custom_data: {
+          value: leadValue,
+          currency: "BRL",
+          lead_quality: tier,
+        },
+      });
+    } catch (err) {
+      console.error(
+        "[diagnosis] after() CAPI Lead failed",
+        err instanceof Error ? err.message : err,
+      );
+    }
   });
 
   return NextResponse.json({

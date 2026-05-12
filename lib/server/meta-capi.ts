@@ -15,7 +15,11 @@
  */
 
 const GRAPH_VERSION = "v20.0";
-const TIMEOUT_MS = 500;
+// Meta CAPI do Brasil pode levar 500-1000ms (TLS handshake cold + Meta
+// roundtrip). 500ms era agressivo demais e abortava regularmente. Como o
+// dispatch agora roda via after() pós-response, latência extra aqui não
+// afeta UX — só protege contra request travado eternamente.
+const TIMEOUT_MS = 5000;
 
 export type CapiEventName = "Lead" | "Schedule" | "PageView";
 
