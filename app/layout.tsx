@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/site";
 import { PageViewTracker } from "@/components/tracking/page-view-tracker";
 import { MetaPixelLoader } from "@/components/tracking/meta-pixel-loader";
+import { GoogleTagLoader } from "@/components/tracking/google-tag-loader";
 
 import "./globals.css";
 
@@ -79,6 +80,7 @@ export default function RootLayout({
           <PageViewTracker />
         </Suspense>
         <MetaPixelLoader />
+        <GoogleTagLoader />
         <Analytics />
       </body>
     </html>
