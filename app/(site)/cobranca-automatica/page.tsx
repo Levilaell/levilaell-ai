@@ -55,12 +55,12 @@ export default function Page() {
             { label: "Mensagens manuais por dia", value: "30" },
             { label: "Tempo médio por mensagem", value: "4 minutos" },
             { label: "Total diário", value: "2 horas" },
-            { label: "Total mensal", value: "40 horas" },
-            { label: "Custo médio da hora", value: "R$ 35" },
+            { label: "Total mensal", value: "44 horas" },
+            { label: "Custo médio da hora (cargo de cobrança)", value: "R$ 35" },
           ]}
           total={{
             label: "Custo mensal de comunicação manual",
-            value: "R$ 1.400",
+            value: "R$ 1.540",
           }}
           subtitle="Sem contar mensagem esquecida, follow-up perdido e cliente que reclama."
         />

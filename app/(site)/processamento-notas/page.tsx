@@ -54,15 +54,14 @@ export default function Page() {
           rows={[
             { label: "Notas processadas por dia", value: "200" },
             { label: "Tempo médio por nota", value: "3 minutos" },
-            { label: "Total diário", value: "10 horas" },
-            { label: "Total mensal", value: "200 horas" },
+            { label: "Tempo total mensal", value: "220 horas" },
             { label: "Custo médio da hora", value: "R$ 30" },
           ]}
           total={{
             label: "Custo mensal de processamento manual",
-            value: "R$ 6.000",
+            value: "R$ 6.600",
           }}
-          subtitle="Sem contar retrabalho de erro humano — em média 5-10% das notas precisam ser corrigidas."
+          subtitle="Sem contar retrabalho de erro humano (típico em digitação manual)."
         />
       </LpSectionTracker>
 

@@ -52,17 +52,16 @@ export default function Page() {
         <LpImpactCalculator
           title="O custo real da triagem manual"
           rows={[
-            { label: "Documentos por dia", value: "200" },
+            { label: "Documentos processados por dia (no escritório)", value: "200" },
             { label: "Tempo médio por documento", value: "1 minuto" },
-            { label: "Total mensal por funcionário", value: "33 horas" },
+            { label: "Tempo total mensal", value: "~73 horas" },
             { label: "Custo médio da hora", value: "R$ 30" },
-            { label: "Em equipe de 5 pessoas", value: "×5" },
           ]}
           total={{
-            label: "Custo mensal estimado",
-            value: "R$ 4.950",
+            label: "Custo mensal de triagem manual",
+            value: "R$ 2.200",
           }}
-          subtitle="Não é palpite. É matemática. Quanto custa pro seu escritório?"
+          subtitle="Equivale a um funcionário part-time só fazendo triagem. Quanto custa pro seu escritório?"
         />
       </LpSectionTracker>
 

@@ -52,15 +52,15 @@ export default function Page() {
         <LpImpactCalculator
           title="Onde escritórios contábeis perdem tempo"
           rows={[
-            { label: "Triagem documentos", value: "5h/dia" },
+            { label: "Triagem documentos", value: "3h/dia" },
             { label: "Cobrança cliente", value: "2h/dia" },
             { label: "Notas fiscais", value: "10h/dia" },
           ]}
           total={{
             label: "Total de processo manual no escritório",
-            value: "17h/dia",
+            value: "15h/dia",
           }}
-          subtitle="Equivale a 2 funcionários full-time só em tarefa manual. Total mensal: ~340 horas. Cada hora dessa é repetitiva, propensa a erro humano, e desmotiva sua equipe."
+          subtitle="Equivale a 2 funcionários full-time só em tarefa manual. Total mensal: ~330 horas. Cada hora dessa é repetitiva, propensa a erro humano, e desmotiva sua equipe."
         />
       </LpSectionTracker>
 
