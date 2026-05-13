@@ -55,14 +55,12 @@ export default function Page() {
             { label: "Triagem documentos", value: "5h/dia" },
             { label: "Cobrança cliente", value: "2h/dia" },
             { label: "Notas fiscais", value: "10h/dia" },
-            { label: "Total por funcionário", value: "17h/dia" },
-            { label: "Em equipe de 5", value: "85h/dia" },
           ]}
           total={{
-            label: "Total mensal",
-            value: "~1.700 horas",
+            label: "Total de processo manual no escritório",
+            value: "17h/dia",
           }}
-          subtitle="Cada hora dessa é repetitiva, propensa a erro humano, e desmotiva sua equipe."
+          subtitle="Equivale a 2 funcionários full-time só em tarefa manual. Total mensal: ~340 horas. Cada hora dessa é repetitiva, propensa a erro humano, e desmotiva sua equipe."
         />
       </LpSectionTracker>
 
@@ -90,9 +88,9 @@ export default function Page() {
             },
             {
               number: 4,
-              title: "Suporte direto comigo",
+              title: "Suporte direto com a equipe técnica",
               description:
-                "Não tem fila de suporte. Quando algo trava, você fala direto com quem construiu o sistema.",
+                "Não tem fila de suporte. Quando algo trava, você fala direto com a equipe que construiu o seu sistema, não com primeiro nível terceirizado.",
             },
           ]}
         />
