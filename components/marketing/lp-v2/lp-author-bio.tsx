@@ -1,43 +1,43 @@
-import { siteConfig } from "@/lib/site";
-import { GithubIcon, LinkedinIcon } from "@/components/ui/social-icons";
+import { LpCalcomCta } from "@/components/marketing/lp-v2/lp-calcom-cta";
+import { LpCtaButton } from "@/components/marketing/lp-v2/lp-cta-button";
 
-export function LpAuthorBio() {
+interface LpAuthorBioProps {
+  lpSlug: string;
+}
+
+export function LpAuthorBio({ lpSlug }: LpAuthorBioProps) {
   return (
     <div className="container-page py-16 md:py-20">
       <div className="max-w-2xl mx-auto">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-3">
-          Quem está por trás
+          Equipe
         </p>
         <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground mb-4">
-          Levi Lael
+          Engenharia de automação para escritórios contábeis.
         </h2>
         <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
-          Engenheiro full-stack que já levou sistemas de IA para produção em
-          fintech e automação B2B. Stack: Next.js, Python, Anthropic, Supabase,
-          n8n. Filosofia: automação técnica sob medida, não SaaS pronto.
+          Combinamos engenharia técnica (sistemas de IA em produção em fintech
+          e automação B2B) com experiência em contabilidade e gestão
+          financeira. Sob medida pro fluxo do seu escritório, não SaaS pronto.
+          Revisão humana onde importa.
         </p>
-        <div className="mt-6 flex items-center gap-4">
-          <a
-            href={siteConfig.social.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="GitHub"
+        <div className="mt-8 flex flex-col sm:flex-row sm:flex-wrap gap-3">
+          <LpCalcomCta lpSlug={lpSlug} ctaPosition="inline" size="lg">
+            Agendar conversa de descoberta
+          </LpCalcomCta>
+          <LpCtaButton
+            lpSlug={lpSlug}
+            ctaPosition="inline"
+            variant="outline"
+            size="lg"
           >
-            <GithubIcon className="size-4" />
-            <span>GitHub</span>
-          </a>
-          <a
-            href={siteConfig.social.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="LinkedIn"
-          >
-            <LinkedinIcon className="size-4" />
-            <span>LinkedIn</span>
-          </a>
+            Fazer diagnóstico
+          </LpCtaButton>
         </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Diagnóstico gratuito sem compromisso. Proposta só se fizer sentido
+          pra você.
+        </p>
       </div>
     </div>
   );

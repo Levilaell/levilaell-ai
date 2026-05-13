@@ -99,7 +99,7 @@ export default function Page() {
       </LpSectionTracker>
 
       <LpSectionTracker lpSlug={LP_SLUG} sectionName="author_bio">
-        <LpAuthorBio />
+        <LpAuthorBio lpSlug={LP_SLUG} />
       </LpSectionTracker>
 
       <LpSectionTracker lpSlug={LP_SLUG} sectionName="faq">

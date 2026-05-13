@@ -49,6 +49,7 @@ export function SiteHeader() {
           <SchedulingLink
             source="header"
             subject="Conversa técnica — Levi Lael"
+            label="Agendar conversa"
             className="hidden lg:inline text-sm text-muted-foreground hover:text-foreground transition-colors"
           />
           <Button asChild size="default" variant="brand" className="rounded-lg hidden sm:inline-flex">
@@ -92,6 +93,7 @@ export function SiteHeader() {
             <SchedulingLink
               source="header_mobile"
               subject="Conversa técnica — Levi Lael"
+              label="Agendar conversa"
               className="mt-3 py-2 text-sm text-foreground/90 hover:text-foreground"
               onNavigate={() => setOpen(false)}
             />
