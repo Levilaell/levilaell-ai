@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import {
@@ -33,9 +34,14 @@ export default async function AdminLoginPage({
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 grid size-10 place-items-center rounded-lg bg-foreground text-background font-mono text-sm font-semibold">
-            LL
-          </div>
+          <Image
+            src="/brand/levilael-logo.png"
+            alt="Levi Lael"
+            width={1326}
+            height={508}
+            priority
+            className="mx-auto mb-4 h-8 w-auto mix-blend-multiply"
+          />
           <h1 className="font-heading text-2xl font-semibold tracking-tight">
             Editorial
           </h1>

@@ -18,18 +18,25 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center" aria-label={siteConfig.name}>
+        <Link
+          href="/"
+          className="flex items-center"
+          aria-label={siteConfig.name}
+        >
           <Image
             src="/brand/levilael-logo.png"
             alt={siteConfig.name}
             width={1326}
             height={508}
             priority
-            className="h-9 w-auto mix-blend-multiply"
+            className="h-6 w-auto mix-blend-multiply"
           />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-7" aria-label="Navegação principal">
+        <nav
+          className="hidden md:flex items-center gap-7"
+          aria-label="Navegação principal"
+        >
           {siteConfig.nav
             .filter((n) => n.href !== "/diagnosis")
             .map((item) => {
@@ -59,7 +66,12 @@ export function SiteHeader() {
             label="Agendar conversa"
             className="hidden lg:inline text-sm text-muted-foreground hover:text-foreground transition-colors"
           />
-          <Button asChild size="default" variant="brand" className="rounded-lg hidden sm:inline-flex">
+          <Button
+            asChild
+            size="default"
+            variant="brand"
+            className="rounded-lg hidden sm:inline-flex"
+          >
             <TrackedLink href="/diagnosis" trackLabel="header_diagnosis">
               Diagnóstico gratuito
             </TrackedLink>
@@ -77,7 +89,10 @@ export function SiteHeader() {
 
       {open && (
         <div className="md:hidden border-t border-border/60 bg-background">
-          <nav className="container-page py-3 flex flex-col" aria-label="Navegação mobile">
+          <nav
+            className="container-page py-3 flex flex-col"
+            aria-label="Navegação mobile"
+          >
             {siteConfig.nav.map((item) => (
               <Link
                 key={item.href}
@@ -88,7 +103,12 @@ export function SiteHeader() {
                 {item.label}
               </Link>
             ))}
-            <Button asChild size="lg" variant="brand" className="mt-3 rounded-lg sm:hidden">
+            <Button
+              asChild
+              size="lg"
+              variant="brand"
+              className="mt-3 rounded-lg sm:hidden"
+            >
               <TrackedLink
                 href="/diagnosis"
                 trackLabel="header_mobile_diagnosis"
@@ -110,4 +130,3 @@ export function SiteHeader() {
     </header>
   );
 }
-

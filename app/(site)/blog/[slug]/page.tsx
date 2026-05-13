@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -122,15 +123,16 @@ export default async function ArticlePage({ params }: Props) {
           <p className="text-lead mt-5">{article.excerpt}</p>
           <div className="mt-7 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="size-9 rounded-full bg-foreground text-background grid place-items-center font-mono text-xs font-semibold">
-                LL
-              </span>
-              <div>
-                <p className="text-sm font-medium">Levi Lael</p>
-                <p className="text-xs text-muted-foreground">
-                  Engenharia de automação para escritórios contábeis
-                </p>
-              </div>
+              <Image
+                src="/brand/levilael-logo.png"
+                alt={siteConfig.name}
+                width={1326}
+                height={508}
+                className="h-7 w-auto mix-blend-multiply"
+              />
+              <p className="text-xs text-muted-foreground max-w-xs">
+                Engenharia de automação para escritórios contábeis
+              </p>
             </div>
             <SocialShare slug={article.slug} title={article.title} />
           </div>

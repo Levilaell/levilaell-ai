@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -45,17 +46,17 @@ export function AdminHeader({
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link
           href="/admin"
-          className="flex items-center gap-2 font-semibold tracking-tight"
+          className="flex items-center gap-3 font-semibold tracking-tight"
         >
-          <span
-            aria-hidden
-            className="grid size-7 place-items-center rounded-md bg-foreground text-background font-mono text-xs font-semibold"
-          >
-            LL
-          </span>
-          <span className="text-sm">
-            Editorial
-            <span className="ml-1 text-muted-foreground">· Admin</span>
+          <Image
+            src="/brand/levilael-logo.png"
+            alt="Levi Lael"
+            width={1326}
+            height={508}
+            className="h-5 w-auto mix-blend-multiply"
+          />
+          <span className="text-sm text-muted-foreground">
+            Editorial · Admin
           </span>
         </Link>
 

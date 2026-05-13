@@ -45,7 +45,7 @@ export function SiteFooter() {
               alt={siteConfig.name}
               width={1326}
               height={508}
-              className="h-11 w-auto mix-blend-multiply"
+              className="h-5 w-auto mix-blend-multiply"
             />
             <p className="text-sm text-muted-foreground mt-3 max-w-xs leading-relaxed">
               Engenharia de automação para escritórios contábeis. Sistema sob
@@ -86,7 +86,8 @@ export function SiteFooter() {
 
         <div className="mt-12 pt-6 border-t border-border/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Levi Lael · Todos os direitos reservados.
+            © {new Date().getFullYear()} Levi Lael · Todos os direitos
+            reservados.
           </p>
           <p className="text-xs text-muted-foreground">
             <Link
