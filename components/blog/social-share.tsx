@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  LinkedinIcon,
-  XIcon,
-  WhatsappIcon,
-} from "@/components/ui/social-icons";
+import { XIcon, WhatsappIcon } from "@/components/ui/social-icons";
 import { siteConfig } from "@/lib/site";
 
 type Props = {
@@ -18,11 +14,6 @@ export function SocialShare({ slug, title }: Props) {
   const encodedTitle = encodeURIComponent(title);
 
   const links = [
-    {
-      label: "LinkedIn",
-      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-      icon: LinkedinIcon,
-    },
     {
       label: "X",
       href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,

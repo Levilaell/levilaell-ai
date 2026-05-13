@@ -12,12 +12,6 @@ export const siteConfig = {
     internal:
       process.env.INTERNAL_NOTIFICATION_EMAIL ?? "hello@levilael.com.br",
   },
-  social: {
-    linkedin:
-      process.env.NEXT_PUBLIC_LINKEDIN_URL ??
-      "https://www.linkedin.com/in/levi-lael",
-    github: process.env.NEXT_PUBLIC_GITHUB_URL ?? "https://github.com/levilael",
-  },
   nav: [
     { label: "Diagnóstico", href: "/diagnosis" },
     { label: "Sobre", href: "/about" },

@@ -149,7 +149,7 @@ um lead duplicou no seu CRM, foi RLS faltando ou idempotência
 ausente. Geralmente os dois."
 
 PROVOCACAO + PROVOCADOR:
-"99% dos consultores de IA que aparecem no LinkedIn nunca
+"99% dos consultores de IA que aparecem no seu feed nunca
 construíram nada em produção. Ferramenta favorita deles:
 o demo. Inimigo deles: retry logic."
 

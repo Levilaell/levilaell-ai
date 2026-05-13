@@ -158,7 +158,11 @@ export function DiagnosisForm() {
       clearDraft();
       track({
         type: "diagnosis_completed",
-        data: { id: data.id, timeline: data.timeline, lead_score: data.lead_score },
+        data: {
+          id: data.id,
+          timeline: data.timeline,
+          lead_score: data.lead_score,
+        },
       });
 
       // Pixel Lead + Google Ads/GA4 conversion. event_id = diagnosis_id casa
@@ -257,7 +261,8 @@ export function DiagnosisForm() {
               </>
             ) : (
               <>
-                Receber meu diagnóstico <CheckCircle2 className="size-4" aria-hidden />
+                Receber meu diagnóstico{" "}
+                <CheckCircle2 className="size-4" aria-hidden />
               </>
             )}
           </Button>
@@ -270,10 +275,10 @@ export function DiagnosisForm() {
 function isLeadValid(a: Answers): boolean {
   return Boolean(
     a.name &&
-      a.name.trim().length >= 2 &&
-      a.email &&
-      /.+@.+\..+/.test(a.email) &&
-      a.consent,
+    a.name.trim().length >= 2 &&
+    a.email &&
+    /.+@.+\..+/.test(a.email) &&
+    a.consent,
   );
 }
 
@@ -293,11 +298,14 @@ function QuestionStep({
       </p>
       <h2 className="heading-3">{question.title}</h2>
       {"subtitle" in question && question.subtitle && (
-        <p className="mt-2 text-sm text-muted-foreground">{question.subtitle}</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {question.subtitle}
+        </p>
       )}
       <div className="mt-6 space-y-2.5">
         {question.options.map((opt) => {
-          const emoji = "emoji" in opt ? (opt as { emoji?: string }).emoji : undefined;
+          const emoji =
+            "emoji" in opt ? (opt as { emoji?: string }).emoji : undefined;
 
           if (question.type === "multi") {
             const current = (answers[question.field] as string[]) ?? [];
@@ -358,7 +366,11 @@ function QuestionStep({
                   : "border-border bg-background hover:border-brand/50 hover:bg-muted",
               )}
             >
-              {emoji && <span className="text-lg" aria-hidden>{emoji}</span>}
+              {emoji && (
+                <span className="text-lg" aria-hidden>
+                  {emoji}
+                </span>
+              )}
               <span>{opt.label}</span>
             </button>
           );
@@ -375,7 +387,9 @@ function QuestionStep({
               </Label>
               <Input
                 id={question.otherField}
-                value={(answers[question.otherField] as string | undefined) ?? ""}
+                value={
+                  (answers[question.otherField] as string | undefined) ?? ""
+                }
                 onChange={(e) => setAnswer(question.otherField, e.target.value)}
                 placeholder="Descreva brevemente"
                 className="mt-1.5"
@@ -432,89 +446,6 @@ function LeadCaptureStep({
           />
         </div>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50/60 dark:bg-amber-950/20 dark:border-amber-900 p-4 space-y-4">
-          <p className="text-sm text-amber-950 dark:text-amber-100">
-            💡 <strong>Quer estimativa de ROI mais precisa?</strong> Esses dados ajudam a IA a calcular retorno real (não chute).
-          </p>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="whatsapp">
-              WhatsApp <span className="text-muted-foreground">(opcional)</span>
-            </Label>
-            <Input
-              id="whatsapp"
-              value={answers.whatsapp ?? ""}
-              onChange={(e) => setAnswer("whatsapp", formatPhone(e.target.value))}
-              placeholder="(11) 99999-9999"
-              autoComplete="tel"
-              inputMode="tel"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="company">
-              Site/empresa <span className="text-muted-foreground">(opcional)</span>
-            </Label>
-            <Input
-              id="company"
-              value={answers.company ?? ""}
-              onChange={(e) => setAnswer("company", e.target.value)}
-              placeholder="empresa.com.br"
-              autoComplete="organization"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="revenue">
-              Faturamento mensal aproximado{" "}
-              <span className="text-muted-foreground">(opcional)</span>
-            </Label>
-            <Select
-              value={(answers.q10_revenue as string | undefined) ?? ""}
-              onValueChange={(v) =>
-                setAnswer("q10_revenue", v as DiagnosisSubmission["q10_revenue"])
-              }
-            >
-              <SelectTrigger id="revenue" className="w-full">
-                <SelectValue placeholder="Selecione (opcional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {REVENUE_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="employees">
-              Número de funcionários{" "}
-              <span className="text-muted-foreground">(opcional)</span>
-            </Label>
-            <Input
-              id="employees"
-              type="number"
-              min={0}
-              value={
-                typeof answers.q10_employees === "number"
-                  ? answers.q10_employees
-                  : ""
-              }
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                setAnswer(
-                  "q10_employees",
-                  Number.isFinite(n) && n >= 0 ? n : undefined,
-                );
-              }}
-              placeholder="Ex: 12"
-              inputMode="numeric"
-            />
-          </div>
-        </div>
-
         <label className="flex items-start gap-2.5 cursor-pointer pt-2">
           <Checkbox
             checked={Boolean(answers.consent)}
@@ -523,7 +454,10 @@ function LeadCaptureStep({
           />
           <span className="text-sm text-muted-foreground leading-relaxed">
             Concordo em receber meu relatório por e-mail e aceito os{" "}
-            <a href="/privacy" className="text-foreground underline underline-offset-2">
+            <a
+              href="/privacy"
+              className="text-foreground underline underline-offset-2"
+            >
               termos de privacidade
             </a>
             .

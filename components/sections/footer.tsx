@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { GithubIcon, LinkedinIcon } from "@/components/ui/social-icons";
-import { TrackedExternalLink } from "@/components/tracking/tracked-external-link";
 import { SchedulingLink } from "@/components/ui/scheduling-button";
 import { siteConfig } from "@/lib/site";
 
@@ -46,24 +44,6 @@ export function SiteFooter() {
               Engenharia de automação para escritórios contábeis. Sistema sob
               medida pro fluxo do seu escritório, não SaaS pronto.
             </p>
-            <div className="mt-5 flex items-center gap-3">
-              <TrackedExternalLink
-                href={siteConfig.social.linkedin}
-                aria-label="LinkedIn"
-                trackLabel="footer_linkedin"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <LinkedinIcon className="size-5" />
-              </TrackedExternalLink>
-              <TrackedExternalLink
-                href={siteConfig.social.github}
-                aria-label="GitHub"
-                trackLabel="footer_github"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <GithubIcon className="size-5" />
-              </TrackedExternalLink>
-            </div>
           </div>
 
           {navColumns.map((col) => (

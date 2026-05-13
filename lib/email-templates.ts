@@ -25,7 +25,7 @@ const baseStyles = `
 `;
 
 export function emailShell(content: string, footerExtra: string = ""): string {
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${baseStyles}</head><body><div class="container">${content}<div class="footer">© ${new Date().getFullYear()} ${siteConfig.name} — <a href="${siteConfig.url}">${siteConfig.domain}</a><br><a href="${siteConfig.social.linkedin}">LinkedIn</a> · <a href="${siteConfig.social.github}">GitHub</a>${footerExtra}</div></div></body></html>`;
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${baseStyles}</head><body><div class="container">${content}<div class="footer">© ${new Date().getFullYear()} ${siteConfig.name} — <a href="${siteConfig.url}">${siteConfig.domain}</a>${footerExtra}</div></div></body></html>`;
 }
 
 // Alias interno mantém referências antigas funcionando.
