@@ -32,6 +32,10 @@ import { track } from "@/lib/tracking";
 import { metaPixel } from "@/lib/tracking/meta";
 import { googleTracking } from "@/lib/tracking/google";
 import { EVENT_VALUE_BRL, leadTier } from "@/lib/tracking/types";
+import {
+  captureAttribution,
+  readAttribution,
+} from "@/lib/tracking/attribution";
 import type { DiagnosisSubmission, DiagnosisAnalysis } from "@/types/diagnosis";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +51,7 @@ export function DiagnosisForm() {
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    captureAttribution();
     const draft = loadDraft();
     if (draft) {
       setStep(draft.step);
@@ -129,10 +134,23 @@ export function DiagnosisForm() {
     setSubmitError(null);
     setSubmitState("submitting");
     try {
+      const attribution = readAttribution();
+      const payload = attribution
+        ? {
+            ...answers,
+            utm_source: attribution.utm_source,
+            utm_medium: attribution.utm_medium,
+            utm_campaign: attribution.utm_campaign,
+            utm_content: attribution.utm_content,
+            utm_term: attribution.utm_term,
+            landing_page: attribution.landing_page,
+            referrer: attribution.referrer,
+          }
+        : answers;
       const res = await fetch("/api/diagnosis/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answers),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

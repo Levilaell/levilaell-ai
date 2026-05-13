@@ -48,6 +48,13 @@ export type SaveDiagnosisInput = DiagnosisAnswers & {
   email: string;
   whatsapp?: string;
   company?: string;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  landing_page?: string | null;
+  referrer?: string | null;
 };
 
 export class SupabaseWriteError extends Error {
@@ -124,6 +131,13 @@ export async function saveDiagnosis(
       q10_revenue: input.q10_revenue ?? null,
       q10_employees:
         typeof input.q10_employees === "number" ? input.q10_employees : null,
+      utm_source: input.utm_source ?? null,
+      utm_medium: input.utm_medium ?? null,
+      utm_campaign: input.utm_campaign ?? null,
+      utm_content: input.utm_content ?? null,
+      utm_term: input.utm_term ?? null,
+      landing_page: input.landing_page ?? null,
+      referrer: input.referrer ?? null,
       status: "processing",
       lead_score: leadScore,
     })

@@ -56,6 +56,14 @@ export const diagnosisAnswersSchema = z.object({
 });
 export type DiagnosisAnswersInput = z.infer<typeof diagnosisAnswersSchema>;
 
+// Atribuição: todos opcionais — fluxo continua funcionando se localStorage
+// estiver bloqueado ou se o lead chegou organicamente. Strings cortadas em
+// 255 pra evitar payloads abusivos (UTMs reais são curtos).
+const attributionField = z
+  .union([z.string().max(255), z.null()])
+  .optional()
+  .transform((v) => (v ? v : null));
+
 export const diagnosisSubmissionSchema = diagnosisAnswersSchema.extend({
   name: z.string().min(2).max(80),
   email: z.email(),
@@ -65,6 +73,13 @@ export const diagnosisSubmissionSchema = diagnosisAnswersSchema.extend({
   q10_employees: z
     .union([z.number().int().min(0).max(1_000_000), z.literal("")])
     .optional(),
+  utm_source: attributionField,
+  utm_medium: attributionField,
+  utm_campaign: attributionField,
+  utm_content: attributionField,
+  utm_term: attributionField,
+  landing_page: attributionField,
+  referrer: attributionField,
   consent: consentRequired,
 });
 export type DiagnosisSubmissionInput = z.infer<typeof diagnosisSubmissionSchema>;

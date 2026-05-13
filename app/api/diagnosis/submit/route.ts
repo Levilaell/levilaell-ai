@@ -106,6 +106,13 @@ export async function POST(request: Request) {
         email: data.email,
         whatsapp: data.whatsapp || undefined,
         company: data.company || undefined,
+        utm_source: data.utm_source ?? null,
+        utm_medium: data.utm_medium ?? null,
+        utm_campaign: data.utm_campaign ?? null,
+        utm_content: data.utm_content ?? null,
+        utm_term: data.utm_term ?? null,
+        landing_page: data.landing_page ?? null,
+        referrer: data.referrer ?? null,
       });
       diagnosisId = saved.id;
     } catch (err) {

@@ -34,6 +34,13 @@ type DiagnosisRow = {
   contacted_at: string | null;
   qualified_at: string | null;
   lead_notes: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  landing_page: string | null;
+  referrer: string | null;
 };
 
 type DiagnosisInsert = Omit<
@@ -46,6 +53,13 @@ type DiagnosisInsert = Omit<
   | "contacted_at"
   | "qualified_at"
   | "lead_notes"
+  | "utm_source"
+  | "utm_medium"
+  | "utm_campaign"
+  | "utm_content"
+  | "utm_term"
+  | "landing_page"
+  | "referrer"
 > & {
   id?: string;
   created_at?: string;
@@ -55,6 +69,13 @@ type DiagnosisInsert = Omit<
   contacted_at?: DiagnosisRow["contacted_at"];
   qualified_at?: DiagnosisRow["qualified_at"];
   lead_notes?: DiagnosisRow["lead_notes"];
+  utm_source?: DiagnosisRow["utm_source"];
+  utm_medium?: DiagnosisRow["utm_medium"];
+  utm_campaign?: DiagnosisRow["utm_campaign"];
+  utm_content?: DiagnosisRow["utm_content"];
+  utm_term?: DiagnosisRow["utm_term"];
+  landing_page?: DiagnosisRow["landing_page"];
+  referrer?: DiagnosisRow["referrer"];
 };
 
 type EmailSequenceRow = {
