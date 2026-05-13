@@ -38,8 +38,11 @@ export function Hero() {
                 variant="outline"
                 className="rounded-xl"
               >
-                <TrackedLink href="/services" trackLabel="home_hero_services">
-                  Ver serviços
+                <TrackedLink
+                  href="/automacao-contabil"
+                  trackLabel="home_hero_solutions"
+                >
+                  Ver soluções
                 </TrackedLink>
               </Button>
             </div>

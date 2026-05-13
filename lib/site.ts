@@ -20,7 +20,6 @@ export const siteConfig = {
   },
   nav: [
     { label: "Diagnóstico", href: "/diagnosis" },
-    { label: "Serviços", href: "/services" },
     { label: "Sobre", href: "/about" },
     { label: "Blog", href: "/blog" },
     { label: "Newsletter", href: "/newsletter" },

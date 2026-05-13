@@ -25,14 +25,14 @@ const faq: FAQItem[] = [
     q: "Quanto custa um projeto de automação?",
     a: (
       <>
-        Depende do escopo. Automações pontuais começam em R$ 2.500. Sprints de
-        IA dedicados ficam em R$ 7.500. Trabalho contínuo como desenvolvedor
-        dedicado, R$ 5.000/mês. Detalhes na página de{" "}
+        Projetos sob medida começam em R$ 5.000 e vão até R$ 25.000, conforme o
+        escopo. A faixa exata sai da conversa de descoberta — onde a gente
+        entende o seu fluxo antes de propor preço. Mais contexto em{" "}
         <Link
-          href="/services"
+          href="/automacao-contabil"
           className="text-foreground underline decoration-brand decoration-2 underline-offset-4 hover:decoration-brand/60"
         >
-          serviços
+          automação contábil
         </Link>
         .
       </>

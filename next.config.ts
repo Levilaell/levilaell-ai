@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/services",
+        destination: "/automacao-contabil",
+        permanent: true,
+      },
+      {
         source: "/lp/document-classification",
         destination: "/triagem-documentos",
         permanent: true,

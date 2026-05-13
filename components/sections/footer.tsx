@@ -11,7 +11,6 @@ const navColumns: { title: string; links: FooterLink[] }[] = [
     title: "Produtos",
     links: [
       { label: "Diagnóstico gratuito", href: "/diagnosis" },
-      { label: "Serviços", href: "/services" },
       { label: "Newsletter", href: "/newsletter" },
     ],
   },
