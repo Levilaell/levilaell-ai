@@ -1,7 +1,7 @@
 /**
  * Redirect interno pro Cal.com que cancela a sequência de e-mails antes de
  * mandar o lead pro agendamento. Usado nos links das sequências (emails 2-6)
- * e no CTA de "Agendar call gratuita" na /diagnosis/result/[id].
+ * e no CTA de "Agendar conversa gratuita" na /diagnosis/result/[id].
  *
  * Caminho feliz:
  *   GET /r/calcom/{diagnosisId}

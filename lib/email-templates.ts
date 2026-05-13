@@ -57,23 +57,23 @@ type EmailCtaCopy = { intro: string; button: string };
 const emailCtaByApproach: Record<RecommendedApproach, EmailCtaCopy> = {
   diy: {
     intro:
-      "Se travar na implementação, te explico o caminho mais curto numa call de 30 min. Sem pitch.",
-    button: "Tirar dúvidas em uma call",
+      "Se travar na implementação, conversamos em 30 min sobre o caminho mais curto. Sem pitch.",
+    button: "Tirar dúvidas em conversa",
   },
   ainda_nao_e_hora: {
     intro:
-      "Mesmo se automação não é prioridade agora, a gente pode mapear quando vai ser. Sem pitch.",
+      "Mesmo se automação não é prioridade agora, podemos mapear quando vai ser. Sem pitch.",
     button: "Agendar 20 min",
   },
   consultoria_pontual: {
     intro:
-      "Quer aprofundar esse plano com apoio especializado? Agenda uma call de 30 min sem compromisso.",
-    button: "Agendar call gratuita",
+      "Quer aprofundar esse plano com apoio especializado? Agende uma conversa de 30 min sem compromisso.",
+    button: "Agendar conversa gratuita",
   },
   parceria_continua: {
     intro:
-      "Se faz sentido trabalhar contínuo, a gente alinha escopo, ritmo e custo numa call.",
-    button: "Agendar call estratégica",
+      "Se faz sentido trabalhar contínuo, alinhamos escopo, ritmo e custo numa conversa.",
+    button: "Agendar conversa estratégica",
   },
 };
 
@@ -133,7 +133,7 @@ export function diagnosisReportEmail(args: {
       <p style="margin-top: 16px"><a class="cta-light" href="${reportUrl}">Ver relatório online</a></p>
 
       <div class="meta">
-        Ou responde este e-mail — leio todos.<br>
+        Ou responde este e-mail — lemos todos.<br>
         — Levi Lael
       </div>
     </div>
@@ -164,7 +164,7 @@ export function newsletterWelcomeEmail(args: { name: string }): {
       <h1>Bem-vindo, ${escapeHtml(fName)}.</h1>
       <p>Você acabou de assinar a newsletter de quem leva operação a sério. Toda terça, um insight prático sobre IA, automação e profissionalização.</p>
       <h2>🎁 Seu Mapa de Operação Inteligente</h2>
-      <p>Conforme prometido, segue o framework em PDF que uso com clientes para mapear oportunidades de automação:</p>
+      <p>Conforme prometido, segue o framework em PDF que usamos com clientes para mapear oportunidades de automação:</p>
       <p><a class="cta" href="${downloadUrl}">Baixar o Mapa (PDF)</a></p>
       <div class="meta">— Levi Lael</div>
     </div>
@@ -189,14 +189,14 @@ export function contactConfirmationEmail(args: { name: string }): {
   const fName = firstName(args.name);
   const html = shell(`
     <div class="card">
-      <h1>Recebi sua mensagem, ${escapeHtml(fName)}.</h1>
-      <p>Respondo em até 6h em dia útil. Se for urgente, me chama no e-mail direto: <a href="mailto:${siteConfig.email.contact}">${siteConfig.email.contact}</a>.</p>
+      <h1>Recebemos sua mensagem, ${escapeHtml(fName)}.</h1>
+      <p>Respondemos em até 6h em dia útil. Se for urgente, manda direto no e-mail: <a href="mailto:${siteConfig.email.contact}">${siteConfig.email.contact}</a>.</p>
       <div class="meta">— Levi Lael</div>
     </div>
   `);
 
-  const text = `Recebi sua mensagem, ${fName}. Respondo em 6h.\n\n— Levi Lael`;
-  return { subject: `Recebi sua mensagem, ${fName}`, html, text };
+  const text = `Recebemos sua mensagem, ${fName}. Respondemos em 6h.\n\n— Levi Lael`;
+  return { subject: `Recebemos sua mensagem, ${fName}`, html, text };
 }
 
 // ---------------------------------------------------------------------------
