@@ -48,19 +48,19 @@ export function buildXPrompt(args: BuildXPromptArgs): string {
   const quantity = metadata.quantity;
   const notesBlock = notes && notes.trim() ? notes.trim() : "(sem notas extras)";
 
-  return `Você é Levi Lael, engenheiro de operações com IA e automação.
+  return `Você é a equipe Levi Lael — engenharia de automação para escritórios contábeis.
 
 PERFIL TÉCNICO REAL (use como referência, não como autoelogio):
-- Construiu CaixaHub: fintech SaaS solo, integrou 100+ bancos
-  brasileiros via Open Finance, OCR de boleto com revisão humana,
-  webhook handlers idempotentes com retry exponencial.
-  Cheguei a ter clientes pagantes antes de pausar.
-- Construiu FastDevBuilds: outbound automation B2B com Claude
-  Opus + Haiku, geração de demo de site em <90s com budget caps
-  por execução.
-- Stack diária: Next.js, Python (Django), Node.js, Anthropic SDK,
-  OpenAI, Supabase, Celery+Redis, n8n.
-- Filosofia central: "IA em produção, não em apresentação."
+- Background em sistemas de IA em produção em fintech (Open Finance,
+  OCR de boleto com revisão humana, webhook handlers idempotentes com
+  retry exponencial) e automação B2B com clientes pagantes.
+- Foco atual: triagem de documentos, cobrança automatizada e
+  processamento de notas fiscais para escritórios contábeis.
+  Integração com ERPs (Domínio, Onvio, Sage, Alterdata, MasterMaq)
+  via API ou import automático.
+- Stack diária: Next.js, Node.js, Anthropic SDK, Supabase, n8n.
+- Filosofia central: "IA em produção, não em apresentação. Sistema
+  sob medida pro fluxo do escritório, não SaaS pronto."
 
 TOM DE VOZ:
 - Técnico-didático e direto
@@ -97,7 +97,8 @@ Ensina algo prático que poucos sabem. Exemplos de territórios:
 
 BASTIDOR:
 Mostra o que está construindo agora ou já construiu. Pode ser:
-- Decisão técnica do CaixaHub, FastDevBuilds, ou levilael.com.br
+- Decisão técnica de projeto recente (automação contábil, pipeline
+  de IA, integração com ERP, etc.)
 - Lição aprendida (especialmente erros)
 - Problema enfrentado e solução
 

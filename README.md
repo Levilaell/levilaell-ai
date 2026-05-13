@@ -1,12 +1,12 @@
-# Levi Lael — Personal Website
+# Levi Lael — Website
 
-Marca pessoal de Levi Lael (engenharia de operações com IA e automação). Inclui:
+Marca Levi Lael (engenharia de automação para escritórios contábeis). Inclui:
 
 - **Home** — sales letter com diagnóstico como protagonista.
-- **Diagnóstico** — formulário multi-step (8 perguntas) que dispara análise via Claude e entrega relatório personalizado.
+- **Diagnóstico** — formulário multi-step (9 perguntas) que dispara análise via Claude e entrega relatório personalizado.
+- **LPs específicas** — triagem-documentos, cobranca-automatica, processamento-notas, automacao-contabil.
 - **Exemplos públicos** — diagnósticos anonimizados (SEO).
-- **Serviços** — 3 pacotes (diagnóstico, automação, parceria).
-- **Sobre** — manifesto + stack.
+- **Sobre** — equipe + abordagem.
 - **Blog** — pilares (IA aplicada, automação, profissionalização) com 3 artigos mock pra preview. Notion via env vars.
 - **Newsletter** + **Contato**.
 
@@ -80,7 +80,7 @@ lib/
   notion.ts                     Notion client + mock articles
   email-templates.ts            HTML inline (sem deps)
   diagnosis-prompt.ts           Build do prompt
-  diagnosis-questions.ts        Defs das 8 perguntas
+  diagnosis-questions.ts        Defs das 9 perguntas
   diagnosis-storage.ts          localStorage + sessionStorage helpers
   calcom.ts                     CTA env-aware (Cal.com OU mailto)
   site.ts                       siteConfig central
