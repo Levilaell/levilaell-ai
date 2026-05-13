@@ -154,10 +154,10 @@ construíram nada em produção. Ferramenta favorita deles:
 o demo. Inimigo deles: retry logic."
 
 BASTIDOR + DIDATICO:
-"O diagnóstico de IA do meu site recusa recomendar automação
-quando não é hora. Honesto > vendedor. Lead lê e pensa 'esse
-cara é diferente'. Conversão piora no curto prazo. Reputação
-melhora pra sempre."
+"Nosso diagnóstico de IA recusa recomendar automação quando não
+é hora. Honesto > vendedor. Lead lê e pensa 'essa equipe é
+diferente'. Conversão piora no curto prazo. Reputação melhora
+pra sempre."
 
 ═══════════════════════════════════════════════════════════
 

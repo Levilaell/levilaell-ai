@@ -15,11 +15,11 @@ type FAQItem = {
 const faq: FAQItem[] = [
   {
     q: "O diagnóstico é realmente gratuito?",
-    a: "Sim, sem letra miúda. Você responde, recebe o relatório, e decide se quer ir adiante. Eu ofereço gratuitamente porque é a melhor forma de te mostrar valor antes de pedir qualquer coisa.",
+    a: "Sim, sem letra miúda. Você responde, recebe o relatório, e decide se quer ir adiante. Oferecemos gratuitamente porque é a melhor forma de te mostrar valor antes de pedir qualquer coisa.",
   },
   {
-    q: "Eu preciso entender de tecnologia pra contratar?",
-    a: "Não. Meu trabalho é traduzir tecnologia em resultado de negócio. Você fala a linguagem da sua empresa, eu traduzo pra automação.",
+    q: "Preciso entender de tecnologia pra contratar?",
+    a: "Não. Nosso trabalho é traduzir tecnologia em resultado de negócio. Você fala a linguagem do seu escritório, a gente traduz pra automação.",
   },
   {
     q: "Quanto custa um projeto de automação?",
@@ -40,7 +40,7 @@ const faq: FAQItem[] = [
   },
   {
     q: "Vocês usam IA em tudo? E se eu não confiar em IA?",
-    a: "Uso IA quando ela é a melhor solução — não como muleta. Em muitos casos, automação tradicional resolve melhor e mais barato. O diagnóstico identifica qual abordagem faz sentido pro seu caso.",
+    a: "Usamos IA quando ela é a melhor solução — não como muleta. Em muitos casos, automação tradicional resolve melhor e mais barato. O diagnóstico identifica qual abordagem faz sentido pro seu caso.",
   },
 ];
 
