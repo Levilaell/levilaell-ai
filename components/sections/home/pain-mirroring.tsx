@@ -12,7 +12,7 @@ export function PainMirroring() {
       <div className="container-page py-20 md:py-24">
         <SectionHeading
           eyebrow="Por que você está aqui"
-          title="Sua empresa cresceu — mas a operação não acompanhou."
+          title="Seu escritório cresceu — mas a operação não acompanhou."
           description="Os processos que funcionavam com 5 pessoas não escalam pra 20. As planilhas viraram caos. As tarefas manuais multiplicam. E você sabe que tem gente sendo paga pra fazer trabalho que software já deveria estar resolvendo."
         />
         <div className="mt-12 grid gap-4 md:grid-cols-3">

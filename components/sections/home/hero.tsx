@@ -10,15 +10,14 @@ export function Hero() {
           <div className="lg:col-span-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-background px-3 py-1 text-xs font-mono uppercase tracking-widest text-muted-foreground mb-6">
               <Sparkles className="size-3.5 text-brand" aria-hidden />
-              Engenharia de operações com IA
+              Para escritórios contábeis
             </div>
             <h1 className="heading-display">
-              Engenharia de operações com IA e automação para empresas que
-              querem{" "}
+              Automação de processos para escritórios contábeis que querem{" "}
               <span className="bg-foreground text-background px-2 rounded-md whitespace-nowrap">
-                crescer sem inchar
+                crescer sem virar
               </span>{" "}
-              a equipe.
+              empresa de tecnologia.
             </h1>
             <p className="text-lead mt-6 max-w-2xl">
               Faça o diagnóstico gratuito e descubra, em 2 minutos, onde sua

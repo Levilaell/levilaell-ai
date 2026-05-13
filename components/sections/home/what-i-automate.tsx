@@ -42,13 +42,13 @@ const items = [
   },
 ] as const;
 
-export function WhatIAutomate() {
+export function WhatWeAutomate() {
   return (
     <section className="border-b border-border/60">
       <div className="container-page py-20 md:py-24">
         <SectionHeading
           eyebrow="Capacidades"
-          title="O que eu automatizo"
+          title="O que automatizamos"
           description="6 categorias de problema. Centenas de combinações possíveis. Sua dor provavelmente é uma delas — e o diagnóstico encontra qual."
         />
         <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">

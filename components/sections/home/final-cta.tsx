@@ -13,7 +13,7 @@ export function FinalCTA() {
           Sua operação tem mais oportunidades do que você imagina.
         </h2>
         <p className="text-lead mt-6 max-w-2xl mx-auto !text-zinc-300 dark:!text-zinc-700">
-          A maioria das empresas perde 15 a 30 horas por semana em tarefas que software já deveria resolver. O diagnóstico te mostra exatamente onde — em 2 minutos.
+          A maioria dos escritórios contábeis perde dezenas de horas por semana em tarefas que software resolveria. O diagnóstico te mostra exatamente onde — em 2 minutos.
         </p>
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <Button asChild size="xl" variant="brand" className="rounded-xl">
