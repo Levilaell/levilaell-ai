@@ -26,8 +26,8 @@ const ctaByApproach: Record<RecommendedApproach, CtaCopy> = {
     eyebrow: "Próxima conversa",
     title: "Travou na implementação?",
     subtitle:
-      "Te explico o caminho mais curto numa call de 30 minutos. Sem pitch.",
-    button: "Tirar dúvidas em uma call",
+      "Te explicamos o caminho mais curto numa conversa de 30 minutos. Sem pitch.",
+    button: "Tirar dúvidas em uma conversa",
   },
   ainda_nao_e_hora: {
     eyebrow: "Conversa exploratória",
@@ -40,15 +40,15 @@ const ctaByApproach: Record<RecommendedApproach, CtaCopy> = {
     eyebrow: "Próxima conversa",
     title: "Quer implementar isso com apoio especializado?",
     subtitle:
-      "Eu ofereço uma call de 30 minutos sem compromisso para discutir esse plano em profundidade.",
-    button: "Agendar call gratuita",
+      "Oferecemos uma conversa de 30 minutos sem compromisso para discutir esse plano em profundidade.",
+    button: "Agendar conversa",
   },
   parceria_continua: {
     eyebrow: "Próxima conversa",
     title: "Vamos discutir uma parceria",
     subtitle:
-      "Quando faz sentido trabalhar contínuo, a gente alinha escopo, ritmo e custo numa call.",
-    button: "Agendar call estratégica",
+      "Quando faz sentido trabalhar contínuo, a gente alinha escopo, ritmo e custo numa conversa.",
+    button: "Agendar conversa estratégica",
   },
 };
 

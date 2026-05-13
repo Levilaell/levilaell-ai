@@ -19,7 +19,7 @@ export function LpHero({
   defaultHeadline,
   dtrVariants,
   subHeadline,
-  primaryCtaText = "Agendar uma call",
+  primaryCtaText = "Agendar conversa",
   secondaryCtaText = "Fazer diagnóstico",
 }: LpHeroProps) {
   return (

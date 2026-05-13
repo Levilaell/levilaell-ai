@@ -18,10 +18,6 @@ const navColumns: { title: string; links: FooterLink[] }[] = [
     title: "Conteúdo",
     links: [
       { label: "Blog", href: "/blog" },
-      {
-        label: "Exemplos de diagnóstico",
-        href: "/diagnosis/examples/clinicas-pequenas-saude",
-      },
       { label: "Sobre", href: "/about" },
     ],
   },
@@ -47,7 +43,8 @@ export function SiteFooter() {
             </p>
             <p className="font-semibold text-lg leading-tight">Levi Lael</p>
             <p className="text-sm text-muted-foreground mt-2 max-w-xs leading-relaxed">
-              Engenharia de operações com IA e automação para empresas que querem crescer sem inchar a equipe.
+              Engenharia de automação para escritórios contábeis. Sistema sob
+              medida pro fluxo do seu escritório, não SaaS pronto.
             </p>
             <div className="mt-5 flex items-center gap-3">
               <TrackedExternalLink

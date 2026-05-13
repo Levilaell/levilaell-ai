@@ -75,7 +75,7 @@ export default function PrivacyPage() {
               <strong>Vercel</strong> — hospedagem do site.
             </li>
             <li>
-              <strong>Cal.com</strong> — apenas se você agendar uma call.
+              <strong>Cal.com</strong> — apenas se você agendar uma conversa.
             </li>
             <li>
               <strong>Meta (Facebook/Instagram)</strong> — eventos de conversão para mensurar campanhas de anúncios. Identificadores (e-mail, telefone, nome) são hashados via SHA-256 antes do envio; o Meta não recebe esses dados em texto puro.
@@ -85,7 +85,7 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p className="mt-4 text-muted-foreground">
-            Nenhum desses parceiros usa seus dados para fins próprios além de prestar o serviço contratado. O compartilhamento com Meta e Google ocorre apenas em eventos específicos (visualização de landing page, conclusão de diagnóstico, agendamento de call) — não há rastreamento contínuo da sua navegação para esses parceiros.
+            Nenhum desses parceiros usa seus dados para fins próprios além de prestar o serviço contratado. O compartilhamento com Meta e Google ocorre apenas em eventos específicos (visualização de landing page, conclusão de diagnóstico, agendamento de conversa) — não há rastreamento contínuo da sua navegação para esses parceiros.
           </p>
         </section>
 

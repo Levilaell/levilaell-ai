@@ -50,7 +50,7 @@ export default function ContactPage() {
                 variant="primary"
                 source="contact_page"
                 subject="Conversa técnica — Levi Lael"
-                label="Agendar call de 30min"
+                label="Agendar conversa de 30min"
               />
             </div>
           </div>

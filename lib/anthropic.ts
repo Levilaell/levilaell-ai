@@ -296,7 +296,7 @@ export function generateMockAnalysis(answers: DiagnosisAnswers): DiagnosisAnalys
       valor_estimado_mensal: "R$ 3.000 a R$ 9.000/mês",
       tempo_payback: "2 a 4 meses",
       disclaimer:
-        "Estimativa preliminar baseada em médias do setor. Para cálculo preciso, podemos refinar na call gratuita.",
+        "Estimativa preliminar baseada em médias do setor. Para cálculo preciso, podemos refinar na conversa gratuita.",
       metodologia:
         "Range estimado a partir de modelos típicos do segmento. Sem dados quantitativos do lead, intervalo mantido amplo de propósito.",
     },

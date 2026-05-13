@@ -13,7 +13,7 @@ export function LpDualCta({
   lpSlug,
   headline,
   subtitle = "Agende uma conversa de 30 minutos ou faça o diagnóstico em 2 minutos.",
-  primaryCtaText = "Agendar uma call",
+  primaryCtaText = "Agendar conversa",
   secondaryCtaText = "Fazer diagnóstico",
 }: LpDualCtaProps) {
   return (

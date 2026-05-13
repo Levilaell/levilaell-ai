@@ -108,7 +108,7 @@ type Props = {
 
 export function SchedulingButton({
   subject,
-  label = "Agendar call gratuita",
+  label = "Agendar conversa",
   size = "lg",
   variant = "primary",
   className,
@@ -158,7 +158,7 @@ type LinkProps = {
 export function SchedulingLink({
   subject,
   source,
-  label = "Agendar call",
+  label = "Agendar conversa",
   className,
   withIcon = false,
   onNavigate,

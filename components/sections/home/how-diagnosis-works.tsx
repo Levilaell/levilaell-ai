@@ -19,7 +19,7 @@ const steps = [
     detail: "no e-mail · acessível por link permanente",
   },
   {
-    title: "Se quiser implementar, agenda uma call comigo — sem compromisso",
+    title: "Se quiser implementar, agenda uma conversa — sem compromisso",
     detail: "sem ligação de vendedor · sem letra miúda",
   },
 ];
