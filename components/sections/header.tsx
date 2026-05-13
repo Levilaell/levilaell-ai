@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
@@ -17,9 +18,15 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label={siteConfig.name}>
-          <Logo />
-          <span className="text-base">Levi Lael</span>
+        <Link href="/" className="flex items-center" aria-label={siteConfig.name}>
+          <Image
+            src="/brand/levilael-logo.png"
+            alt={siteConfig.name}
+            width={1326}
+            height={508}
+            priority
+            className="h-9 w-auto mix-blend-multiply"
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-7" aria-label="Navegação principal">
@@ -104,13 +111,3 @@ export function SiteHeader() {
   );
 }
 
-function Logo() {
-  return (
-    <span
-      aria-hidden
-      className="grid size-8 place-items-center rounded-lg bg-foreground text-background font-mono text-sm font-semibold"
-    >
-      LL
-    </span>
-  );
-}

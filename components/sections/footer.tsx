@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SchedulingLink } from "@/components/ui/scheduling-button";
 import { siteConfig } from "@/lib/site";
@@ -39,8 +40,14 @@ export function SiteFooter() {
             <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-3">
               {siteConfig.domain}
             </p>
-            <p className="font-semibold text-lg leading-tight">Levi Lael</p>
-            <p className="text-sm text-muted-foreground mt-2 max-w-xs leading-relaxed">
+            <Image
+              src="/brand/levilael-logo.png"
+              alt={siteConfig.name}
+              width={1326}
+              height={508}
+              className="h-11 w-auto mix-blend-multiply"
+            />
+            <p className="text-sm text-muted-foreground mt-3 max-w-xs leading-relaxed">
               Engenharia de automação para escritórios contábeis. Sistema sob
               medida pro fluxo do seu escritório, não SaaS pronto.
             </p>
