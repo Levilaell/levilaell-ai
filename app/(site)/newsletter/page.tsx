@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 const promises = [
   "Um insight estratégico por semana (3-5 minutos de leitura)",
-  "Cases reais (anonimizados) de operações que automatizei",
-  "Frameworks de decisão que uso com clientes",
+  "Cases reais (anonimizados) de operações que automatizamos",
+  "Frameworks de decisão que usamos com clientes",
   "Acesso antecipado a novos conteúdos e produtos",
 ];
 
@@ -60,7 +60,7 @@ export default function NewsletterPage() {
           </h2>
           <p className="mt-3 text-sm text-amber-900/80 dark:text-amber-100/80 leading-relaxed">
             Ao assinar, você recebe imediatamente o framework em PDF de 12
-            páginas que uso com meus clientes pra mapear oportunidades de
+            páginas que usamos com clientes pra mapear oportunidades de
             automação.
           </p>
         </aside>

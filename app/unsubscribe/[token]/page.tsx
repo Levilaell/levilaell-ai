@@ -75,8 +75,8 @@ export default async function UnsubscribePage({ params }: Props) {
           <h1 className="heading-2">Cancelado.</h1>
           <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
             Você não vai mais receber emails automáticos sobre o seu diagnóstico.
-            Se quiser conversar comigo, é só responder qualquer email anterior
-            ou usar o formulário abaixo.
+            Se quiser conversar com a gente, é só responder qualquer email
+            anterior ou usar o formulário abaixo.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild size="lg" variant="outline" className="rounded-xl">
@@ -95,7 +95,7 @@ export default async function UnsubscribePage({ params }: Props) {
               aria-hidden
             />
           </div>
-          <h1 className="heading-2">Não consegui processar.</h1>
+          <h1 className="heading-2">Não conseguimos processar.</h1>
           <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
             {result.reason ?? "Tente novamente mais tarde."} Se quiser cancelar
             manualmente, mande um email pra{" "}

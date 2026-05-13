@@ -31,7 +31,7 @@ const ctaByApproach: Record<RecommendedApproach, CtaCopy> = {
   },
   ainda_nao_e_hora: {
     eyebrow: "Conversa exploratória",
-    title: "Quer pensar isso comigo?",
+    title: "Quer pensar isso com a gente?",
     subtitle:
       "Mesmo se automação não é prioridade agora, a gente pode mapear quando vai ser. Sem pitch.",
     button: "Agendar 20 min",

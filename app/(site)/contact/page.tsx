@@ -41,8 +41,8 @@ export default function ContactPage() {
               Prefere conversar direto?
             </p>
             <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-              30min de conversa técnica — não é pitch comercial. Se eu não for a
-              melhor pessoa pro seu caso, te indico quem é.
+              30min de conversa técnica — não é pitch comercial. Se não formos a
+              melhor opção pro seu caso, indicamos quem é.
             </p>
             <div className="mt-4">
               <SchedulingButton

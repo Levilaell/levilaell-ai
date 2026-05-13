@@ -128,7 +128,7 @@ export default async function ArticlePage({ params }: Props) {
               <div>
                 <p className="text-sm font-medium">Levi Lael</p>
                 <p className="text-xs text-muted-foreground">
-                  Engenheiro de operações com IA
+                  Engenharia de automação para escritórios contábeis
                 </p>
               </div>
             </div>
