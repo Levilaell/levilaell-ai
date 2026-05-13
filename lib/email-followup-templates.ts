@@ -37,13 +37,13 @@ const footerUnsub = (unsubUrl: string) =>
 // ---------------------------------------------------------------------------
 export function followUpEmail3(ctx: FollowUpContext): FollowUpEmail {
   const f = firstName(ctx.name);
-  const subject = `${f}, como decido entre construir vs comprar automação`;
+  const subject = `${f}, como decidir entre construir vs comprar automação`;
 
   const html = emailShell(
     `
     <div class="card">
       <p>Oi, ${escapeHtml(f)}.</p>
-      <p>Toda vez que ajudo alguém a pensar em automação, a primeira pergunta é: <strong>"compro pronto ou mando construir?"</strong></p>
+      <p>Toda vez que ajudamos alguém a pensar em automação, a primeira pergunta é: <strong>"compro pronto ou mando construir?"</strong></p>
       <p>Não tem resposta universal. Mas tem framework.</p>
 
       <h3>Compra pronto se:</h3>
@@ -60,8 +60,8 @@ export function followUpEmail3(ctx: FollowUpContext): FollowUpEmail {
         <li>Diferencial competitivo está justamente na automação.</li>
       </ul>
 
-      <p>80% dos casos: começa comprando pronto, migra pra custom quando dor específica aparece.</p>
-      <p>Se quiser pensar isso pra sua operação especificamente, agenda 30 min comigo.</p>
+      <p>Na maioria dos casos: começa comprando pronto, migra pra custom quando dor específica aparece.</p>
+      <p>Se quiser pensar isso pra sua operação especificamente, agende 30 min com a gente.</p>
       ${ctaButton("Agendar 30 min", ctx.calcomUrl)}
 
       <div class="meta">— Levi Lael</div>
@@ -72,7 +72,7 @@ export function followUpEmail3(ctx: FollowUpContext): FollowUpEmail {
 
   const text = `Oi, ${f}.
 
-Toda vez que ajudo alguém a pensar em automação, a primeira pergunta é: "compro pronto ou mando construir?"
+Toda vez que ajudamos alguém a pensar em automação, a primeira pergunta é: "compro pronto ou mando construir?"
 
 COMPRA pronto se:
 - O processo é genérico (vendido em todo lugar)
@@ -84,7 +84,7 @@ CONSTRÓI sob medida se:
 - Stack atual exige integração customizada
 - Diferencial competitivo está na automação
 
-80% dos casos: começa comprando, migra pra custom quando dor específica aparece.
+Na maioria dos casos: começa comprando, migra pra custom quando dor específica aparece.
 
 Agendar 30 min: ${ctx.calcomUrl}
 
@@ -95,7 +95,7 @@ Cancelar futuros: ${ctx.unsubscribeUrl}`;
 }
 
 // ---------------------------------------------------------------------------
-// Email 4 — D+8 — convite explícito pra call (referencia oportunidade #1)
+// Email 4 — D+8 — convite explícito pra conversa (referencia oportunidade #1)
 // ---------------------------------------------------------------------------
 export function followUpEmail4(ctx: FollowUpContext): FollowUpEmail {
   const f = firstName(ctx.name);
@@ -106,11 +106,11 @@ export function followUpEmail4(ctx: FollowUpContext): FollowUpEmail {
     <div class="card">
       <p>Oi, ${escapeHtml(f)}.</p>
       <p>Já se passaram 8 dias desde que você completou o diagnóstico. <strong>${escapeHtml(ctx.opportunityTitle)}</strong> apareceu como sua prioridade número um.</p>
-      <p>Se você ainda quer destravar isso, me oferece 30 minutos. Sem pitch, sem apresentação. Vamos conversar sobre seu caso específico e te dou o caminho mais curto.</p>
+      <p>Se você ainda quer destravar isso, agende 30 minutos com a gente. Sem pitch, sem apresentação. Conversamos sobre seu caso específico e te damos o caminho mais curto.</p>
       <ul>
-        <li>Se for o caminho de DIY, te explico como fazer sozinho.</li>
-        <li>Se eu puder ajudar, te falo como.</li>
-        <li>Se não for o momento, te falo isso também.</li>
+        <li>Se for o caminho de DIY, te explicamos como fazer sozinho.</li>
+        <li>Se pudermos ajudar, te falamos como.</li>
+        <li>Se não for o momento, te falamos isso também.</li>
       </ul>
       ${ctaButton("Agendar 30 min", ctx.calcomUrl)}
       <div class="meta">— Levi Lael</div>
@@ -123,11 +123,11 @@ export function followUpEmail4(ctx: FollowUpContext): FollowUpEmail {
 
 Já se passaram 8 dias desde o diagnóstico. ${ctx.opportunityTitle} apareceu como sua prioridade #1.
 
-Se ainda quer destravar isso, me oferece 30 minutos. Sem pitch, sem apresentação.
+Se ainda quer destravar isso, agende 30 minutos com a gente. Sem pitch, sem apresentação.
 
-- Se for DIY, te explico como fazer sozinho.
-- Se eu puder ajudar, te falo como.
-- Se não for o momento, te falo isso também.
+- Se for DIY, te explicamos como fazer sozinho.
+- Se pudermos ajudar, te falamos como.
+- Se não for o momento, te falamos isso também.
 
 Agendar: ${ctx.calcomUrl}
 
@@ -149,11 +149,11 @@ export function followUpEmail5(ctx: FollowUpContext): FollowUpEmail {
     `
     <div class="card">
       <p>Oi, ${escapeHtml(f)}.</p>
-      <p>Esse é o penúltimo email que você recebe sobre seu diagnóstico. Antes de eu sumir do seu inbox, queria deixar um bônus:</p>
+      <p>Esse é o penúltimo email que você recebe sobre seu diagnóstico. Antes da sequência terminar, queremos deixar um bônus:</p>
       <h2>🎁 Mapa de Operação Inteligente</h2>
-      <p>Framework em PDF de 12 páginas que uso com clientes pra identificar oportunidades de automação. Gratuito, é só baixar.</p>
+      <p>Framework em PDF de 12 páginas que usamos com clientes pra identificar oportunidades de automação. Gratuito, é só baixar.</p>
       <p><a class="cta" href="${newsletterUrl}">Pegar o Mapa</a></p>
-      <p>Se em algum momento fizer sentido conversar, <a href="${ctx.calcomUrl}">meu calendário está aqui</a>. Sem pressa.</p>
+      <p>Se em algum momento fizer sentido conversar, <a href="${ctx.calcomUrl}">nosso calendário está aqui</a>. Sem pressa.</p>
       <div class="meta">— Levi Lael</div>
     </div>
   `,
@@ -162,13 +162,13 @@ export function followUpEmail5(ctx: FollowUpContext): FollowUpEmail {
 
   const text = `Oi, ${f}.
 
-Esse é o penúltimo email que você recebe sobre seu diagnóstico. Antes de eu sumir do seu inbox, queria deixar um bônus:
+Esse é o penúltimo email que você recebe sobre seu diagnóstico. Antes da sequência terminar, queremos deixar um bônus:
 
-🎁 Mapa de Operação Inteligente — framework em PDF de 12 páginas que uso com clientes pra identificar oportunidades de automação.
+🎁 Mapa de Operação Inteligente — framework em PDF de 12 páginas que usamos com clientes pra identificar oportunidades de automação.
 
 Pegar: ${newsletterUrl}
 
-Se em algum momento fizer sentido conversar, meu calendário está aqui:
+Se em algum momento fizer sentido conversar, nosso calendário está aqui:
 ${ctx.calcomUrl}
 
 — Levi Lael
@@ -189,8 +189,8 @@ export function followUpEmail6(ctx: FollowUpContext): FollowUpEmail {
     <div class="card">
       <p>Oi, ${escapeHtml(f)}.</p>
       <p>Tem 20 dias que você fez o diagnóstico. Esse é o último email automático que você recebe sobre isso.</p>
-      <p>Se ainda tem alguma dúvida ou quer trocar uma ideia, <a href="${ctx.calcomUrl}">meu calendário tá aqui</a> ou simplesmente responde esse email.</p>
-      <p>Se a operação está rodando bem e isso já se resolveu, ótimo — fico feliz.</p>
+      <p>Se ainda tem alguma dúvida ou quer trocar uma ideia, <a href="${ctx.calcomUrl}">nosso calendário tá aqui</a> ou simplesmente responde esse email.</p>
+      <p>Se a operação está rodando bem e isso já se resolveu, ótimo — ficamos felizes.</p>
       <p style="margin-top:32px"><a href="${ctx.unsubscribeUrl}" style="color:#52525b; text-decoration:underline">Cancelar futuros emails</a></p>
       <div class="meta">— Levi Lael</div>
     </div>
@@ -201,12 +201,12 @@ export function followUpEmail6(ctx: FollowUpContext): FollowUpEmail {
 
 Tem 20 dias que você fez o diagnóstico. Esse é o último email automático que você recebe sobre isso.
 
-Se ainda tem alguma dúvida ou quer trocar uma ideia, meu calendário tá aqui:
+Se ainda tem alguma dúvida ou quer trocar uma ideia, nosso calendário tá aqui:
 ${ctx.calcomUrl}
 
 Ou só responde esse email.
 
-Se a operação está rodando bem e isso já se resolveu, ótimo — fico feliz.
+Se a operação está rodando bem e isso já se resolveu, ótimo — ficamos felizes.
 
 Cancelar futuros: ${ctx.unsubscribeUrl}
 

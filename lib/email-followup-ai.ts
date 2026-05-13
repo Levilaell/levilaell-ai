@@ -146,7 +146,7 @@ function buildPrompt(ctx: FollowUp2Context): string {
   const goalLabel = labelFromOptions(MAIN_GOALS, ctx.q7_main_goal);
   const tools = ctx.opportunity1.ferramentas_sugeridas.join(", ");
 
-  return `Você está escrevendo o segundo e-mail de uma sequência de nurturing pra um lead que fez um diagnóstico no site de Levi Lael (engenheiro de operações com IA). Esse e-mail vai 2 dias depois do diagnóstico.
+  return `Você está escrevendo o segundo e-mail de uma sequência de nurturing pra um lead que fez um diagnóstico no site da Levi Lael (engenharia de automação para escritórios contábeis). Esse e-mail vai 2 dias depois do diagnóstico.
 
 CONTEXTO DO LEAD:
 - Nome: ${ctx.name}
@@ -166,12 +166,12 @@ Aprofundar a Oportunidade #1 com 1 nuance que o relatório inicial não menciono
 REGRAS:
 1. Máximo 250 palavras no body
 2. Subject curto e específico (não use "novidades", "atualização" ou similar)
-3. Termina com convite suave pra agendar call no link ${ctx.calcomUrl}
+3. Termina com convite suave pra agendar conversa no link ${ctx.calcomUrl}
 4. NUNCA invente estatísticas ou casos
 5. Linguagem calibrada pra maturidade tech: "${maturityLabel}" — se for "manual", evite jargão; se for "mature", pode ser técnico
 6. Não use "querido(a)" ou abertura formal — comece com "Oi, [primeiro nome]."
 7. Português brasileiro direto
-8. NÃO mencione Levi Lael em terceira pessoa — você é o Levi escrevendo
+8. NÃO mencione Levi Lael em terceira pessoa — você é a equipe Levi Lael escrevendo. Use "nós" / "construímos" / "alinhamos" — nunca primeira pessoa singular ("eu", "meu", "comigo")
 
 FORMATO DO HTML:
 - Use apenas <p>, <strong>, <em>, <a href>, <ul>/<li>
@@ -244,13 +244,13 @@ function mockFollowUpResponse(ctx: FollowUp2Context): AiResponse {
   const subject = `${f}, um detalhe sobre ${op.titulo} que vale relembrar`;
   const body_html = `<p>Oi, ${escapeHtml(f)}.</p>
 <p>Dois dias atrás você terminou o diagnóstico — e <strong>${escapeHtml(op.titulo)}</strong> apareceu como sua maior oportunidade.</p>
-<p>O relatório falou do <em>quê</em>. Hoje quero falar de uma nuance do <em>como</em>: 80% das equipes que tentam essa automação param na primeira integração porque o sistema legado responde devagar e ninguém calibrou os retries. Sem retry exponencial, a primeira semana de produção mostra os bugs. Antes de codar, mapeie 3 pontos onde o fluxo pode quebrar (timeout, payload inválido, rate limit) e desenhe o que acontece em cada — não tratar isso te custa o dobro depois.</p>
-<p>Se quiser revisar o plano comigo (30 min, sem compromisso): <a href="${ctx.calcomUrl}">${ctx.calcomUrl}</a></p>`;
+<p>O relatório falou do <em>quê</em>. Hoje queremos falar de uma nuance do <em>como</em>: a maioria das equipes que tentam essa automação param na primeira integração porque o sistema legado responde devagar e ninguém calibrou os retries. Sem retry exponencial, a primeira semana de produção mostra os bugs. Antes de codar, mapeie 3 pontos onde o fluxo pode quebrar (timeout, payload inválido, rate limit) e desenhe o que acontece em cada — não tratar isso custa o dobro depois.</p>
+<p>Se quiser revisar o plano com a gente (30 min, sem compromisso): <a href="${ctx.calcomUrl}">${ctx.calcomUrl}</a></p>`;
   const body_text = `Oi, ${f}.
 
 Dois dias atrás você terminou o diagnóstico — e ${op.titulo} apareceu como sua maior oportunidade.
 
-O relatório falou do quê. Hoje quero falar de uma nuance do como: 80% das equipes que tentam essa automação param na primeira integração porque o sistema legado responde devagar e ninguém calibrou os retries. Antes de codar, mapeie 3 pontos onde o fluxo pode quebrar e desenhe o que acontece em cada.
+O relatório falou do quê. Hoje queremos falar de uma nuance do como: a maioria das equipes que tentam essa automação para na primeira integração porque o sistema legado responde devagar e ninguém calibrou os retries. Antes de codar, mapeie 3 pontos onde o fluxo pode quebrar e desenhe o que acontece em cada.
 
 Agendar 30 min: ${ctx.calcomUrl}`;
   return { subject, body_html, body_text };
