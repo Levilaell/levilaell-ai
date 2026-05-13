@@ -35,7 +35,7 @@ export default function PrivacyPage() {
           <h2 className="heading-3">2. Que dados coletamos</h2>
           <ul className="mt-3 space-y-2 list-disc list-outside pl-6 marker:text-muted-foreground">
             <li>
-              <strong>Diagnóstico:</strong> nome, e-mail, WhatsApp (opcional), empresa (opcional), respostas das 9 perguntas, e dados quantitativos opcionais (faturamento, número de funcionários).
+              <strong>Diagnóstico:</strong> nome, e-mail, WhatsApp (opcional), empresa (opcional), respostas do diagnóstico, e dados quantitativos opcionais (faturamento, número de funcionários).
             </li>
             <li>
               <strong>Newsletter:</strong> nome, e-mail.

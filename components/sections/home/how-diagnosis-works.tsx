@@ -5,8 +5,8 @@ import { TrackedLink } from "@/components/tracking/tracked-link";
 
 const steps = [
   {
-    title: "Você responde 8 perguntas estratégicas sobre sua operação atual",
-    detail: "2 minutos · sem cadastro pra começar",
+    title: "Você responde algumas perguntas estratégicas sobre sua operação atual",
+    detail: "diagnóstico em 2 minutos · sem cadastro pra começar",
   },
   {
     title:

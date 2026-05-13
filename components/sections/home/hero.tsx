@@ -66,8 +66,8 @@ function DiagnosisPreview() {
       />
       <div className="relative rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center justify-between text-xs font-mono text-muted-foreground">
-          <span>DIAGNÓSTICO · Q1/8</span>
-          <span>2 min</span>
+          <span>DIAGNÓSTICO · 2 MIN</span>
+          <span>EM PROGRESSO</span>
         </div>
         <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
           <div className="h-full w-[12%] bg-brand" />

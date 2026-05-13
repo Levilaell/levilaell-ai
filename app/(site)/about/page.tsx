@@ -101,9 +101,9 @@ export default function AboutPage() {
           </p>
           <p>
             Construímos o oposto. Sistema desenhado pro fluxo específico do
-            seu escritório, integrado ao ERP que você já usa (Domínio,
-            Onvio, Sage, Alterdata, MasterMaq), com revisão humana onde
-            importa.
+            seu escritório, conectado ao ERP que você já usa via API ou
+            import automático — Domínio, Onvio, Sage, Alterdata, MasterMaq
+            e outros — com revisão humana onde importa.
           </p>
           <p>
             A diferença entre uma demo que impressiona e um sistema que roda

@@ -89,9 +89,9 @@ export default function Page() {
             },
             {
               number: 4,
-              title: "Integra com seu sistema",
+              title: "Conecta com seu ERP",
               description:
-                "Funciona com Domínio, Onvio, Sage, Alterdata. Os documentos triados entram direto no seu fluxo atual.",
+                "Via API ou import automático. Suporta Domínio, Onvio, Sage, Alterdata, MasterMaq e outros. Os documentos triados entram no seu fluxo atual.",
             },
           ]}
         />
@@ -118,7 +118,7 @@ export default function Page() {
             {
               question: "Funciona com meu sistema atual?",
               answer:
-                "Sim. O sistema é construído pra integrar com seu fluxo, não substituir suas ferramentas. Os documentos triados podem entrar direto no Domínio, Onvio, Sage, Alterdata ou outro ERP.",
+                "Sim. Conectamos com seu ERP via API ou import automático — Domínio, Onvio, Sage, Alterdata, MasterMaq e outros. O sistema é construído pra integrar com seu fluxo, não substituir suas ferramentas.",
             },
             {
               question: "E se meu formato de documento for muito específico?",

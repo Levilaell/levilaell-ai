@@ -91,7 +91,7 @@ export default function Page() {
               number: 4,
               title: "Output direto pro seu sistema",
               description:
-                "Dados estruturados entram automaticamente no Domínio, Onvio, Sage ou planilha. Sua equipe só revisa o que precisa.",
+                "Conecta com seu ERP via API ou import automático. Suporta Domínio, Onvio, Sage, Alterdata, MasterMaq e outros. Sua equipe só revisa o que precisa.",
             },
           ]}
         />

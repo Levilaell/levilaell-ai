@@ -76,9 +76,9 @@ export default function Page() {
             },
             {
               number: 2,
-              title: "Integra com seu ERP",
+              title: "Conecta com seu ERP",
               description:
-                "Domínio, Onvio, Sage, Alterdata, MasterMaq. Sistema soma ao que você já usa, não substitui.",
+                "Via API ou import automático. Suporta Domínio, Onvio, Sage, Alterdata, MasterMaq e outros. Sistema soma ao que você já usa, não substitui.",
             },
             {
               number: 3,
@@ -117,12 +117,12 @@ export default function Page() {
             {
               question: "Funciona com qual ERP?",
               answer:
-                "Sistemas mais comuns no mercado contábil: Domínio, Onvio, Sage, Alterdata, MasterMaq. Outros também funcionam — sistema é construído pra integrar com o que você usa.",
+                "Conectamos via API ou import automático. Suporta Domínio, Onvio, Sage, Alterdata, MasterMaq e outros — sistema é construído pra integrar com o que você usa, no caminho que o ERP permitir.",
             },
             {
               question: "Como funciona o diagnóstico?",
               answer:
-                "10 perguntas em 2 minutos sobre o seu escritório. IA gera análise com 3 oportunidades priorizadas, estimativa de ROI e recomendação honesta (inclui 'ainda não é hora' quando aplicável).",
+                "Diagnóstico em 2 minutos sobre o seu escritório. IA gera análise com 3 oportunidades priorizadas, estimativa de ROI e recomendação honesta (inclui 'ainda não é hora' quando aplicável).",
             },
           ]}
         />
