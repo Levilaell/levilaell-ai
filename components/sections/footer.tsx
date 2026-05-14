@@ -40,13 +40,7 @@ export function SiteFooter() {
             <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-3">
               {siteConfig.domain}
             </p>
-            <Image
-              src="/brand/levilael-logo.png"
-              alt={siteConfig.name}
-              width={1326}
-              height={508}
-              className="h-5 w-auto mix-blend-multiply"
-            />
+
             <p className="text-sm text-muted-foreground mt-3 max-w-xs leading-relaxed">
               Engenharia de automação para escritórios contábeis. Sistema sob
               medida pro fluxo do seu escritório, não SaaS pronto.

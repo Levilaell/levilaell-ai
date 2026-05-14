@@ -53,7 +53,7 @@ export function AdminHeader({
             alt="Levi Lael"
             width={1326}
             height={508}
-            className="h-5 w-auto mix-blend-multiply"
+            className="h-12 mt-1 w-auto mix-blend-multiply"
           />
           <span className="text-sm text-muted-foreground">
             Editorial · Admin
@@ -101,8 +101,8 @@ export function AdminHeader({
           <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 text-xs sm:px-6">
             <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
             <span>
-              Você está em <strong>{ratioPct}%</strong> do limite mensal de IA
-              ({formatBRL(costMonthBRL!)} de {formatBRL(monthlyLimitBRL)}).
+              Você está em <strong>{ratioPct}%</strong> do limite mensal de IA (
+              {formatBRL(costMonthBRL!)} de {formatBRL(monthlyLimitBRL)}).
             </span>
             <Link
               href="/admin/stats"

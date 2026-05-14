@@ -9,7 +9,11 @@ import { ArticleRenderer } from "@/components/blog/article-renderer";
 import { InlineDiagnosisCTA } from "@/components/blog/inline-cta";
 import { PillarBadge } from "@/components/blog/pillar-badge";
 import { SocialShare } from "@/components/blog/social-share";
-import { getArticleBySlug, getRelatedArticles, listArticles } from "@/lib/notion";
+import {
+  getArticleBySlug,
+  getRelatedArticles,
+  listArticles,
+} from "@/lib/notion";
 import { siteConfig } from "@/lib/site";
 import { formatLongDate } from "@/lib/utils";
 
@@ -19,7 +23,10 @@ type Props = {
 
 export const revalidate = 600;
 
-function splitMarkdownAtMidpoint(markdown: string): { before: string; after: string } {
+function splitMarkdownAtMidpoint(markdown: string): {
+  before: string;
+  after: string;
+} {
   const paragraphs = markdown.split(/\n\n+/);
   if (paragraphs.length <= 3) return { before: markdown, after: "" };
   const mid = Math.max(2, Math.floor(paragraphs.length / 2));
@@ -63,7 +70,9 @@ export default async function ArticlePage({ params }: Props) {
   if (!article) notFound();
 
   const related = await getRelatedArticles(article);
-  const { before: beforeCta, after: afterCta } = splitMarkdownAtMidpoint(article.markdown);
+  const { before: beforeCta, after: afterCta } = splitMarkdownAtMidpoint(
+    article.markdown,
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -73,7 +82,9 @@ export default async function ArticlePage({ params }: Props) {
     datePublished: article.publishedAt,
     dateModified: article.publishedAt,
     inLanguage: "pt-BR",
-    image: article.coverImage ? [article.coverImage] : [`${siteConfig.url}/og.png`],
+    image: article.coverImage
+      ? [article.coverImage]
+      : [`${siteConfig.url}/og.png`],
     author: {
       "@type": "Person",
       name: siteConfig.name,
@@ -102,7 +113,12 @@ export default async function ArticlePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="container-prose">
-        <Button asChild variant="ghost" size="sm" className="rounded-lg mb-6 -ml-3">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="rounded-lg mb-6 -ml-3"
+        >
           <Link href="/blog">
             <ArrowLeft className="size-4" aria-hidden /> Voltar para o blog
           </Link>
@@ -122,18 +138,6 @@ export default async function ArticlePage({ params }: Props) {
           <h1 className="heading-display">{article.title}</h1>
           <p className="text-lead mt-5">{article.excerpt}</p>
           <div className="mt-7 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/brand/levilael-logo.png"
-                alt={siteConfig.name}
-                width={1326}
-                height={508}
-                className="h-7 w-auto mix-blend-multiply"
-              />
-              <p className="text-xs text-muted-foreground max-w-xs">
-                Engenharia de automação para escritórios contábeis
-              </p>
-            </div>
             <SocialShare slug={article.slug} title={article.title} />
           </div>
         </header>

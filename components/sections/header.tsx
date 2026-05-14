@@ -27,9 +27,9 @@ export function SiteHeader() {
             src="/brand/levilael-logo.png"
             alt={siteConfig.name}
             width={1326}
-            height={508}
+            height={400}
             priority
-            className="h-6 w-auto mix-blend-multiply"
+            className="h-17 mt-2 w-auto mix-blend-multiply"
           />
         </Link>
 

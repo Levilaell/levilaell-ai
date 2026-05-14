@@ -40,14 +40,9 @@ export default async function AdminLoginPage({
             width={1326}
             height={508}
             priority
-            className="mx-auto mb-4 h-8 w-auto mix-blend-multiply"
+            className="mx-auto mb-4 h-20 w-auto mix-blend-multiply"
           />
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Editorial
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Acesso restrito.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Acesso restrito.</p>
         </div>
 
         {!isAdminConfigured() ? (
