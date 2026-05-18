@@ -82,7 +82,8 @@ export type FollowUp2Context = {
   q2_erp: string;
   q3_client_profile: string;
   opportunity1: OpportunityV2 | Opportunity;
-  calcomUrl: string;
+  /** URL pra página /agendar?d=<id> — substituiu o Cal.com em 2026-05-18. */
+  schedulingUrl: string;
   unsubscribeUrl: string;
 };
 
@@ -114,10 +115,10 @@ export async function generateFollowUpEmail2(
     .replace(/<\/?head[^>]*>/gi, "")
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
 
-  // Se o IA não incluiu link pra Cal.com, adiciona um CTA antes do unsub.
-  const calcomMentioned = cleanHtml.includes(ctx.calcomUrl);
-  if (!calcomMentioned) {
-    cleanHtml += `<p style="margin-top:24px"><a class="cta" href="${ctx.calcomUrl}">Agendar 30 min</a></p>`;
+  // Se a IA não incluiu o link de agendamento, adiciona um CTA antes do unsub.
+  const schedulingMentioned = cleanHtml.includes(ctx.schedulingUrl);
+  if (!schedulingMentioned) {
+    cleanHtml += `<p style="margin-top:24px"><a class="cta" href="${ctx.schedulingUrl}">Quero conversar</a></p>`;
   }
 
   const html = emailShell(
@@ -127,9 +128,9 @@ export async function generateFollowUpEmail2(
   const textWithUnsub = ai.body_text.includes(ctx.unsubscribeUrl)
     ? ai.body_text
     : `${ai.body_text}\n\nCancelar futuros: ${ctx.unsubscribeUrl}`;
-  const textFinal = textWithUnsub.includes(ctx.calcomUrl)
+  const textFinal = textWithUnsub.includes(ctx.schedulingUrl)
     ? textWithUnsub
-    : `${textWithUnsub}\n\nAgendar: ${ctx.calcomUrl}`;
+    : `${textWithUnsub}\n\nQuero conversar: ${ctx.schedulingUrl}`;
 
   return {
     subject: ai.subject,
@@ -170,7 +171,7 @@ Aprofundar a Oportunidade #1 com 1 nuance que o relatório inicial não menciono
 REGRAS:
 1. Máximo 250 palavras no body
 2. Subject curto e específico (não use "novidades", "atualização" ou similar)
-3. Termina com convite suave pra agendar conversa no link ${ctx.calcomUrl}
+3. Termina com um convite suave pro lead deixar contato pra falar no WhatsApp, usando o link ${ctx.schedulingUrl}. NÃO mencione "agendar 30 minutos", "calendário", "Cal.com" — fala "deixa seu contato e te chamo no WhatsApp" ou variação natural disso.
 4. NUNCA invente estatísticas, casos ou números
 5. NÃO recomende ferramenta específica (n8n, Make, Zapier, ChatGPT). Foque no processo.
 6. Linguagem ajustada pra contabilidade — pode usar terminologia técnica (SPED, DCTF, eSocial, fechamento) quando fizer sentido
@@ -181,7 +182,7 @@ REGRAS:
 FORMATO DO HTML:
 - Use apenas <p>, <strong>, <em>, <a href>, <ul>/<li>
 - Não inclua <html>, <body>, <head>, <style> — o wrapper já cuida
-- Os links pra Cal.com devem usar o href "${ctx.calcomUrl}"
+- O link de "quero conversar" deve usar o href "${ctx.schedulingUrl}"
 
 Chame a tool "save_follow_up_email" com subject, body_html e body_text.`;
 }
@@ -250,13 +251,13 @@ function mockFollowUpResponse(ctx: FollowUp2Context): AiResponse {
   const body_html = `<p>Oi, ${escapeHtml(f)}.</p>
 <p>Dois dias atrás vocês terminaram o diagnóstico — e <strong>${escapeHtml(op.titulo)}</strong> apareceu como a maior oportunidade.</p>
 <p>O relatório falou do <em>quê</em>. Hoje queremos falar de uma nuance do <em>como</em>: a maioria dos escritórios contábeis começa essa automação pela ponta errada — tenta automatizar o registro antes de padronizar a entrada. Resultado: a equipe ainda recebe arquivo solto por WhatsApp, e o "automatizador" trabalha em cima do caos. Antes de plugar qualquer coisa no ERP, vale mapear como os documentos chegam hoje e desenhar um único canal padrão de entrada — pra cada tipo de cliente. Esse passo, sozinho, normalmente derruba 30% do tempo de triagem.</p>
-<p>Se quiserem revisar o plano com a gente (30 min, sem compromisso): <a href="${ctx.calcomUrl}">${ctx.calcomUrl}</a></p>`;
+<p>Se quiserem revisar o plano com a gente, <a href="${ctx.schedulingUrl}">deixa o contato aqui</a> que te chamamos no WhatsApp.</p>`;
   const body_text = `Oi, ${f}.
 
 Dois dias atrás vocês terminaram o diagnóstico — e ${op.titulo} apareceu como a maior oportunidade.
 
 O relatório falou do quê. Hoje queremos falar de uma nuance do como: a maioria dos escritórios começa essa automação pela ponta errada — tenta automatizar o registro antes de padronizar a entrada. Antes de plugar no ERP, vale mapear como os documentos chegam hoje e desenhar um único canal padrão de entrada.
 
-Agendar 30 min: ${ctx.calcomUrl}`;
+Quero conversar: ${ctx.schedulingUrl}`;
   return { subject, body_html, body_text };
 }

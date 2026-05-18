@@ -25,6 +25,22 @@ export type MarketingEvent =
         email?: string;
         phone?: string;
       };
+    }
+  | {
+      type: "scheduling_dialog_opened";
+      data: {
+        source: string | null;
+        diagnosis_id: string | null;
+      };
+    }
+  | {
+      type: "scheduling_submitted";
+      data: {
+        source: string | null;
+        urgency: "this_week" | "next_month" | "researching";
+        diagnosis_id: string | null;
+        has_site_url: boolean;
+      };
     };
 
 /**

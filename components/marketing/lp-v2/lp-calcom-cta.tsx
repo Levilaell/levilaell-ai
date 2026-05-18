@@ -1,12 +1,11 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ArrowUpRight, Mail } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSchedulingClick } from "@/components/ui/scheduling-button";
+import { SchedulingDialog } from "@/components/ui/scheduling-dialog";
 import { cn } from "@/lib/utils";
-import { trackLpEvent } from "@/lib/tracking";
+import { track, trackLpEvent } from "@/lib/tracking";
 import { extractTrackingParams } from "@/lib/marketing/utm";
 
 type CtaPosition = "hero" | "final" | "inline";
@@ -20,11 +19,10 @@ interface LpCalcomCtaProps {
 }
 
 /**
- * CTA primário das LPs apontando pro Cal.com. Envolve `useSchedulingClick`
- * (que já dispara Schedule no Meta Pixel + Google Ads + CAPI via beacon) e
- * adiciona `lp_cta_clicked` interno com `cta_target: "calcom"` pra atribuir
- * ao funil de LP. Cai pra mailto quando `NEXT_PUBLIC_CALCOM_URL` não está
- * setado.
+ * CTA primário das LPs. Antes apontava direto pro Cal.com em nova aba;
+ * desde 2026-05-18 abre o SchedulingDialog (form próprio → Telegram pro
+ * Levi/comercial → contato manual via WhatsApp). Mantém o disparo do
+ * lp_cta_clicked pra atribuição do funil.
  */
 export function LpCalcomCta({
   lpSlug,
@@ -33,11 +31,8 @@ export function LpCalcomCta({
   size = "xl",
   className,
 }: LpCalcomCtaProps) {
-  const { href, isMailto, onClick } = useSchedulingClick({
-    subject: `Conversa técnica — ${lpSlug}`,
-    source: `lp_${lpSlug}_${ctaPosition}`,
-  });
-  const Icon = isMailto ? Mail : ArrowUpRight;
+  const [open, setOpen] = React.useState(false);
+  const source = `lp_${lpSlug}_${ctaPosition}`;
 
   function handleClick() {
     if (typeof window !== "undefined") {
@@ -45,29 +40,30 @@ export function LpCalcomCta({
       trackLpEvent("lp_cta_clicked", {
         lp_slug: lpSlug,
         cta_position: ctaPosition,
-        cta_target: "calcom",
+        cta_target: "scheduling_dialog",
         ...utmParams,
       });
     }
-    onClick();
+    track({
+      type: "scheduling_dialog_opened",
+      data: { source, diagnosis_id: null },
+    });
+    setOpen(true);
   }
 
   return (
-    <Button
-      asChild
-      variant="brand"
-      size={size}
-      className={cn("rounded-xl shadow-sm", className)}
-    >
-      <Link
-        href={href}
-        target={isMailto ? undefined : "_blank"}
-        rel={isMailto ? undefined : "noopener noreferrer"}
+    <>
+      <Button
+        type="button"
+        variant="brand"
+        size={size}
+        className={cn("rounded-xl shadow-sm", className)}
         onClick={handleClick}
       >
         <span>{children}</span>
-        <Icon className="size-4" aria-hidden />
-      </Link>
-    </Button>
+        <ArrowUpRight className="size-4" aria-hidden />
+      </Button>
+      <SchedulingDialog open={open} onOpenChange={setOpen} source={source} />
+    </>
   );
 }

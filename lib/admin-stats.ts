@@ -222,6 +222,8 @@ export async function getFunnelStats(
       "diagnosis_completed",
       "cta_clicked",
       "calcom_clicked",
+      "scheduling_dialog_opened",
+      "scheduling_submitted",
     ]);
 
   if (error) {
@@ -246,7 +248,21 @@ export async function getFunnelStats(
       { key: "diagnosis_started", label: "Diagnósticos iniciados", count: uniqueByType("diagnosis_started") },
       { key: "diagnosis_completed", label: "Diagnósticos completados", count: uniqueByType("diagnosis_completed") },
       { key: "cta_clicked", label: "Cliques em CTA", count: uniqueByType("cta_clicked") },
-      { key: "calcom_clicked", label: "Cliques em Cal.com", count: uniqueByType("calcom_clicked") },
+      {
+        key: "scheduling_dialog_opened",
+        label: "Dialog de agendar aberto",
+        // Soma calcom_clicked (legado) + scheduling_dialog_opened (novo) pra
+        // não perder histórico antes da migração de 2026-05-18.
+        count: new Set([
+          ...(sessionsByType.get("calcom_clicked") ?? new Set()),
+          ...(sessionsByType.get("scheduling_dialog_opened") ?? new Set()),
+        ]).size,
+      },
+      {
+        key: "scheduling_submitted",
+        label: "Pedidos de agendamento enviados",
+        count: uniqueByType("scheduling_submitted"),
+      },
     ],
   };
 }

@@ -261,6 +261,50 @@ type ContentPipelineInsert = {
   generation_count?: number;
 };
 
+type SchedulingRequestRow = {
+  id: string;
+  created_at: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  site_url: string | null;
+  urgency: "this_week" | "next_month" | "researching";
+  source: string | null;
+  diagnosis_id: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  landing_page: string | null;
+  referrer: string | null;
+  notified_at: string | null;
+  contacted_at: string | null;
+  status: "new" | "contacted" | "scheduled" | "won" | "lost";
+};
+
+type SchedulingRequestInsert = {
+  id?: string;
+  created_at?: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  site_url?: string | null;
+  urgency: SchedulingRequestRow["urgency"];
+  source?: string | null;
+  diagnosis_id?: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  landing_page?: string | null;
+  referrer?: string | null;
+  notified_at?: string | null;
+  contacted_at?: string | null;
+  status?: SchedulingRequestRow["status"];
+};
+
 type NewsletterSendRow = {
   id: string;
   pipeline_id: string | null;
@@ -328,6 +372,12 @@ export type Database = {
         Row: NewsletterSendRow;
         Insert: NewsletterSendInsert;
         Update: Partial<NewsletterSendInsert>;
+        Relationships: [];
+      };
+      scheduling_requests: {
+        Row: SchedulingRequestRow;
+        Insert: SchedulingRequestInsert;
+        Update: Partial<SchedulingRequestInsert>;
         Relationships: [];
       };
     };

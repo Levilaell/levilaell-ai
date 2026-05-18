@@ -1,17 +1,24 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowUpRight, Mail } from "lucide-react";
+/**
+ * Botões e links de "Agendar conversa".
+ *
+ * Antes (até 2026-05-18): redirecionavam pro Cal.com em nova aba. Lead
+ * agendava sozinho, e como não tinha lembrete/follow-up estruturado,
+ * as 3 calls testadas no dia 18 sumiram (zero shows). Migrado pra form
+ * próprio (SchedulingDialog) que captura nome/whatsapp/email/site/urgência
+ * e dispara Telegram pro Levi + comercial, que chamam no WhatsApp pra
+ * combinar horário — você controla o follow-up.
+ *
+ * Mantém os mesmos call sites e props (subject, source, diagnosisId, label,
+ * variant, etc) então nada além desse arquivo precisou ser refatorado.
+ */
+
+import { useState } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  getCalcomRedirectUrl,
-  getCalcomUrl,
-  getSchedulingTarget,
-} from "@/lib/calcom";
+import { SchedulingDialog } from "@/components/ui/scheduling-dialog";
 import { track } from "@/lib/tracking";
-import { metaPixel } from "@/lib/tracking/meta";
-import { googleTracking } from "@/lib/tracking/google";
-import { EVENT_VALUE_BRL } from "@/lib/tracking/types";
 import { cn } from "@/lib/utils";
 
 type CalcomVariant = "primary" | "secondary" | "white";
@@ -29,85 +36,30 @@ const baseVariant: Record<CalcomVariant, "brand" | "outline" | "default"> = {
   white: "default",
 };
 
-type SchedulingClickInput = {
-  subject?: string;
-  diagnosisId?: string;
-  source?: string;
-};
-
-type SchedulingClickResult = {
-  href: string;
-  isMailto: boolean;
-  onClick: () => void;
-};
-
-export function useSchedulingClick({
-  subject,
-  diagnosisId,
-  source,
-}: SchedulingClickInput): SchedulingClickResult {
-  const fallback = getSchedulingTarget(subject);
-  const calcomBase = getCalcomUrl();
-  const useRedirector = Boolean(diagnosisId && calcomBase);
-  const href = useRedirector
-    ? getCalcomRedirectUrl(diagnosisId!)
-    : fallback.href;
-  const isMailto = !useRedirector && fallback.isMailto;
-
-  function onClick() {
-    track({
-      type: "calcom_clicked",
-      data: {
-        source: source ?? null,
-        diagnosis_id: diagnosisId ?? null,
-        is_mailto: isMailto,
-      },
-    });
-
-    if (isMailto) return;
-
-    const eventId =
-      diagnosisId ??
-      (typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `sched_${Date.now()}_${Math.random().toString(36).slice(2)}`);
-
-    void metaPixel.schedule({
-      event_id: eventId,
-      value: EVENT_VALUE_BRL.schedule,
-    });
-    googleTracking.scheduleCall({ value: EVENT_VALUE_BRL.schedule });
-
-    if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
-      const payload = JSON.stringify({
-        event_id: eventId,
-        diagnosis_id: diagnosisId,
-      });
-      const blob = new Blob([payload], { type: "application/json" });
-      navigator.sendBeacon("/api/tracking/calcom", blob);
-    }
-  }
-
-  return { href, isMailto, onClick };
+function trackOpen(source: string | undefined, diagnosisId: string | undefined) {
+  track({
+    type: "scheduling_dialog_opened",
+    data: {
+      source: source ?? null,
+      diagnosis_id: diagnosisId ?? null,
+    },
+  });
 }
 
 type Props = {
+  /** Subject legado — não é mais usado, mantido pra compatibilidade de call sites. */
   subject?: string;
   label?: string;
   size?: "default" | "lg" | "xl";
   variant?: CalcomVariant;
   className?: string;
-  /**
-   * Quando passado, o botão usa o redirector interno (/r/calcom/[id]) que
-   * cancela a sequência de e-mails antes de jogar o lead pro Cal.com.
-   */
+  /** Quando passado, o submit do form cancela a sequence de e-mails do diagnóstico. */
   diagnosisId?: string;
-  /** Origem usada no tracking event (ex: "result_page", "services_cta") */
+  /** Origem usada no tracking (ex: "result_page", "services_cta") */
   source?: string;
 };
 
 export function SchedulingButton({
-  subject,
   label = "Agendar conversa",
   size = "lg",
   variant = "primary",
@@ -115,34 +67,35 @@ export function SchedulingButton({
   diagnosisId,
   source,
 }: Props) {
-  const { href, isMailto, onClick } = useSchedulingClick({
-    subject,
-    diagnosisId,
-    source,
-  });
-  const Icon = isMailto ? Mail : ArrowUpRight;
+  const [open, setOpen] = useState(false);
 
   return (
-    <Button
-      asChild
-      size={size}
-      variant={baseVariant[variant]}
-      className={cn("rounded-xl", variantClasses[variant], className)}
-    >
-      <Link
-        href={href}
-        target={isMailto ? undefined : "_blank"}
-        rel={isMailto ? undefined : "noopener noreferrer"}
-        onClick={onClick}
+    <>
+      <Button
+        type="button"
+        size={size}
+        variant={baseVariant[variant]}
+        className={cn("rounded-xl", variantClasses[variant], className)}
+        onClick={() => {
+          trackOpen(source, diagnosisId);
+          setOpen(true);
+        }}
       >
-        <Icon className="size-4" aria-hidden />
+        <ArrowUpRight className="size-4" aria-hidden />
         <span>{label}</span>
-      </Link>
-    </Button>
+      </Button>
+      <SchedulingDialog
+        open={open}
+        onOpenChange={setOpen}
+        source={source}
+        diagnosisId={diagnosisId}
+      />
+    </>
   );
 }
 
 type LinkProps = {
+  /** Subject legado — não é mais usado. */
   subject?: string;
   source?: string;
   label?: string;
@@ -152,41 +105,46 @@ type LinkProps = {
 };
 
 /**
- * Versão link textual do SchedulingButton — pra header, footer e outros
- * lugares onde um botão cheio seria visualmente pesado.
+ * Versão link textual — usado em header/footer onde um botão cheio seria
+ * visualmente pesado. Comportamento é o mesmo: clica → abre dialog.
  */
 export function SchedulingLink({
-  subject,
   source,
   label = "Agendar conversa",
   className,
   withIcon = false,
   onNavigate,
 }: LinkProps) {
-  const { href, isMailto, onClick } = useSchedulingClick({ subject, source });
+  const [open, setOpen] = useState(false);
 
   return (
-    <Link
-      href={href}
-      target={isMailto ? undefined : "_blank"}
-      rel={isMailto ? undefined : "noopener noreferrer"}
-      onClick={() => {
-        onClick();
-        onNavigate?.();
-      }}
-      className={className}
-    >
-      {withIcon ? (
-        <span className="inline-flex items-center gap-1.5">
-          {label}
-          <ArrowUpRight className="size-3.5" aria-hidden />
-        </span>
-      ) : (
-        label
-      )}
-    </Link>
+    <>
+      <button
+        type="button"
+        className={className}
+        onClick={() => {
+          trackOpen(source, undefined);
+          onNavigate?.();
+          setOpen(true);
+        }}
+      >
+        {withIcon ? (
+          <span className="inline-flex items-center gap-1.5">
+            {label}
+            <ArrowUpRight className="size-3.5" aria-hidden />
+          </span>
+        ) : (
+          label
+        )}
+      </button>
+      <SchedulingDialog
+        open={open}
+        onOpenChange={setOpen}
+        source={source}
+      />
+    </>
   );
 }
 
-// Alias mais explícito.
+// Alias retrocompatível.
 export const CalcomButton = SchedulingButton;

@@ -4,7 +4,6 @@ import {
   type LegacyRecommendedApproach,
   type RecommendedApproachV2,
 } from "@/types/diagnosis";
-import { getCalcomRedirectUrl, getCalcomUrl } from "@/lib/calcom";
 import { siteConfig } from "@/lib/site";
 
 const baseStyles = `
@@ -82,41 +81,41 @@ type EmailCtaCopy = { intro: string; button: string };
 const emailCtaByApproachV2: Record<RecommendedApproachV2, EmailCtaCopy> = {
   diy: {
     intro:
-      "Se travar na implementação, conversamos em 30 min sobre o caminho mais curto. Sem pitch.",
-    button: "Tirar dúvidas em conversa",
+      "Se travar na implementação, deixa o contato aqui que te chamo no WhatsApp pra trocar uma ideia. Sem pitch.",
+    button: "Quero tirar uma dúvida",
   },
   conversa: {
     intro:
-      "Pra refinar o plano com a gente, agende uma conversa de 30 min sem compromisso.",
-    button: "Agendar conversa gratuita",
+      "Pra refinar o plano com a gente, deixa seu contato aqui que te chamo no WhatsApp.",
+    button: "Quero conversar",
   },
   proposta_formal: {
     intro:
-      "Pelo cenário do escritório, faz sentido conversar sobre projeto formal. Alinhamos escopo, prazos e métricas.",
-    button: "Agendar conversa estratégica",
+      "Pelo cenário do escritório, faz sentido conversar sobre projeto formal. Alinhamos escopo, prazos e métricas numa call.",
+    button: "Quero falar sobre projeto",
   },
 };
 
 const emailCtaByApproachLegacy: Record<LegacyRecommendedApproach, EmailCtaCopy> = {
   diy: {
     intro:
-      "Se travar na implementação, conversamos em 30 min sobre o caminho mais curto. Sem pitch.",
-    button: "Tirar dúvidas em conversa",
+      "Se travar na implementação, deixa o contato aqui que te chamo no WhatsApp pra trocar uma ideia. Sem pitch.",
+    button: "Quero tirar uma dúvida",
   },
   ainda_nao_e_hora: {
     intro:
       "Mesmo se automação não é prioridade agora, podemos mapear quando vai ser. Sem pitch.",
-    button: "Agendar 20 min",
+    button: "Quero conversar",
   },
   consultoria_pontual: {
     intro:
-      "Quer aprofundar esse plano com apoio especializado? Agende uma conversa de 30 min sem compromisso.",
-    button: "Agendar conversa gratuita",
+      "Quer aprofundar esse plano com apoio especializado? Deixa seu contato aqui que te chamo no WhatsApp.",
+    button: "Quero conversar",
   },
   parceria_continua: {
     intro:
       "Se faz sentido trabalhar contínuo, alinhamos escopo, ritmo e custo numa conversa.",
-    button: "Agendar conversa estratégica",
+    button: "Quero falar sobre parceria",
   },
 };
 
@@ -165,10 +164,8 @@ export function diagnosisReportEmail(args: {
       : "";
 
   const ctaCopy = emailCtaFor(analysis);
-  const calcomBase = getCalcomUrl();
-  const schedulingHref = calcomBase
-    ? getCalcomRedirectUrl(diagnosisId)
-    : `mailto:${siteConfig.email.contact}?subject=${encodeURIComponent(`Diagnóstico — ${name}`)}`;
+  // Redirector interno: cancela email sequence ao clicar e leva pra /agendar.
+  const schedulingHref = `${siteConfig.url}/r/calcom/${encodeURIComponent(diagnosisId)}`;
 
   const approachLabel = approachLabelFor(analysis);
 
@@ -200,7 +197,7 @@ export function diagnosisReportEmail(args: {
   const pdfDescription = isLegacy
     ? "top 3 oportunidades, quick win, ROI, alerta"
     : "gargalo principal, top 3 oportunidades, plano 30/60/90, alerta";
-  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\nPróximo passo recomendado: ${approachLabel}.\n\nO relatório completo está no PDF anexo (${pdfDescription}).\n\n${ctaCopy.intro}\nAgendar: ${schedulingHref}\n\nVer online: ${reportUrl}\n\n— Levi Lael`;
+  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\nPróximo passo recomendado: ${approachLabel}.\n\nO relatório completo está no PDF anexo (${pdfDescription}).\n\n${ctaCopy.intro}\nDeixar contato: ${schedulingHref}\n\nVer online: ${reportUrl}\n\n— Levi Lael`;
   return {
     subject: `Seu diagnóstico de operação está pronto, ${fName}`,
     html,
@@ -218,21 +215,15 @@ export function diagnosisFailedEmail(args: {
 }): { subject: string; html: string; text: string } {
   const { name, diagnosisId } = args;
   const fName = firstName(name);
-  const calcomBase = getCalcomUrl();
-  const schedulingHref = calcomBase
-    ? getCalcomRedirectUrl(diagnosisId)
-    : `mailto:${siteConfig.email.contact}?subject=${encodeURIComponent(`Diagnóstico — ${name}`)}`;
+  // Redirector interno: cancela email sequence ao clicar e leva pra /agendar.
+  const schedulingHref = `${siteConfig.url}/r/calcom/${encodeURIComponent(diagnosisId)}`;
 
   const html = shell(`
     <div class="card">
       <h1>${escapeHtml(fName)}, tivemos um problema técnico aqui.</h1>
       <p>A geração da sua análise falhou no meio do caminho. Não foi culpa sua — recebemos seus dados normalmente.</p>
-      <p>Duas opções:</p>
-      <ul>
-        <li>Eu te chamo no WhatsApp em até 24h pra fechar o diagnóstico contigo direto.</li>
-        <li>Se prefere já marcar agora, agenda 30 min no link abaixo.</li>
-      </ul>
-      <p style="margin-top: 16px"><a class="cta" href="${schedulingHref}">Agendar conversa de 30 min</a></p>
+      <p>Deixa o seu contato no link abaixo que te chamo no WhatsApp em até 24h pra fechar o diagnóstico contigo direto.</p>
+      <p style="margin-top: 16px"><a class="cta" href="${schedulingHref}">Deixar meu contato</a></p>
       <div class="meta">
         Desculpa o transtorno.<br>
         — Levi Lael
@@ -240,7 +231,7 @@ export function diagnosisFailedEmail(args: {
     </div>
   `);
 
-  const text = `${fName}, tivemos um problema técnico aqui.\n\nA geração da sua análise falhou. Não foi culpa sua — recebemos seus dados normalmente.\n\nEu te chamo no WhatsApp em até 24h pra fechar o diagnóstico contigo direto. Se prefere já marcar agora: ${schedulingHref}\n\nDesculpa o transtorno.\n— Levi Lael`;
+  const text = `${fName}, tivemos um problema técnico aqui.\n\nA geração da sua análise falhou. Não foi culpa sua — recebemos seus dados normalmente.\n\nDeixa o seu contato aqui que te chamo no WhatsApp em até 24h pra fechar o diagnóstico contigo direto: ${schedulingHref}\n\nDesculpa o transtorno.\n— Levi Lael`;
   return {
     subject: `${fName}, deu problema técnico no seu diagnóstico — vamos resolver`,
     html,

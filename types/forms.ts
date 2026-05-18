@@ -98,6 +98,57 @@ const brWhatsapp = z
     return digits.length >= 10 && digits.length <= 13;
   }, "WhatsApp inválido. Use DDD + número.");
 
+// Atribuição: todos opcionais — fluxo continua funcionando se localStorage
+// estiver bloqueado ou se o lead chegou organicamente. Strings cortadas em
+// 255 pra evitar payloads abusivos (UTMs reais são curtos).
+const attributionField = z
+  .union([z.string().max(255), z.null()])
+  .optional()
+  .transform((v) => (v ? v : null));
+
+// ---------------------------------------------------------------------------
+// Scheduling request (form que substituiu o link direto pro Cal.com)
+// ---------------------------------------------------------------------------
+// 5 campos: nome, whatsapp, email, site (opcional), urgência.
+// Submit dispara notificação Telegram pro Levi + comercial; eles chamam no
+// WhatsApp pra combinar. site_url ajuda a rodar preview ANTES da call.
+export const schedulingUrgencyEnum = z.enum([
+  "this_week",
+  "next_month",
+  "researching",
+]);
+export type SchedulingUrgency = z.infer<typeof schedulingUrgencyEnum>;
+
+export const SCHEDULING_URGENCY_LABEL: Record<SchedulingUrgency, string> = {
+  this_week: "Essa semana",
+  next_month: "Próximo mês",
+  researching: "Só pesquisando",
+};
+
+const optionalUrl = z
+  .string()
+  .max(200, "URL muito longa.")
+  .optional()
+  .or(z.literal(""));
+
+export const schedulingRequestSchema = z.object({
+  name: z.string().min(2, "Nome muito curto.").max(80),
+  email: z.email("E-mail inválido."),
+  whatsapp: brWhatsapp,
+  site_url: optionalUrl,
+  urgency: schedulingUrgencyEnum,
+  source: z.string().max(40).optional().or(z.literal("")),
+  diagnosis_id: z.string().uuid().optional().or(z.literal("")),
+  utm_source: attributionField,
+  utm_medium: attributionField,
+  utm_campaign: attributionField,
+  utm_content: attributionField,
+  utm_term: attributionField,
+  landing_page: attributionField,
+  referrer: attributionField,
+});
+export type SchedulingRequestInput = z.infer<typeof schedulingRequestSchema>;
+
 export const diagnosisLeadSchema = z.object({
   name: z.string().min(2, "Nome muito curto.").max(80),
   email: z.email("E-mail inválido."),
@@ -106,14 +157,6 @@ export const diagnosisLeadSchema = z.object({
   consent: consentRequired,
 });
 export type DiagnosisLeadInput = z.infer<typeof diagnosisLeadSchema>;
-
-// Atribuição: todos opcionais — fluxo continua funcionando se localStorage
-// estiver bloqueado ou se o lead chegou organicamente. Strings cortadas em
-// 255 pra evitar payloads abusivos (UTMs reais são curtos).
-const attributionField = z
-  .union([z.string().max(255), z.null()])
-  .optional()
-  .transform((v) => (v ? v : null));
 
 export const diagnosisSubmissionSchema = diagnosisAnswersSchema.extend({
   name: z.string().min(2).max(80),

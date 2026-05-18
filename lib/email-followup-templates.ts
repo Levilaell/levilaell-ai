@@ -16,7 +16,8 @@ export type FollowUpContext = {
   diagnosisId: string;
   name: string;
   opportunityTitle: string;
-  calcomUrl: string;
+  /** URL pra página /agendar?d=<id> — substituiu o link do Cal.com em 2026-05-18. */
+  schedulingUrl: string;
   unsubscribeUrl: string;
 };
 
@@ -61,8 +62,8 @@ export function followUpEmail3(ctx: FollowUpContext): FollowUpEmail {
       </ul>
 
       <p>Na maioria dos casos: começa comprando pronto, migra pra custom quando dor específica aparece.</p>
-      <p>Se quiser pensar isso pra sua operação especificamente, agende 30 min com a gente.</p>
-      ${ctaButton("Agendar 30 min", ctx.calcomUrl)}
+      <p>Se quiser pensar isso pra sua operação especificamente, deixa seu contato que te chamo no WhatsApp.</p>
+      ${ctaButton("Quero conversar", ctx.schedulingUrl)}
 
       <div class="meta">— Levi Lael</div>
     </div>
@@ -86,7 +87,7 @@ CONSTRÓI sob medida se:
 
 Na maioria dos casos: começa comprando, migra pra custom quando dor específica aparece.
 
-Agendar 30 min: ${ctx.calcomUrl}
+Quero conversar: ${ctx.schedulingUrl}
 
 — Levi Lael
 Cancelar futuros: ${ctx.unsubscribeUrl}`;
@@ -99,20 +100,20 @@ Cancelar futuros: ${ctx.unsubscribeUrl}`;
 // ---------------------------------------------------------------------------
 export function followUpEmail4(ctx: FollowUpContext): FollowUpEmail {
   const f = firstName(ctx.name);
-  const subject = `${f}, 30 minutos pra destravar ${ctx.opportunityTitle}?`;
+  const subject = `${f}, vamos destravar ${ctx.opportunityTitle}?`;
 
   const html = emailShell(
     `
     <div class="card">
       <p>Oi, ${escapeHtml(f)}.</p>
       <p>Já se passaram 8 dias desde que você completou o diagnóstico. <strong>${escapeHtml(ctx.opportunityTitle)}</strong> apareceu como sua prioridade número um.</p>
-      <p>Se você ainda quer destravar isso, agende 30 minutos com a gente. Sem pitch, sem apresentação. Conversamos sobre seu caso específico e te damos o caminho mais curto.</p>
+      <p>Se você ainda quer destravar isso, deixa seu contato e te chamo no WhatsApp pra uma conversa rápida. Sem pitch, sem apresentação. Falamos sobre seu caso específico e te dou o caminho mais curto.</p>
       <ul>
-        <li>Se for o caminho de DIY, te explicamos como fazer sozinho.</li>
-        <li>Se pudermos ajudar, te falamos como.</li>
-        <li>Se não for o momento, te falamos isso também.</li>
+        <li>Se for o caminho de DIY, te explico como fazer sozinho.</li>
+        <li>Se eu puder ajudar, te falo como.</li>
+        <li>Se não for o momento, te falo isso também.</li>
       </ul>
-      ${ctaButton("Agendar 30 min", ctx.calcomUrl)}
+      ${ctaButton("Quero conversar", ctx.schedulingUrl)}
       <div class="meta">— Levi Lael</div>
     </div>
   `,
@@ -123,13 +124,13 @@ export function followUpEmail4(ctx: FollowUpContext): FollowUpEmail {
 
 Já se passaram 8 dias desde o diagnóstico. ${ctx.opportunityTitle} apareceu como sua prioridade #1.
 
-Se ainda quer destravar isso, agende 30 minutos com a gente. Sem pitch, sem apresentação.
+Se ainda quer destravar isso, deixa seu contato e te chamo no WhatsApp pra uma conversa rápida. Sem pitch, sem apresentação.
 
-- Se for DIY, te explicamos como fazer sozinho.
-- Se pudermos ajudar, te falamos como.
-- Se não for o momento, te falamos isso também.
+- Se for DIY, te explico como fazer sozinho.
+- Se eu puder ajudar, te falo como.
+- Se não for o momento, te falo isso também.
 
-Agendar: ${ctx.calcomUrl}
+Quero conversar: ${ctx.schedulingUrl}
 
 — Levi Lael
 Cancelar futuros: ${ctx.unsubscribeUrl}`;
@@ -153,7 +154,7 @@ export function followUpEmail5(ctx: FollowUpContext): FollowUpEmail {
       <h2>🎁 Mapa de Operação Inteligente</h2>
       <p>Framework em PDF de 12 páginas que usamos com clientes pra identificar oportunidades de automação. Gratuito, é só baixar.</p>
       <p><a class="cta" href="${newsletterUrl}">Pegar o Mapa</a></p>
-      <p>Se em algum momento fizer sentido conversar, <a href="${ctx.calcomUrl}">nosso calendário está aqui</a>. Sem pressa.</p>
+      <p>Se em algum momento fizer sentido trocar uma ideia, <a href="${ctx.schedulingUrl}">deixa seu contato aqui</a> e te chamo no WhatsApp. Sem pressa.</p>
       <div class="meta">— Levi Lael</div>
     </div>
   `,
@@ -168,8 +169,8 @@ Esse é o penúltimo email que você recebe sobre seu diagnóstico. Antes da seq
 
 Pegar: ${newsletterUrl}
 
-Se em algum momento fizer sentido conversar, nosso calendário está aqui:
-${ctx.calcomUrl}
+Se em algum momento fizer sentido trocar uma ideia, deixa seu contato e te chamo no WhatsApp:
+${ctx.schedulingUrl}
 
 — Levi Lael
 Cancelar futuros: ${ctx.unsubscribeUrl}`;
@@ -189,7 +190,7 @@ export function followUpEmail6(ctx: FollowUpContext): FollowUpEmail {
     <div class="card">
       <p>Oi, ${escapeHtml(f)}.</p>
       <p>Tem 20 dias que você fez o diagnóstico. Esse é o último email automático que você recebe sobre isso.</p>
-      <p>Se ainda tem alguma dúvida ou quer trocar uma ideia, <a href="${ctx.calcomUrl}">nosso calendário tá aqui</a> ou simplesmente responde esse email.</p>
+      <p>Se ainda tem alguma dúvida ou quer trocar uma ideia, <a href="${ctx.schedulingUrl}">deixa seu contato aqui</a> que te chamo no WhatsApp, ou simplesmente responde esse email.</p>
       <p>Se a operação está rodando bem e isso já se resolveu, ótimo — ficamos felizes.</p>
       <p style="margin-top:32px"><a href="${ctx.unsubscribeUrl}" style="color:#52525b; text-decoration:underline">Cancelar futuros emails</a></p>
       <div class="meta">— Levi Lael</div>
@@ -201,8 +202,8 @@ export function followUpEmail6(ctx: FollowUpContext): FollowUpEmail {
 
 Tem 20 dias que você fez o diagnóstico. Esse é o último email automático que você recebe sobre isso.
 
-Se ainda tem alguma dúvida ou quer trocar uma ideia, nosso calendário tá aqui:
-${ctx.calcomUrl}
+Se ainda tem alguma dúvida ou quer trocar uma ideia, deixa seu contato aqui que te chamo no WhatsApp:
+${ctx.schedulingUrl}
 
 Ou só responde esse email.
 

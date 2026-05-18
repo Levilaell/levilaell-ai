@@ -18,10 +18,7 @@ import {
   followUpFixedTemplate,
   type FollowUpContext,
 } from "@/lib/email-followup-templates";
-import {
-  getCalcomRedirectUrl,
-  getCalcomUrl,
-} from "@/lib/calcom";
+import { siteConfig } from "@/lib/site";
 import { unsubscribeApiUrl, unsubscribeUrl } from "@/lib/unsubscribe";
 import type { DiagnosisAnalysis } from "@/types/diagnosis";
 
@@ -56,14 +53,10 @@ export async function runFollowUpEmail(
   const supabase = getSupabaseService();
   if (!supabase) return { ok: false, error: "Supabase service não configurado." };
 
-  const calcomBase = getCalcomUrl();
-  if (!calcomBase) {
-    // Sem Cal.com configurado, não rodamos — não vamos mandar lead pra mailto
-    // numa sequência de nurturing.
-    return { ok: false, error: "NEXT_PUBLIC_CALCOM_URL não configurado." };
-  }
-  // Usamos redirector interno que cancela a sequence ao clicar.
-  const calcomUrl = getCalcomRedirectUrl(diag.id);
+  // Redirector interno que cancela a sequence ao clicar e leva o lead pra
+  // /agendar?d=<id> (form pré-preenchido). Substituiu o redirect pro Cal.com
+  // em 2026-05-18 — agora o site sempre tem destino válido sem env var.
+  const schedulingUrl = `${siteConfig.url}/r/calcom/${encodeURIComponent(diag.id)}`;
   const unsubUrl = unsubscribeUrl(diag.id);
   const unsubApi = unsubscribeApiUrl(diag.id);
 
@@ -96,7 +89,7 @@ export async function runFollowUpEmail(
         q2_erp: diag.q2_erp ?? "",
         q3_client_profile: diag.q3_client_profile ?? "",
         opportunity1: op1,
-        calcomUrl,
+        schedulingUrl,
         unsubscribeUrl: unsubUrl,
       });
       subject = ai.subject;
@@ -107,7 +100,7 @@ export async function runFollowUpEmail(
         diagnosisId: diag.id,
         name: diag.name,
         opportunityTitle: op1?.titulo ?? "sua principal oportunidade",
-        calcomUrl,
+        schedulingUrl,
         unsubscribeUrl: unsubUrl,
       };
       const t = followUpFixedTemplate(row.email_number, ctx);

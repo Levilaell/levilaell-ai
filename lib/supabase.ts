@@ -441,6 +441,94 @@ export async function saveContact(input: SaveContactInput): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Scheduling requests (form do "Agendar conversa")
+// ---------------------------------------------------------------------------
+export type SaveSchedulingRequestInput = {
+  name: string;
+  email: string;
+  whatsapp: string;
+  site_url?: string | null;
+  urgency: "this_week" | "next_month" | "researching";
+  source?: string | null;
+  diagnosis_id?: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_content?: string | null;
+  utm_term?: string | null;
+  landing_page?: string | null;
+  referrer?: string | null;
+};
+
+export async function saveSchedulingRequest(
+  input: SaveSchedulingRequestInput,
+): Promise<{ id: string }> {
+  const supabase = getSupabaseService();
+  if (!supabase) {
+    throw new Error(
+      "[DB_ERROR] saveSchedulingRequest: Supabase service client não configurado.",
+    );
+  }
+
+  // Log sanitizado (sem PII bruto)
+  console.log("[DB] saveSchedulingRequest insert", {
+    has_name: Boolean(input.name),
+    has_email: Boolean(input.email),
+    has_whatsapp: Boolean(input.whatsapp),
+    has_site_url: Boolean(input.site_url),
+    urgency: input.urgency,
+    source: input.source ?? null,
+    has_diagnosis: Boolean(input.diagnosis_id),
+  });
+
+  const { data, error } = await supabase
+    .from("scheduling_requests")
+    .insert({
+      name: input.name,
+      email: input.email,
+      whatsapp: input.whatsapp,
+      site_url: input.site_url || null,
+      urgency: input.urgency,
+      source: input.source ?? null,
+      diagnosis_id: input.diagnosis_id || null,
+      utm_source: input.utm_source ?? null,
+      utm_medium: input.utm_medium ?? null,
+      utm_campaign: input.utm_campaign ?? null,
+      utm_content: input.utm_content ?? null,
+      utm_term: input.utm_term ?? null,
+      landing_page: input.landing_page ?? null,
+      referrer: input.referrer ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("[DB_ERROR] saveSchedulingRequest failed", {
+      code: (error as { code?: string }).code,
+      message: error.message,
+    });
+    throw new SupabaseWriteError("saveSchedulingRequest", error);
+  }
+  console.log("[DB] saveSchedulingRequest ok", { id: data.id });
+  return { id: data.id };
+}
+
+export async function markSchedulingRequestNotified(id: string): Promise<void> {
+  const supabase = getSupabaseService();
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("scheduling_requests")
+    .update({ notified_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) {
+    console.error("[DB_ERROR] markSchedulingRequestNotified failed (silent)", {
+      id,
+      message: error.message,
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Tracking
 // ---------------------------------------------------------------------------
 export type TrackEventInput = {
