@@ -138,30 +138,41 @@ export function DiagnosisForm() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body?.error ?? `Erro ${res.status}`);
       }
+      // Shape novo (Supabase ON, async): { id, event_id, lead_score,
+      // status: 'pending', anthropic_configured }. Sem analysis.
+      // Shape legado (Supabase OFF, sync): { id, event_id, createdAt, name,
+      // timeline, analysis, lead_score, status: 'completed' }.
       const data = (await res.json()) as {
         id: string;
         event_id: string;
-        analysis: DiagnosisAnalysis;
-        createdAt: string;
-        name: string;
-        timeline?: string;
         lead_score: number;
+        status?: "pending" | "completed";
+        analysis?: DiagnosisAnalysis;
+        createdAt?: string;
+        name?: string;
+        timeline?: string;
       };
-      const result: StoredResult = {
-        id: data.id,
-        createdAt: data.createdAt,
-        name: data.name,
-        analysis: data.analysis,
-        timeline: data.timeline,
-      };
-      saveResult(result);
+
+      // Só salva no sessionStorage se temos analysis (caminho sync). No
+      // caminho async, o /result/[id] lê do Supabase e renderiza direto.
+      if (data.analysis && data.createdAt && data.name) {
+        const result: StoredResult = {
+          id: data.id,
+          createdAt: data.createdAt,
+          name: data.name,
+          analysis: data.analysis,
+          timeline: data.timeline,
+        };
+        saveResult(result);
+      }
       clearDraft();
       track({
         type: "diagnosis_completed",
         data: {
           id: data.id,
-          timeline: data.timeline,
+          timeline: data.timeline ?? answers.q7_timeline ?? null,
           lead_score: data.lead_score,
+          status: data.status ?? "completed",
         },
       });
 
@@ -257,7 +268,7 @@ export function DiagnosisForm() {
             {submitState === "submitting" ? (
               <>
                 <Loader2 className="size-4 animate-spin" aria-hidden />
-                Gerando análise…
+                Enviando…
               </>
             ) : (
               <>

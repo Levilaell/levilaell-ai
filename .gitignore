@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# meta ads debug dumps
+scripts/debug/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -232,7 +232,93 @@ export type DiagnosisFetched = {
   status: DiagnosisStatus;
   analysis: DiagnosisAnalysis | null;
   q8_timeline: string;
+  error_message: string | null;
+  retry_count: number;
 };
+
+// Lite: usado pelo endpoint /status (polling). Lê só o que muda durante
+// o processamento, sem trazer PII nem ai_analysis pesado.
+export type DiagnosisStatusLite = {
+  status: DiagnosisStatus;
+  error_message: string | null;
+  retry_count: number;
+};
+
+export async function getDiagnosisStatusLite(
+  id: string,
+): Promise<DiagnosisStatusLite | null> {
+  const supabase = getSupabaseService();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("diagnoses")
+    .select("status, error_message, retry_count")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    status: data.status,
+    error_message: data.error_message,
+    retry_count: data.retry_count,
+  };
+}
+
+// Reset pra retry manual: zera análise/erro, status volta pra processing,
+// incrementa retry_count. Retorna o retry_count atualizado pra rate limit.
+// Não dispara o reprocessamento aqui — caller (rota /retry) que chama
+// generateDiagnosisAnalysis via after().
+export async function resetDiagnosisForRetry(
+  id: string,
+): Promise<{ retry_count: number } | null> {
+  const supabase = getSupabaseService();
+  if (!supabase) return null;
+  // Atualização condicional — só reseta se ainda não atingiu o limite.
+  // Postgres trata isso como um único write atômico (sem race entre
+  // dois cliques simultâneos do botão).
+  const { data, error } = await supabase
+    .from("diagnoses")
+    .update({
+      status: "processing",
+      ai_analysis: null,
+      error_message: null,
+      retry_count: 1,
+    })
+    .eq("id", id)
+    .eq("retry_count", 0)
+    .select("retry_count")
+    .single();
+  if (error || !data) return null;
+  return { retry_count: data.retry_count };
+}
+
+// Busca answers V2 a partir do registro do banco — usado pelo retry pra
+// reconstruir DiagnosisAnswers e chamar generateDiagnosisAnalysis de novo.
+export async function getDiagnosisAnswers(
+  id: string,
+): Promise<DiagnosisAnswers | null> {
+  const supabase = getSupabaseService();
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("diagnoses")
+    .select(
+      "q1_size, q2_erp, q3_client_profile, q3_pain_areas, q5_hours_weekly, q6_automation_history, q8_timeline",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return null;
+  if (!data.q2_erp || !data.q3_client_profile) return null;
+  return {
+    q1_size: data.q1_size as DiagnosisAnswers["q1_size"],
+    q2_erp: data.q2_erp as DiagnosisAnswers["q2_erp"],
+    q3_client_profile:
+      data.q3_client_profile as DiagnosisAnswers["q3_client_profile"],
+    q4_pain_areas: data.q3_pain_areas as DiagnosisAnswers["q4_pain_areas"],
+    q5_hours_weekly:
+      data.q5_hours_weekly as DiagnosisAnswers["q5_hours_weekly"],
+    q6_automation_history:
+      data.q6_automation_history as DiagnosisAnswers["q6_automation_history"],
+    q7_timeline: data.q8_timeline as DiagnosisAnswers["q7_timeline"],
+  };
+}
 
 export async function getDiagnosisById(
   id: string,
@@ -243,7 +329,7 @@ export async function getDiagnosisById(
   const { data, error } = await supabase
     .from("diagnoses")
     .select(
-      "id, name, email, whatsapp, created_at, status, ai_analysis, q8_timeline",
+      "id, name, email, whatsapp, created_at, status, ai_analysis, q8_timeline, error_message, retry_count",
     )
     .eq("id", id)
     .maybeSingle();
@@ -258,6 +344,8 @@ export async function getDiagnosisById(
     status: data.status,
     analysis: data.ai_analysis,
     q8_timeline: data.q8_timeline,
+    error_message: data.error_message,
+    retry_count: data.retry_count,
   };
 }
 

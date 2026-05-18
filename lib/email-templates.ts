@@ -209,6 +209,46 @@ export function diagnosisReportEmail(args: {
 }
 
 // ---------------------------------------------------------------------------
+// Diagnosis failed (Anthropic estourou retries — lead recebe pedido honesto
+// de desculpas + CTA pra agendar direto). Sem PDF anexo.
+// ---------------------------------------------------------------------------
+export function diagnosisFailedEmail(args: {
+  name: string;
+  diagnosisId: string;
+}): { subject: string; html: string; text: string } {
+  const { name, diagnosisId } = args;
+  const fName = firstName(name);
+  const calcomBase = getCalcomUrl();
+  const schedulingHref = calcomBase
+    ? getCalcomRedirectUrl(diagnosisId)
+    : `mailto:${siteConfig.email.contact}?subject=${encodeURIComponent(`Diagnóstico — ${name}`)}`;
+
+  const html = shell(`
+    <div class="card">
+      <h1>${escapeHtml(fName)}, tivemos um problema técnico aqui.</h1>
+      <p>A geração da sua análise falhou no meio do caminho. Não foi culpa sua — recebemos seus dados normalmente.</p>
+      <p>Duas opções:</p>
+      <ul>
+        <li>Eu te chamo no WhatsApp em até 24h pra fechar o diagnóstico contigo direto.</li>
+        <li>Se prefere já marcar agora, agenda 30 min no link abaixo.</li>
+      </ul>
+      <p style="margin-top: 16px"><a class="cta" href="${schedulingHref}">Agendar conversa de 30 min</a></p>
+      <div class="meta">
+        Desculpa o transtorno.<br>
+        — Levi Lael
+      </div>
+    </div>
+  `);
+
+  const text = `${fName}, tivemos um problema técnico aqui.\n\nA geração da sua análise falhou. Não foi culpa sua — recebemos seus dados normalmente.\n\nEu te chamo no WhatsApp em até 24h pra fechar o diagnóstico contigo direto. Se prefere já marcar agora: ${schedulingHref}\n\nDesculpa o transtorno.\n— Levi Lael`;
+  return {
+    subject: `${fName}, deu problema técnico no seu diagnóstico — vamos resolver`,
+    html,
+    text,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Newsletter welcome (immediate after subscribe)
 // ---------------------------------------------------------------------------
 export function newsletterWelcomeEmail(args: { name: string }): {

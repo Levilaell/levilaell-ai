@@ -4,17 +4,18 @@ import { diagnosisSubmissionSchema } from "@/types/forms";
 import {
   generateDiagnosisAnalysis,
   AnthropicError,
+  isAnthropicConfigured,
 } from "@/lib/anthropic";
 import {
   saveDiagnosis,
   updateDiagnosisStatus,
   scheduleEmailSequence,
   isSupabaseConfigured,
-  SupabaseWriteError,
 } from "@/lib/supabase";
 import { sendEmail, isResendConfigured } from "@/lib/resend";
 import {
   diagnosisReportEmail,
+  diagnosisFailedEmail,
   internalDiagnosisEmail,
 } from "@/lib/email-templates";
 import {
@@ -44,9 +45,9 @@ import type {
 } from "@/types/diagnosis";
 
 export const runtime = "nodejs";
-// 60s era apertado: Anthropic ~44s + saveDiagnosis/updateStatus + emails
-// já estourava 50s. Subindo pra 90s dá margem em horários ruins do
-// Anthropic e cobre cold starts do Fluid Compute.
+// Path crítico (Supabase ON) é insert + retorno: <1s. after() segura
+// Anthropic + PDF + emails. Mantém 90s pra cobrir o caso Supabase OFF
+// (sync legacy) e o orçamento do after() em runtimes serverless.
 export const maxDuration = 90;
 
 export async function POST(request: Request) {
@@ -86,120 +87,216 @@ export async function POST(request: Request) {
     q7_timeline: data.q7_timeline as DiagnosisAnswers["q7_timeline"],
   };
 
-  // 1) Persist initial row (status=processing) ------------------------------
-  // Quando Supabase está configurado: failure aqui é fatal (lead se perderia
-  // sem registro; preferimos devolver 503 e o usuário tenta de novo).
-  // Quando Supabase NÃO está configurado: caímos pra fallback local (dev mode).
-  let diagnosisId: string;
-  if (isSupabaseConfigured()) {
+  // Headers / cookies pra Meta CAPI: extrai upfront antes de qualquer
+  // after(), porque request scope pode estar morto no callback.
+  const referer = request.headers.get("referer");
+  const userAgent = request.headers.get("user-agent");
+  const cookieHeader = request.headers.get("cookie");
+  const clientIp = extractClientIp(request.headers);
+
+  const score = calculateLeadScore(answers);
+  const tier = leadTier(score);
+  const leadValue =
+    tier === "hot" ? EVENT_VALUE_BRL.hot_lead : EVENT_VALUE_BRL.lead;
+
+  // ---------------------------------------------------------------------------
+  // Fallback sync — só quando Supabase OFF (dev sem credenciais). Mantém o
+  // fluxo antigo: Anthropic + email no caminho crítico, response leva ~30s
+  // mas devolve analysis pro form salvar em localStorage. Em produção esse
+  // bloco nunca roda.
+  // ---------------------------------------------------------------------------
+  if (!isSupabaseConfigured()) {
+    const diagnosisId = randomUUID();
+    console.warn(
+      "[diagnosis] Supabase OFF — fallback sync, lead NÃO será persistido.",
+      { id: diagnosisId },
+    );
+
+    let analysis: DiagnosisAnalysis;
     try {
-      const saved = await saveDiagnosis({
-        ...answers,
-        name: data.name,
-        email: data.email,
-        whatsapp: data.whatsapp || undefined,
-        company: data.company || undefined,
-        utm_source: data.utm_source ?? null,
-        utm_medium: data.utm_medium ?? null,
-        utm_campaign: data.utm_campaign ?? null,
-        utm_content: data.utm_content ?? null,
-        utm_term: data.utm_term ?? null,
-        landing_page: data.landing_page ?? null,
-        referrer: data.referrer ?? null,
-      });
-      diagnosisId = saved.id;
+      analysis = await generateDiagnosisAnalysis(answers);
     } catch (err) {
-      console.error(
-        "[DB_ERROR] submit aborted — saveDiagnosis failed",
-        err instanceof Error ? err.message : err,
-      );
+      console.error("[diagnosis] anthropic failed (sync fallback):", err);
       return NextResponse.json(
         {
           error:
-            "Não consegui registrar seu diagnóstico agora. Tente novamente em alguns segundos.",
+            "Não consegui gerar a análise agora. Tente novamente em alguns segundos.",
         },
-        { status: 503 },
+        { status: 502 },
       );
     }
-  } else {
-    diagnosisId = randomUUID();
-    console.warn(
-      "[diagnosis] Supabase OFF — usando UUID local. Lead NÃO será persistido.",
-      { id: diagnosisId },
-    );
-  }
 
-  // 2) Run Anthropic --------------------------------------------------------
-  let analysis: DiagnosisAnalysis;
-  try {
-    analysis = await generateDiagnosisAnalysis(answers);
-  } catch (err) {
-    const message =
-      err instanceof AnthropicError
-        ? err.message
-        : err instanceof Error
-          ? err.message
-          : "Erro desconhecido.";
-    if (isSupabaseConfigured()) {
+    if (isResendConfigured()) {
+      const userEmail = diagnosisReportEmail({
+        name: data.name,
+        diagnosisId,
+        analysis,
+        timeline: answers.q7_timeline,
+      });
       try {
-        await updateDiagnosisStatus(diagnosisId, {
-          status: "failed",
-          error_message: message,
+        await sendEmail({
+          to: data.email,
+          subject: userEmail.subject,
+          html: userEmail.html,
+          text: userEmail.text,
         });
-      } catch (updateErr) {
+      } catch (err) {
         console.error(
-          "[DB_ERROR] failed to mark diagnosis as failed",
-          updateErr instanceof Error ? updateErr.message : updateErr,
+          "[diagnosis:sync] email failed (continuando)",
+          err instanceof Error ? err.message : err,
         );
       }
     }
-    console.error("[diagnosis] anthropic failed:", err);
+
+    return NextResponse.json({
+      id: diagnosisId,
+      event_id: diagnosisId,
+      createdAt,
+      name: data.name,
+      timeline: answers.q7_timeline,
+      analysis,
+      lead_score: score,
+      status: "completed",
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Path async (Supabase ON) — caminho crítico: salva pending e retorna.
+  // ---------------------------------------------------------------------------
+  let diagnosisId: string;
+  try {
+    const saved = await saveDiagnosis({
+      ...answers,
+      name: data.name,
+      email: data.email,
+      whatsapp: data.whatsapp || undefined,
+      company: data.company || undefined,
+      utm_source: data.utm_source ?? null,
+      utm_medium: data.utm_medium ?? null,
+      utm_campaign: data.utm_campaign ?? null,
+      utm_content: data.utm_content ?? null,
+      utm_term: data.utm_term ?? null,
+      landing_page: data.landing_page ?? null,
+      referrer: data.referrer ?? null,
+    });
+    diagnosisId = saved.id;
+  } catch (err) {
+    console.error(
+      "[DB_ERROR] submit aborted — saveDiagnosis failed",
+      err instanceof Error ? err.message : err,
+    );
     return NextResponse.json(
       {
         error:
-          "Não consegui gerar a análise agora. Tente novamente em alguns segundos.",
+          "Não consegui registrar seu diagnóstico agora. Tente novamente em alguns segundos.",
       },
-      { status: 502 },
+      { status: 503 },
     );
   }
 
-  // 3) Update with completed analysis + lead_score -------------------------
-  // lead_score sempre é gravado aqui (antes ficava nulo na coluna; admin
-  // recalculava on-the-fly). Calcular uma vez e reusar nas etapas seguintes.
-  const score = calculateLeadScore(answers);
-  if (isSupabaseConfigured()) {
-    try {
-      await updateDiagnosisStatus(diagnosisId, {
-        status: "completed",
-        ai_analysis: analysis,
-        lead_score: score,
-      });
-    } catch (err) {
-      // Não é fatal: a análise foi gerada e segue pro e-mail. Apenas o status
-      // ficou em 'processing' no banco. Logar e continuar.
-      console.error(
-        "[DB_ERROR] update completed status failed (continuando)",
-        err instanceof SupabaseWriteError ? err.message : err,
+  // -----------------------------------------------------------------------
+  // after() #1 — sequência principal: Anthropic → update status → PDF →
+  // email user (ou email de fallback se failed). UM callback só porque
+  // ordem importa; callbacks separados em after() podem rodar concorrente
+  // no Next 15 e a ordenação implícita NÃO é garantida.
+  // -----------------------------------------------------------------------
+  after(async () => {
+    const log = (msg: string, extra?: unknown) =>
+      console.log(
+        `[diagnosis:after] ${msg}`,
+        extra !== undefined ? extra : "",
       );
+    const errLog = (msg: string, err: unknown) =>
+      console.error(
+        `[diagnosis:after] ${msg}`,
+        err instanceof Error ? err.message : err,
+      );
+
+    // 1. Anthropic
+    let analysis: DiagnosisAnalysis | null = null;
+    let aiError: string | null = null;
+    try {
+      analysis = await generateDiagnosisAnalysis(answers);
+      log("anthropic ok", { id: diagnosisId });
+    } catch (err) {
+      aiError =
+        err instanceof AnthropicError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Erro desconhecido.";
+      errLog("anthropic failed after retries", err);
     }
-  }
 
-  // 4) Email 1 (relatório pro user) ----------------------------------------
-  // ÚNICO email awaited: é o relatório que o user está esperando. Se falhar,
-  // o user navega pro /diagnosis/result/[id] e vê tudo na tela, mas o email
-  // de backup falhou silenciosamente — aceitável.
-  //
-  // PDF é gerado server-side com @react-pdf/renderer (~1-2s) e anexado.
-  // Se a renderização do PDF falhar, manda email sem anexo — relatório
-  // continua acessível via link online.
-  if (isResendConfigured()) {
-    const userEmail = diagnosisReportEmail({
-      name: data.name,
-      diagnosisId,
-      analysis,
-      timeline: answers.q7_timeline,
-    });
+    // 2. Update status (completed | failed)
+    if (analysis) {
+      try {
+        await updateDiagnosisStatus(diagnosisId, {
+          status: "completed",
+          ai_analysis: analysis,
+          lead_score: score,
+        });
+        log("status=completed gravado", { id: diagnosisId });
+      } catch (err) {
+        errLog("update status completed falhou (continuando)", err);
+      }
+    } else {
+      try {
+        await updateDiagnosisStatus(diagnosisId, {
+          status: "failed",
+          error_message: aiError,
+        });
+        log("status=failed gravado", { id: diagnosisId });
+      } catch (err) {
+        errLog("update status failed falhou (continuando)", err);
+      }
+    }
 
+    // 3. Resend (se não configurado, paramos aqui — nada de email/PDF)
+    if (!isResendConfigured()) {
+      log("resend off — pulando email/PDF", { id: diagnosisId });
+      return;
+    }
+
+    // 3a. Caminho failed → email curto pro user (sem PDF, com link Cal.com)
+    //     + alerta interno pro Levi saber que lead precisa contato manual.
+    if (!analysis) {
+      try {
+        const failed = diagnosisFailedEmail({
+          name: data.name,
+          diagnosisId,
+        });
+        await sendEmail({
+          to: data.email,
+          subject: failed.subject,
+          html: failed.html,
+          text: failed.text,
+        });
+        log("email failed enviado", { to: data.email });
+      } catch (err) {
+        errLog("email failed falhou", err);
+      }
+      try {
+        const labels = describeAnswers(answers);
+        await sendEmail({
+          to: siteConfig.email.internal,
+          subject: `⚠️ Diagnóstico falhou: ${data.name}${data.company ? ` (${data.company})` : ""} · score ${score}`,
+          replyTo: data.email,
+          html: `<p>IA estourou retries pro lead <strong>${data.name}</strong>.</p>
+<p>Email: <a href="mailto:${data.email}">${data.email}</a>${data.whatsapp ? ` · WhatsApp: ${data.whatsapp}` : ""}</p>
+<p>Carteira ${labels.carteira} · ERP ${labels.erp} · Perfil ${labels.perfilCliente} · Urgência ${labels.urgencia} · Score ${score}</p>
+<p>Erro: ${aiError ?? "desconhecido"}</p>
+<p>O lead recebeu email pedindo desculpas + link Cal.com. Vale chamar no WhatsApp em até 24h.</p>`,
+          text: `Diagnóstico falhou: ${data.name}. Lead: ${data.email} ${data.whatsapp ?? ""}. Score ${score}. Erro: ${aiError ?? "desconhecido"}.`,
+        });
+        log("alerta interno (failed) enviado");
+      } catch (err) {
+        errLog("alerta interno (failed) falhou", err);
+      }
+      return;
+    }
+
+    // 3b. Caminho success → PDF + email completo
     let pdfBuffer: Buffer | null = null;
     try {
       pdfBuffer = await renderDiagnosisPdf({
@@ -208,52 +305,40 @@ export async function POST(request: Request) {
         generatedAt: new Date(createdAt),
         reportUrl: `${siteConfig.url}/diagnosis/result/${diagnosisId}`,
       });
+      log("pdf renderizado", { bytes: pdfBuffer.byteLength });
     } catch (err) {
-      console.error(
-        "[diagnosis] PDF render failed — sending email without attachment",
-        err instanceof Error ? err.message : err,
-      );
+      errLog("pdf render falhou — enviando email sem anexo", err);
     }
 
-    await sendEmail({
-      to: data.email,
-      subject: userEmail.subject,
-      html: userEmail.html,
-      text: userEmail.text,
-      attachments: pdfBuffer
-        ? [
-            {
-              filename: diagnosisPdfFilename(data.name, diagnosisId),
-              content: pdfBuffer,
-              contentType: "application/pdf",
-            },
-          ]
-        : undefined,
-    });
-  } else {
-    console.info("[diagnosis] resend off — relatório não enviado", {
-      id: diagnosisId,
-      to: data.email,
-    });
-  }
+    try {
+      const userEmail = diagnosisReportEmail({
+        name: data.name,
+        diagnosisId,
+        analysis,
+        timeline: answers.q7_timeline,
+      });
+      await sendEmail({
+        to: data.email,
+        subject: userEmail.subject,
+        html: userEmail.html,
+        text: userEmail.text,
+        attachments: pdfBuffer
+          ? [
+              {
+                filename: diagnosisPdfFilename(data.name, diagnosisId),
+                content: pdfBuffer,
+                contentType: "application/pdf",
+              },
+            ]
+          : undefined,
+      });
+      log("email report enviado", { to: data.email, with_pdf: !!pdfBuffer });
+    } catch (err) {
+      errLog("email report falhou", err);
+    }
 
-  // 5) Tudo o que NÃO precisa bloquear response vai pra after() ------------
-  // after() do next/server roda callbacks DEPOIS do response ser flushado,
-  // garantindo execução completa mesmo em runtimes serverless onde o void
-  // promise normal poderia ser descartado no encerramento do request scope.
-  //
-  // Aqui vai: notificação interna pro Levi, schedule de emails 2-6, CAPI
-  // Lead. Tudo não-crítico pro UX do user — eles podem demorar 2-5s sem
-  // afetar a percepção de velocidade.
-  // Extrai headers/IP do request UPFRONT — após o response ser flushado,
-  // acessar request.headers em alguns runtimes é não-determinístico.
-  const referer = request.headers.get("referer");
-  const userAgent = request.headers.get("user-agent");
-  const cookieHeader = request.headers.get("cookie");
-  const clientIp = extractClientIp(request.headers);
-
-  after(async () => {
-    if (!isResendConfigured()) return;
+    // 4. Notificação interna completa pro Levi (success). Template precisa
+    // de analysis não-null — fica aqui dentro do bloco success.
     try {
       const labels = describeAnswers(answers);
       const internal = internalDiagnosisEmail({
@@ -278,33 +363,26 @@ export async function POST(request: Request) {
         text: internal.text,
         replyTo: data.email,
       });
+      log("email interno enviado");
     } catch (err) {
-      console.error(
-        "[diagnosis] after() internal email failed",
-        err instanceof Error ? err.message : err,
-      );
+      errLog("email interno falhou", err);
     }
-  });
 
-  after(async () => {
-    if (!isSupabaseConfigured()) return;
+    // 5. Schedule da sequência (só faz sentido em success — drips referenciam
+    // a análise). Em failed, o lead recebeu fallback e o follow-up vira manual.
     try {
       const items = buildEmailSequenceItems(new Date(createdAt));
       await scheduleEmailSequence(diagnosisId, items);
+      log("email sequence agendada", { count: items.length });
     } catch (err) {
-      console.error(
-        "[diagnosis] after() scheduleEmailSequence failed",
-        err instanceof SupabaseWriteError ? err.message : err,
-      );
+      errLog("scheduleEmailSequence falhou", err);
     }
   });
 
-  // CAPI Lead — event_id = diagnosisId pra dedup com Pixel client. Timeout
-  // interno do sendCapiEvent é 5s (subiu de 500ms). Fire-and-forget via
-  // after pra não custar nada no caminho crítico.
-  const tier = leadTier(score);
-  const leadValue =
-    tier === "hot" ? EVENT_VALUE_BRL.hot_lead : EVENT_VALUE_BRL.lead;
+  // -----------------------------------------------------------------------
+  // after() #3 — CAPI Lead. event_id = diagnosisId pra dedup com Pixel
+  // client. Não depende da análise — pode disparar em paralelo.
+  // -----------------------------------------------------------------------
   after(async () => {
     try {
       await sendCapiEvent({
@@ -328,7 +406,7 @@ export async function POST(request: Request) {
       });
     } catch (err) {
       console.error(
-        "[diagnosis] after() CAPI Lead failed",
+        "[diagnosis:after] CAPI Lead failed",
         err instanceof Error ? err.message : err,
       );
     }
@@ -337,10 +415,11 @@ export async function POST(request: Request) {
   return NextResponse.json({
     id: diagnosisId,
     event_id: diagnosisId,
-    createdAt,
-    name: data.name,
-    timeline: answers.q7_timeline,
-    analysis,
     lead_score: score,
+    status: "pending",
+    // anthropic_configured ajuda o client a decidir se o polling é necessário
+    // (em dev sem ANTHROPIC_API_KEY o after() ainda roda usando mock e isso
+    // é transparente, mas fica documentado).
+    anthropic_configured: isAnthropicConfigured(),
   });
 }

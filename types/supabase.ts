@@ -37,6 +37,7 @@ type DiagnosisRow = {
   status: "processing" | "completed" | "failed";
   error_message: string | null;
   lead_score: number | null;
+  retry_count: number;
   contacted_at: string | null;
   qualified_at: string | null;
   lead_notes: string | null;
@@ -56,6 +57,7 @@ type DiagnosisInsert = Omit<
   | "ai_analysis"
   | "error_message"
   | "lead_score"
+  | "retry_count"
   | "contacted_at"
   | "qualified_at"
   | "lead_notes"
@@ -72,6 +74,7 @@ type DiagnosisInsert = Omit<
   ai_analysis?: DiagnosisRow["ai_analysis"];
   error_message?: DiagnosisRow["error_message"];
   lead_score?: DiagnosisRow["lead_score"];
+  retry_count?: DiagnosisRow["retry_count"];
   contacted_at?: DiagnosisRow["contacted_at"];
   qualified_at?: DiagnosisRow["qualified_at"];
   lead_notes?: DiagnosisRow["lead_notes"];
