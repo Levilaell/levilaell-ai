@@ -88,10 +88,20 @@ export const diagnosisAnswersSchema = z.object({
 });
 export type DiagnosisAnswersInput = z.infer<typeof diagnosisAnswersSchema>;
 
+// Aceita formatos comuns brasileiros: "(17) 99999-9999", "17999999999", "+5517999999999".
+// Validamos só a contagem de dígitos pra não brigar com máscara/colagem do usuário.
+const brWhatsapp = z
+  .string()
+  .max(40, "Telefone muito longo.")
+  .refine((v) => {
+    const digits = v.replace(/\D/g, "");
+    return digits.length >= 10 && digits.length <= 13;
+  }, "WhatsApp inválido. Use DDD + número.");
+
 export const diagnosisLeadSchema = z.object({
   name: z.string().min(2, "Nome muito curto.").max(80),
   email: z.email("E-mail inválido."),
-  whatsapp: z.string().max(40).optional().or(z.literal("")),
+  whatsapp: brWhatsapp,
   company: z.string().max(120).optional().or(z.literal("")),
   consent: consentRequired,
 });
@@ -108,7 +118,7 @@ const attributionField = z
 export const diagnosisSubmissionSchema = diagnosisAnswersSchema.extend({
   name: z.string().min(2).max(80),
   email: z.email(),
-  whatsapp: z.string().max(40).optional().or(z.literal("")),
+  whatsapp: brWhatsapp,
   company: z.string().max(120).optional().or(z.literal("")),
   utm_source: attributionField,
   utm_medium: attributionField,

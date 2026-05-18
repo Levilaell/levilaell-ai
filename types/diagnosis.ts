@@ -73,7 +73,7 @@ export type DiagnosisAnswers = {
 export type DiagnosisLead = {
   name: string;
   email: string;
-  whatsapp?: string;
+  whatsapp: string;
   company?: string;
   consent: boolean;
 };

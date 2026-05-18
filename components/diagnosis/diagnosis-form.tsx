@@ -273,13 +273,28 @@ export function DiagnosisForm() {
 }
 
 function isLeadValid(a: Answers): boolean {
+  const wppDigits = (a.whatsapp ?? "").replace(/\D/g, "").length;
   return Boolean(
     a.name &&
     a.name.trim().length >= 2 &&
     a.email &&
     /.+@.+\..+/.test(a.email) &&
+    wppDigits >= 10 &&
+    wppDigits <= 13 &&
     a.consent,
   );
+}
+
+// Máscara BR: (XX) XXXXX-XXXX para celular, (XX) XXXX-XXXX para fixo.
+function formatBRPhone(raw: string): string {
+  const d = raw.replace(/\D/g, "").slice(0, 11);
+  if (d.length === 0) return "";
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) {
+    return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  }
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
 function QuestionStep({
@@ -423,6 +438,26 @@ function LeadCaptureStep({
             placeholder="seu@email.com"
             autoComplete="email"
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="whatsapp">
+            WhatsApp <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="whatsapp"
+            type="tel"
+            inputMode="tel"
+            value={answers.whatsapp ?? ""}
+            onChange={(e) =>
+              setAnswer("whatsapp", formatBRPhone(e.target.value))
+            }
+            placeholder="(17) 99999-9999"
+            autoComplete="tel-national"
+          />
+          <p className="text-xs text-muted-foreground">
+            Usamos só pra confirmar o envio do relatório e tirar dúvidas.
+          </p>
         </div>
 
         <label className="flex items-start gap-2.5 cursor-pointer pt-2">
