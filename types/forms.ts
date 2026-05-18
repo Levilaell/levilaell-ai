@@ -21,40 +21,81 @@ export const contactSchema = z.object({
 });
 export type ContactInput = z.infer<typeof contactSchema>;
 
+// ---------------------------------------------------------------------------
+// Diagnóstico V2 contábil (>=2026-05-18)
+// 7 perguntas: carteira, ERP, perfil de cliente, dores, horas, histórico,
+// urgência. Lead capture mínimo (name + email + consent).
+// ---------------------------------------------------------------------------
+export const diagnosisAnswersSchema = z.object({
+  q1_size: z.enum([
+    "ate_30",
+    "30_a_100",
+    "100_a_250",
+    "250_a_500",
+    "500_mais",
+  ]),
+  q2_erp: z.enum([
+    "dominio",
+    "onvio",
+    "alterdata",
+    "sage",
+    "contmatic",
+    "mastermaq",
+    "outro_planilha",
+  ]),
+  q3_client_profile: z.enum([
+    "mei",
+    "simples",
+    "presumido",
+    "real",
+    "misto",
+  ]),
+  q4_pain_areas: z
+    .array(
+      z.enum([
+        "triagem",
+        "cobranca",
+        "nf",
+        "lancamentos",
+        "conciliacao",
+        "atendimento",
+        "relatorios",
+        "onboarding",
+      ]),
+    )
+    .min(1, "Escolha ao menos 1.")
+    .max(3, "Máximo 3."),
+  q5_hours_weekly: z.enum([
+    "menos_10",
+    "10_a_25",
+    "25_a_50",
+    "50_a_100",
+    "mais_100",
+  ]),
+  q6_automation_history: z.enum([
+    "nunca",
+    "saas_falhou",
+    "freelancer_fragil",
+    "automacoes_pontuais",
+    "outro_quer_conversar",
+  ]),
+  q7_timeline: z.enum([
+    "para_ontem",
+    "proximo_mes",
+    "tres_meses",
+    "sem_urgencia",
+  ]),
+});
+export type DiagnosisAnswersInput = z.infer<typeof diagnosisAnswersSchema>;
+
 export const diagnosisLeadSchema = z.object({
   name: z.string().min(2, "Nome muito curto.").max(80),
   email: z.email("E-mail inválido."),
   whatsapp: z.string().max(40).optional().or(z.literal("")),
   company: z.string().max(120).optional().or(z.literal("")),
-  q10_revenue: z.string().max(40).optional().or(z.literal("")),
-  q10_employees: z
-    .number()
-    .int()
-    .min(0)
-    .max(1_000_000)
-    .optional()
-    .or(z.literal("").transform(() => undefined))
-    .or(z.nan().transform(() => undefined)),
   consent: consentRequired,
 });
 export type DiagnosisLeadInput = z.infer<typeof diagnosisLeadSchema>;
-
-export const diagnosisAnswersSchema = z.object({
-  q1_size: z.string().min(1),
-  q2_business_model: z.string().min(1),
-  q2_business_model_other: z.string().max(120).optional(),
-  q3_pain_areas: z
-    .array(z.string())
-    .min(1, "Escolha ao menos 1.")
-    .max(3, "Máximo 3."),
-  q4_tech_maturity: z.string().min(1),
-  q5_hours_weekly: z.string().min(1),
-  q6_automation_history: z.string().min(1),
-  q7_main_goal: z.string().min(1),
-  q8_timeline: z.string().min(1),
-  q9_budget: z.string().min(1),
-});
-export type DiagnosisAnswersInput = z.infer<typeof diagnosisAnswersSchema>;
 
 // Atribuição: todos opcionais — fluxo continua funcionando se localStorage
 // estiver bloqueado ou se o lead chegou organicamente. Strings cortadas em
@@ -69,10 +110,6 @@ export const diagnosisSubmissionSchema = diagnosisAnswersSchema.extend({
   email: z.email(),
   whatsapp: z.string().max(40).optional().or(z.literal("")),
   company: z.string().max(120).optional().or(z.literal("")),
-  q10_revenue: z.string().max(40).optional().or(z.literal("")),
-  q10_employees: z
-    .union([z.number().int().min(0).max(1_000_000), z.literal("")])
-    .optional(),
   utm_source: attributionField,
   utm_medium: attributionField,
   utm_campaign: attributionField,
@@ -85,44 +122,40 @@ export const diagnosisSubmissionSchema = diagnosisAnswersSchema.extend({
 export type DiagnosisSubmissionInput = z.infer<typeof diagnosisSubmissionSchema>;
 
 // ---------------------------------------------------------------------------
-// Schema do output do Claude — usado pra validar a resposta da IA
+// Schema do output do Claude V2 — usado pra validar a resposta da IA
+// Diferenças vs v1:
+//   - Sem quick_win / estimativa_roi / ferramentas_sugeridas
+//   - + gargalo_principal, plano_30_60_90
+//   - abordagem: diy | conversa | proposta_formal
 // ---------------------------------------------------------------------------
-export const opportunitySchema = z.object({
+export const opportunitySchemaV2 = z.object({
   titulo: z.string().min(1),
   descricao: z.string().min(1),
   impacto_estimado: z.string().min(1),
-  complexidade: z.enum(["baixa", "média", "alta"]),
-  ferramentas_sugeridas: z.array(z.string()).min(1).max(8),
+  complexidade: z.enum(["baixa", "media", "alta"]),
   prazo_implementacao: z.string().min(1),
 });
 
 export const diagnosisAnalysisSchema = z.object({
   diagnostico_resumido: z.string().min(1),
+  gargalo_principal: z.object({
+    area: z.string().min(1),
+    descricao: z.string().min(1),
+    impacto_estimado: z.string().min(1),
+  }),
   tres_oportunidades: z
-    .array(opportunitySchema)
+    .array(opportunitySchemaV2)
     .length(3, "Exatamente 3 oportunidades."),
-  quick_win: z.object({
-    titulo: z.string().min(1),
-    passo_a_passo: z.array(z.string()).min(3).max(8),
-    ferramentas_necessarias: z.array(z.string()).max(8),
-  }),
-  estimativa_roi: z.object({
-    horas_recuperaveis_mes: z.union([z.number(), z.string()]),
-    valor_estimado_mensal: z.string().min(1),
-    tempo_payback: z.string().min(1),
-    disclaimer: z.string().nullable(),
-    metodologia: z.string().min(1),
-  }),
-  proximo_passo_recomendado: z.object({
-    abordagem: z.enum([
-      "diy",
-      "consultoria_pontual",
-      "parceria_continua",
-      "ainda_nao_e_hora",
-    ]),
-    justificativa: z.string().min(1),
+  plano_30_60_90: z.object({
+    "30_dias": z.string().min(1),
+    "60_dias": z.string().min(1),
+    "90_dias": z.string().min(1),
   }),
   alerta_estrategico: z.string().min(1),
+  proximo_passo_recomendado: z.object({
+    abordagem: z.enum(["diy", "conversa", "proposta_formal"]),
+    justificativa: z.string().min(1),
+  }),
 });
 
 export type DiagnosisAnalysisOutput = z.infer<typeof diagnosisAnalysisSchema>;

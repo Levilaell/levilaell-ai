@@ -5,6 +5,18 @@ import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/admin-format";
 import type { LeadSummary } from "@/lib/admin-stats";
 
+// Listing mostra ERP (V2) ou modelo de negócio (legacy). Ambos coexistem
+// porque mudamos de público em 2026-05-18 e os leads antigos seguem visíveis.
+const ERP_LABELS: Record<string, string> = {
+  dominio: "Domínio",
+  onvio: "Onvio",
+  alterdata: "Alterdata",
+  sage: "Sage",
+  contmatic: "Contmatic",
+  mastermaq: "MasterMaq",
+  outro_planilha: "Outro/planilha",
+};
+
 const BUSINESS_LABELS: Record<string, string> = {
   b2b_services: "Serviços B2B",
   ecommerce: "E-commerce",
@@ -16,6 +28,12 @@ const BUSINESS_LABELS: Record<string, string> = {
 };
 
 const TIMELINE_LABELS: Record<string, string> = {
+  // V2 contábil
+  para_ontem: "🔥 Pra ontem",
+  proximo_mes: "⚡ Próximo mês",
+  tres_meses: "📅 3 meses",
+  sem_urgencia: "🌱 Exploratório",
+  // Legacy v1
   this_week: "🔥 Esta semana",
   next_month: "⚡ Próximo mês",
   "3_to_6_months": "📅 3-6 meses",
@@ -87,8 +105,12 @@ export function LeadsTable({
                   </div>
                   <div className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
                     <span>
-                      {BUSINESS_LABELS[l.q2_business_model] ??
-                        l.q2_business_model}
+                      {l.q2_erp
+                        ? (ERP_LABELS[l.q2_erp] ?? l.q2_erp)
+                        : l.q2_business_model
+                          ? (BUSINESS_LABELS[l.q2_business_model] ??
+                            l.q2_business_model)
+                          : "(sem perfil)"}
                     </span>
                     <span>·</span>
                     <span>

@@ -47,9 +47,12 @@ export type LeadSummary = {
   email: string;
   whatsapp: string | null;
   company: string | null;
-  q2_business_model: string;
+  // q2_business_model só é preenchido em registros legacy (<2026-05-18).
+  // q2_erp só em registros V2 contábil. Listing mostra um OU outro.
+  q2_business_model: string | null;
+  q2_erp: string | null;
   q8_timeline: string;
-  q9_budget: string;
+  q9_budget: string | null;
   lead_score: number | null;
   created_at: string;
   contacted_at: string | null;
@@ -255,7 +258,7 @@ export async function getTopLeads(limit = 10): Promise<LeadSummary[]> {
   const { data, error } = await service()
     .from("diagnoses")
     .select(
-      "id, name, email, whatsapp, company, q2_business_model, q8_timeline, q9_budget, lead_score, created_at, contacted_at, qualified_at",
+      "id, name, email, whatsapp, company, q2_business_model, q2_erp, q8_timeline, q9_budget, lead_score, created_at, contacted_at, qualified_at",
     )
     .eq("status", "completed")
     .order("lead_score", { ascending: false, nullsFirst: false })

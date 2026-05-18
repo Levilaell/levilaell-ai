@@ -1,5 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { DiagnosisAnalysis, DiagnosisAnswers } from "@/types/diagnosis";
+import type {
+  DiagnosisAnalysis,
+  DiagnosisAnalysisV2,
+  DiagnosisAnswers,
+} from "@/types/diagnosis";
 import { buildDiagnosisPrompt, describeAnswers } from "@/lib/diagnosis-prompt";
 import {
   diagnosisAnalysisSchema,
@@ -24,25 +28,40 @@ function getClient(): Anthropic | null {
   return client;
 }
 
-// JSON schema for the tool — força structured output via Anthropic tool use.
+// JSON schema V2 — força structured output. Estrutura nova:
+// gargalo_principal + tres_oportunidades + plano_30_60_90 + alerta + abordagem.
 const ANALYSIS_TOOL = {
   name: "save_diagnosis_analysis",
   description:
-    "Persiste a análise estruturada do diagnóstico de operação. Sempre chame essa tool com a análise completa.",
+    "Persiste a análise estruturada do diagnóstico contábil. Sempre chame essa tool com a análise completa.",
   input_schema: {
     type: "object" as const,
     required: [
       "diagnostico_resumido",
+      "gargalo_principal",
       "tres_oportunidades",
-      "quick_win",
-      "estimativa_roi",
-      "proximo_passo_recomendado",
+      "plano_30_60_90",
       "alerta_estrategico",
+      "proximo_passo_recomendado",
     ],
     properties: {
       diagnostico_resumido: {
         type: "string",
-        description: "1-2 frases capturando a situação atual com empatia e precisão.",
+        description:
+          "2-3 frases sobre o estágio do escritório no eixo de maturidade operacional. Constatar, não elogiar.",
+      },
+      gargalo_principal: {
+        type: "object",
+        required: ["area", "descricao", "impacto_estimado"],
+        properties: {
+          area: { type: "string" },
+          descricao: { type: "string" },
+          impacto_estimado: {
+            type: "string",
+            description:
+              "Horas/mês perdidas em faixa conservadora (ex: '40-60 h/mês'). NÃO usar R$.",
+          },
+        },
       },
       tres_oportunidades: {
         type: "array",
@@ -53,87 +72,46 @@ const ANALYSIS_TOOL = {
           required: [
             "titulo",
             "descricao",
-            "impacto_estimado",
             "complexidade",
-            "ferramentas_sugeridas",
             "prazo_implementacao",
+            "impacto_estimado",
           ],
           properties: {
             titulo: { type: "string" },
             descricao: { type: "string" },
-            impacto_estimado: { type: "string" },
-            complexidade: { type: "string", enum: ["baixa", "média", "alta"] },
-            ferramentas_sugeridas: {
-              type: "array",
-              items: { type: "string" },
-              minItems: 1,
-              maxItems: 8,
+            complexidade: {
+              type: "string",
+              enum: ["baixa", "media", "alta"],
             },
             prazo_implementacao: { type: "string" },
+            impacto_estimado: {
+              type: "string",
+              description: "Qualitativo. SEM R$ específico.",
+            },
           },
         },
       },
-      quick_win: {
+      plano_30_60_90: {
         type: "object",
-        required: ["titulo", "passo_a_passo", "ferramentas_necessarias"],
+        required: ["30_dias", "60_dias", "90_dias"],
         properties: {
-          titulo: { type: "string" },
-          passo_a_passo: {
-            type: "array",
-            items: { type: "string" },
-            minItems: 3,
-            maxItems: 8,
-          },
-          ferramentas_necessarias: {
-            type: "array",
-            items: { type: "string" },
-            maxItems: 8,
-          },
+          "30_dias": { type: "string" },
+          "60_dias": { type: "string" },
+          "90_dias": { type: "string" },
         },
       },
-      estimativa_roi: {
-        type: "object",
-        required: [
-          "horas_recuperaveis_mes",
-          "valor_estimado_mensal",
-          "tempo_payback",
-          "disclaimer",
-          "metodologia",
-        ],
-        properties: {
-          horas_recuperaveis_mes: {
-            description: "Número OU range em string (ex: 40 ou '30-50').",
-          },
-          valor_estimado_mensal: {
-            type: "string",
-            description: "Range em string (ex: 'R$ 2.000 a R$ 8.000/mês').",
-          },
-          tempo_payback: { type: "string" },
-          disclaimer: {
-            type: ["string", "null"],
-            description:
-              "Texto explicando precisão da estimativa, ou null se calculado com dados reais.",
-          },
-          metodologia: { type: "string" },
-        },
-      },
+      alerta_estrategico: { type: "string" },
       proximo_passo_recomendado: {
         type: "object",
         required: ["abordagem", "justificativa"],
         properties: {
           abordagem: {
             type: "string",
-            enum: [
-              "diy",
-              "consultoria_pontual",
-              "parceria_continua",
-              "ainda_nao_e_hora",
-            ],
+            enum: ["diy", "conversa", "proposta_formal"],
           },
           justificativa: { type: "string" },
         },
       },
-      alerta_estrategico: { type: "string" },
     },
   },
 };
@@ -209,11 +187,10 @@ export async function generateDiagnosisAnalysis(
   );
 }
 
-function toAnalysis(parsed: DiagnosisAnalysisOutput): DiagnosisAnalysis {
-  // Zod permite array de qualquer tamanho; cast para a tupla esperada.
+function toAnalysis(parsed: DiagnosisAnalysisOutput): DiagnosisAnalysisV2 {
   return {
     ...parsed,
-    tres_oportunidades: parsed.tres_oportunidades as DiagnosisAnalysis["tres_oportunidades"],
+    tres_oportunidades: parsed.tres_oportunidades as DiagnosisAnalysisV2["tres_oportunidades"],
   };
 }
 
@@ -227,89 +204,101 @@ export class AnthropicError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Mock fallback — usado quando ANTHROPIC_API_KEY não está setado.
-// Continua sector-aware pra manter o desenvolvimento local sem custo de IA.
+// Mock fallback — usado quando ANTHROPIC_API_KEY ausente (dev/staging sem key).
+// Deve refletir a estrutura V2 contábil. NÃO menciona ferramentas específicas
+// (n8n, Make, Zapier) — o prompt real bane essas marcas e o mock deve seguir.
 // ---------------------------------------------------------------------------
-export function generateMockAnalysis(answers: DiagnosisAnswers): DiagnosisAnalysis {
+export function generateMockAnalysis(
+  answers: DiagnosisAnswers,
+): DiagnosisAnalysisV2 {
   const d = describeAnswers(answers);
-  const isB2B = answers.q2_business_model === "b2b_services";
-  const isEcom = answers.q2_business_model === "ecommerce";
-  const sectorTouch = isB2B
-    ? "operação de serviço B2B"
-    : isEcom
-      ? "jornada de compra"
-      : "operação interna";
+  const carteiraGrande =
+    answers.q1_size === "250_a_500" || answers.q1_size === "500_mais";
+  const erpRobusto = ["dominio", "onvio", "alterdata", "sage"].includes(
+    answers.q2_erp,
+  );
+  const horasAltas =
+    answers.q5_hours_weekly === "50_a_100" ||
+    answers.q5_hours_weekly === "mais_100";
+  const urgenciaAlta = answers.q7_timeline === "para_ontem";
+  const semHistorico = answers.q6_automation_history === "nunca";
+  const saasFalhou = answers.q6_automation_history === "saas_falhou";
 
-  const isUrgent = answers.q8_timeline === "this_week";
-  const isLowBudget = answers.q9_budget === "under_1k";
-  const noUrgency = answers.q8_timeline === "no_urgency";
+  const abordagem: "diy" | "conversa" | "proposta_formal" =
+    carteiraGrande && erpRobusto && horasAltas && urgenciaAlta
+      ? "proposta_formal"
+      : (answers.q1_size === "ate_30" ||
+            answers.q1_size === "30_a_100") &&
+          semHistorico &&
+          (answers.q7_timeline === "sem_urgencia" ||
+            answers.q7_timeline === "tres_meses")
+        ? "diy"
+        : "conversa";
 
-  const abordagem = isLowBudget
-    ? "diy"
-    : answers.q9_budget === "over_15k"
-      ? "parceria_continua"
-      : "consultoria_pontual";
+  const primeiraDor = answers.q4_pain_areas[0] ?? "triagem";
+  const areaMap: Record<string, string> = {
+    triagem: "Triagem documental",
+    cobranca: "Cobrança de documentos",
+    nf: "Processamento de NF",
+    lancamentos: "Lançamentos fiscais",
+    conciliacao: "Conciliação bancária",
+    atendimento: "Atendimento a clientes",
+    relatorios: "Relatórios mensais",
+    onboarding: "Onboarding de clientes",
+  };
+  const areaGargalo = areaMap[primeiraDor] ?? "Operação interna";
 
   return {
-    diagnostico_resumido: `Operação no segmento de ${d.businessModel.toLowerCase()} (porte: ${d.size.toLowerCase()}) com gargalo principal em ${d.painAreas.toLowerCase()}. Objetivo declarado de "${d.mainGoal.toLowerCase()}" ${noUrgency ? "sugere caminho exploratório" : "é compatível com automação focada"}.`,
+    diagnostico_resumido: `Escritório com carteira de ${d.carteira.toLowerCase()} rodando em ${d.erp}, perfil predominante ${d.perfilCliente.toLowerCase()}. ${horasAltas ? "Volume de horas em tarefas manuais indica que a operação cresceu na frente da estrutura." : "Operação ainda comporta o volume atual, mas sem folga pra absorver novos clientes sem dor."}`,
+    gargalo_principal: {
+      area: areaGargalo,
+      descricao: `Concentração de tempo em ${areaGargalo.toLowerCase()} sugere que a equipe vira repositório manual de informação que ERP e obrigações depois precisam consumir. Quando o fechamento aperta, esse retrabalho cobra juros em forma de horas extras ou erro em SPED/DCTF.`,
+      impacto_estimado: horasAltas
+        ? "60-100 h/mês concentradas em poucas pessoas"
+        : "20-40 h/mês diluídas no time",
+    },
     tres_oportunidades: [
       {
-        titulo: "Centralizar atendimento e qualificação",
-        descricao: `Construir um agente de IA que recebe leads e qualifica antes do humano entrar — específico pro ${sectorTouch}.`,
-        impacto_estimado: "até 12h/semana recuperadas",
-        complexidade: "média",
-        ferramentas_sugeridas: ["n8n", "Claude", "WhatsApp Business API"],
-        prazo_implementacao: isUrgent ? "1-2 semanas" : "3-4 semanas",
-      },
-      {
-        titulo: "Automatizar relatórios operacionais",
-        descricao:
-          "Substituir planilhas manuais por dashboards que se atualizam sozinhos a partir das fontes existentes.",
-        impacto_estimado: "8h/semana de coordenadores",
+        titulo: `Estruturar o fluxo de ${areaGargalo.toLowerCase()}`,
+        descricao: `Mapear ponto a ponto o caminho atual de entrada → conferência → lançamento. Padronizar templates de pedido ao cliente, prazos e responsáveis. Antes de automatizar, deixar o processo previsível — automação sobre processo quebrado só acelera o caos.`,
         complexidade: "baixa",
-        ferramentas_sugeridas: ["Metabase", "n8n", "Supabase"],
-        prazo_implementacao: "1-2 semanas",
+        prazo_implementacao: urgenciaAlta ? "1-2 semanas" : "2-3 semanas",
+        impacto_estimado: "Previsibilidade no fechamento e redução de retrabalho",
       },
       {
-        titulo: "Integrar sistemas críticos",
-        descricao:
-          "Conectar CRM, financeiro e canais de comunicação pra que dados fluam sem cópia manual.",
-        impacto_estimado: "redução de 60% em retrabalho",
-        complexidade: "média",
-        ferramentas_sugeridas: ["n8n", "Make", "APIs nativas"],
+        titulo: "Triagem assistida por IA na entrada de documentos",
+        descricao: `Configurar uma camada de classificação automática que lê documentos recebidos (e-mail, WhatsApp), identifica tipo (NF entrada, NF saída, extrato, boleto, contrato) e roteia pra fila correta do ERP. Equipe vira revisora, não digitadora.`,
+        complexidade: "media",
         prazo_implementacao: "3-6 semanas",
+        impacto_estimado: "Alívio significativo em horas de digitação manual",
+      },
+      {
+        titulo: "Relatórios mensais auto-gerados",
+        descricao: `Substituir a montagem manual de relatórios por geração automática a partir dos dados do ERP, com envio agendado pra cada cliente. Padrão único, mas com bloco editável por cliente. Libera horas dos responsáveis técnicos pra atendimento consultivo.`,
+        complexidade: "media",
+        prazo_implementacao: "4-6 semanas",
+        impacto_estimado: "Tempo de fechamento reduzido em dias úteis",
       },
     ],
-    quick_win: {
-      titulo: "Fluxo de boas-vindas automatizado (1 semana)",
-      passo_a_passo: [
-        "Mapear o canal onde mais entram leads.",
-        "Criar uma sequência de 3 mensagens automatizadas com perguntas-chave.",
-        "Conectar respostas a uma planilha estruturada.",
-        "Definir critério simples de qualificação (orçamento + prazo).",
-        "Rotear leads quentes direto pra você.",
-      ],
-      ferramentas_necessarias: ["WhatsApp Business", "Google Sheets", "Tally"],
+    plano_30_60_90: {
+      "30_dias":
+        "Mapear o fluxo atual da dor principal em uma folha de papel. Padronizar templates de cobrança de documentos e prazos de envio acordados por escrito.",
+      "60_dias":
+        "Implementar a camada de triagem com IA pros tipos de documento mais comuns. Medir tempo de digitação por NF antes/depois.",
+      "90_dias":
+        "Automatizar relatórios mensais e migrar o time pra postura consultiva — usar a folga pra subir ticket médio nos clientes existentes.",
     },
-    estimativa_roi: {
-      horas_recuperaveis_mes: "30-60",
-      valor_estimado_mensal: "R$ 3.000 a R$ 9.000/mês",
-      tempo_payback: "2 a 4 meses",
-      disclaimer:
-        "Estimativa preliminar baseada em médias do setor. Para cálculo preciso, podemos refinar na conversa gratuita.",
-      metodologia:
-        "Range estimado a partir de modelos típicos do segmento. Sem dados quantitativos do lead, intervalo mantido amplo de propósito.",
-    },
+    alerta_estrategico: saasFalhou
+      ? "O histórico mostra que vocês já tentaram SaaS pronto e não escalou. O risco invisível agora é repetir o padrão com outro SaaS — produto bom no demo, frágil em produção contábil. O que falta normalmente não é mais ferramenta: é desenho de processo antes da implementação, e propriedade técnica de quem opera. Antes de comprar de novo, vale mapear exatamente por que o último tentativa quebrou."
+      : "A armadilha clássica em escritório contábil é tratar automação como projeto único — 'vou parar pra implementar e depois volto'. Operação contábil é cíclica (fechamento mensal, obrigações anuais), e qualquer mudança grande precisa caber dentro do ciclo. Recomendamos automatizar em ondas curtas que não atrapalhem o fechamento atual.",
     proximo_passo_recomendado: {
       abordagem,
       justificativa:
         abordagem === "diy"
-          ? "Investimento informado e maturidade técnica indicam caminho autônomo: foque em ferramentas no-code com baixo custo recorrente antes de contratar."
-          : abordagem === "parceria_continua"
-            ? "Investimento e volume justificam parceria contínua: o ganho composto de iterações semanais supera projetos pontuais."
-            : "Você tem clareza do problema e investimento alinhado. Uma consultoria pontual de 4-6 semanas resolve o gargalo principal sem comprometer a operação atual.",
+          ? "Carteira ainda pequena e sem histórico de tentativa de automação significam que o ROI de contratar agora é baixo. Vale primeiro padronizar processos com a equipe atual; quando a dor passar de 25 h/sem ou a carteira passar de 100, conversamos."
+          : abordagem === "proposta_formal"
+            ? "Carteira robusta, ERP consolidado e horas altas justificam um projeto formal com escopo, prazos e métricas. Recomendamos um diagnóstico aprofundado de 1-2 semanas antes do desenho final, pra garantir que o que vamos automatizar realmente reduz o gargalo certo."
+            : "O perfil indica espaço pra ganho real, mas o caminho exato depende de detalhes que não cabem no formulário. Uma conversa de 30-40 min mapeia o caminho mais curto e descarta o que não vai render no curto prazo.",
     },
-    alerta_estrategico:
-      "Cuidado para não automatizar processo quebrado. Antes de qualquer ferramenta, vale 1 semana mapeando o fluxo atual em uma folha de papel — automatizar caos só acelera o caos.",
   };
 }

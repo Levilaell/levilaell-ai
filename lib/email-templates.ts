@@ -1,4 +1,9 @@
-import type { DiagnosisAnalysis, RecommendedApproach } from "@/types/diagnosis";
+import {
+  isLegacyAnalysis,
+  type DiagnosisAnalysis,
+  type LegacyRecommendedApproach,
+  type RecommendedApproachV2,
+} from "@/types/diagnosis";
 import { getCalcomRedirectUrl, getCalcomUrl } from "@/lib/calcom";
 import { siteConfig } from "@/lib/site";
 
@@ -31,7 +36,15 @@ export function emailShell(content: string, footerExtra: string = ""): string {
 // Alias interno mantém referências antigas funcionando.
 const shell = emailShell;
 
-const approachLabels: Record<RecommendedApproach, string> = {
+// V2 + Legacy convivem: 4 diagnósticos antigos ainda podem disparar emails se
+// reprocessados (raro). Dicionários acumulam ambas as chaves.
+const approachLabelsV2: Record<RecommendedApproachV2, string> = {
+  diy: "Faça você mesmo",
+  conversa: "Conversa exploratória (30 min)",
+  proposta_formal: "Proposta formal de projeto",
+};
+
+const approachLabelsLegacy: Record<LegacyRecommendedApproach, string> = {
   diy: "Faça você mesmo",
   consultoria_pontual: "Consultoria pontual",
   parceria_continua: "Parceria contínua",
@@ -39,6 +52,12 @@ const approachLabels: Record<RecommendedApproach, string> = {
 };
 
 const timelineBadges: Record<string, string> = {
+  // V2 contábil
+  para_ontem: "🔥 Urgente",
+  proximo_mes: "⚡ Próximo mês",
+  tres_meses: "📅 3 meses",
+  sem_urgencia: "🌱 Exploratório",
+  // Legacy v1
   this_week: "🔥 Urgente",
   next_month: "⚡ Próximo mês",
   "3_to_6_months": "📅 Médio prazo",
@@ -46,6 +65,12 @@ const timelineBadges: Record<string, string> = {
 };
 
 const timelineContexts: Record<string, string> = {
+  // V2 contábil
+  para_ontem: "Vocês marcaram urgência alta. Aqui está o caminho mais curto:",
+  proximo_mes: "Vocês marcaram horizonte de 1 mês. Aqui está o plano:",
+  tres_meses: "Vocês marcaram horizonte de 3 meses. Aqui está o plano:",
+  sem_urgencia: "Vocês marcaram esse projeto como exploratório:",
+  // Legacy v1
   this_week: "Você marcou esse projeto como urgente. Aqui está seu plano:",
   next_month: "Você marcou esse projeto pra rodar no próximo mês:",
   "3_to_6_months": "Você marcou esse projeto pros próximos 3-6 meses:",
@@ -54,7 +79,25 @@ const timelineContexts: Record<string, string> = {
 
 type EmailCtaCopy = { intro: string; button: string };
 
-const emailCtaByApproach: Record<RecommendedApproach, EmailCtaCopy> = {
+const emailCtaByApproachV2: Record<RecommendedApproachV2, EmailCtaCopy> = {
+  diy: {
+    intro:
+      "Se travar na implementação, conversamos em 30 min sobre o caminho mais curto. Sem pitch.",
+    button: "Tirar dúvidas em conversa",
+  },
+  conversa: {
+    intro:
+      "Pra refinar o plano com a gente, agende uma conversa de 30 min sem compromisso.",
+    button: "Agendar conversa gratuita",
+  },
+  proposta_formal: {
+    intro:
+      "Pelo cenário do escritório, faz sentido conversar sobre projeto formal. Alinhamos escopo, prazos e métricas.",
+    button: "Agendar conversa estratégica",
+  },
+};
+
+const emailCtaByApproachLegacy: Record<LegacyRecommendedApproach, EmailCtaCopy> = {
   diy: {
     intro:
       "Se travar na implementação, conversamos em 30 min sobre o caminho mais curto. Sem pitch.",
@@ -76,6 +119,22 @@ const emailCtaByApproach: Record<RecommendedApproach, EmailCtaCopy> = {
     button: "Agendar conversa estratégica",
   },
 };
+
+function approachLabelFor(analysis: DiagnosisAnalysis): string {
+  if (isLegacyAnalysis(analysis)) {
+    return approachLabelsLegacy[analysis.proximo_passo_recomendado.abordagem];
+  }
+  return approachLabelsV2[analysis.proximo_passo_recomendado.abordagem];
+}
+
+function emailCtaFor(analysis: DiagnosisAnalysis): EmailCtaCopy {
+  if (isLegacyAnalysis(analysis)) {
+    return emailCtaByApproachLegacy[
+      analysis.proximo_passo_recomendado.abordagem
+    ];
+  }
+  return emailCtaByApproachV2[analysis.proximo_passo_recomendado.abordagem];
+}
 
 /** Pega só o primeiro nome — "Levi Lael Coelho Silva" → "Levi". */
 export function firstName(full: string): string {
@@ -105,15 +164,13 @@ export function diagnosisReportEmail(args: {
       ? `<p style="color:#52525b; font-size:14px; margin-bottom:16px"><strong>${timelineBadges[timeline]}</strong> · ${escapeHtml(timelineContexts[timeline])}</p>`
       : "";
 
-  const ctaCopy =
-    emailCtaByApproach[analysis.proximo_passo_recomendado.abordagem];
+  const ctaCopy = emailCtaFor(analysis);
   const calcomBase = getCalcomUrl();
   const schedulingHref = calcomBase
     ? getCalcomRedirectUrl(diagnosisId)
     : `mailto:${siteConfig.email.contact}?subject=${encodeURIComponent(`Diagnóstico — ${name}`)}`;
 
-  const approachLabel =
-    approachLabels[analysis.proximo_passo_recomendado.abordagem];
+  const approachLabel = approachLabelFor(analysis);
 
   const html = shell(`
     <div class="card">
@@ -124,7 +181,7 @@ export function diagnosisReportEmail(args: {
       <p style="margin-top: 20px"><strong>Próximo passo recomendado:</strong> ${escapeHtml(approachLabel)}.</p>
 
       <p style="margin-top: 16px; padding: 14px; background: #fafafa; border: 1px solid #e4e4e7; border-radius: 8px; font-size: 14px">
-        📎 <strong>Relatório completo em PDF anexo</strong> — top 3 oportunidades, quick win de 1 semana, ROI estimado e alerta estratégico.
+        📎 <strong>Relatório completo em PDF anexo</strong> — gargalo principal, top 3 oportunidades, plano 30/60/90 dias e alerta estratégico.
       </p>
 
       <p style="margin-top: 24px">${escapeHtml(ctaCopy.intro)}</p>
@@ -139,7 +196,11 @@ export function diagnosisReportEmail(args: {
     </div>
   `);
 
-  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\nPróximo passo recomendado: ${approachLabel}.\n\nO relatório completo está no PDF anexo (top 3 oportunidades, quick win, ROI, alerta).\n\n${ctaCopy.intro}\nAgendar: ${schedulingHref}\n\nVer online: ${reportUrl}\n\n— Levi Lael`;
+  const isLegacy = isLegacyAnalysis(analysis);
+  const pdfDescription = isLegacy
+    ? "top 3 oportunidades, quick win, ROI, alerta"
+    : "gargalo principal, top 3 oportunidades, plano 30/60/90, alerta";
+  const text = `Olá, ${fName}.\n\n${analysis.diagnostico_resumido}\n\nPróximo passo recomendado: ${approachLabel}.\n\nO relatório completo está no PDF anexo (${pdfDescription}).\n\n${ctaCopy.intro}\nAgendar: ${schedulingHref}\n\nVer online: ${reportUrl}\n\n— Levi Lael`;
   return {
     subject: `Seu diagnóstico de operação está pronto, ${fName}`,
     html,
@@ -202,6 +263,7 @@ export function contactConfirmationEmail(args: { name: string }): {
 // ---------------------------------------------------------------------------
 // Internal notifications
 // ---------------------------------------------------------------------------
+// Notificação interna pro Levi a cada diagnóstico — V2 contábil.
 export function internalDiagnosisEmail(args: {
   diagnosisId: string;
   name: string;
@@ -211,11 +273,10 @@ export function internalDiagnosisEmail(args: {
   leadScore: number | null;
   analysis: DiagnosisAnalysis;
   contextLabels: {
-    size: string;
-    businessModel: string;
-    timeline: string;
-    budget: string;
-    revenue: string;
+    carteira: string;
+    erp: string;
+    perfilCliente: string;
+    urgencia: string;
   };
 }): { subject: string; html: string; text: string } {
   const {
@@ -231,6 +292,15 @@ export function internalDiagnosisEmail(args: {
   const reportUrl = `${siteConfig.url}/diagnosis/result/${diagnosisId}`;
   const op1 = analysis.tres_oportunidades[0];
   const subject = `🎯 Novo diagnóstico: ${name}${company ? ` (${company})` : ""}${leadScore !== null ? ` · score ${leadScore}` : ""}`;
+  const approachLabel = approachLabelFor(analysis);
+
+  const gargaloBlock =
+    !isLegacyAnalysis(analysis) && analysis.gargalo_principal
+      ? `
+      <h2>Gargalo principal</h2>
+      <p><strong>${escapeHtml(analysis.gargalo_principal.area)}</strong> — ${escapeHtml(analysis.gargalo_principal.impacto_estimado)}</p>
+      `
+      : "";
 
   const html = shell(`
     <div class="card">
@@ -247,23 +317,19 @@ export function internalDiagnosisEmail(args: {
 
       <h2>Contexto</h2>
       <p>
-        Tamanho: ${escapeHtml(contextLabels.size)}<br>
-        Modelo: ${escapeHtml(contextLabels.businessModel)}<br>
-        Urgência: ${escapeHtml(contextLabels.timeline)}<br>
-        Budget: ${escapeHtml(contextLabels.budget)}<br>
-        Faturamento: ${escapeHtml(contextLabels.revenue)}
+        Carteira: ${escapeHtml(contextLabels.carteira)}<br>
+        ERP: ${escapeHtml(contextLabels.erp)}<br>
+        Perfil de cliente: ${escapeHtml(contextLabels.perfilCliente)}<br>
+        Urgência: ${escapeHtml(contextLabels.urgencia)}
       </p>
+
+      ${gargaloBlock}
 
       <h2>Oportunidade #1</h2>
       <p><strong>${escapeHtml(op1.titulo)}</strong> — ${escapeHtml(op1.impacto_estimado)} (${escapeHtml(op1.complexidade)})</p>
 
-      <h2>ROI estimado</h2>
-      <p>
-        ${escapeHtml(analysis.estimativa_roi.valor_estimado_mensal)} · payback ${escapeHtml(analysis.estimativa_roi.tempo_payback)}
-      </p>
-
       <h2>Recomendação</h2>
-      <p><strong>${escapeHtml(approachLabels[analysis.proximo_passo_recomendado.abordagem])}</strong></p>
+      <p><strong>${escapeHtml(approachLabel)}</strong></p>
       <p>${escapeHtml(analysis.proximo_passo_recomendado.justificativa)}</p>
 
       <p style="margin-top: 24px"><a class="cta" href="${reportUrl}">Abrir relatório completo</a></p>

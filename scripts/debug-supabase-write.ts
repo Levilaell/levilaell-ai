@@ -58,18 +58,18 @@ const anon: SupabaseClient = createClient(url, anonKey, {
 
 const DEBUG_EMAIL = `__debug_${Date.now()}@example.invalid`;
 
+// Insert V2 contábil — mesmo layout do que o submit V2 grava (q4_pain_areas
+// do form vira q3_pain_areas no banco; q7_timeline vira q8_timeline).
 const mockDiagnosisInsert = {
   name: "[DEBUG] Probe",
   email: DEBUG_EMAIL,
-  q1_size: "small_2_10",
-  q2_business_model: "b2b_services",
-  q3_pain_areas: ["lead_attendance"],
-  q4_tech_maturity: "isolated_tools",
-  q5_hours_weekly: "5_to_10",
-  q6_automation_history: "never",
-  q7_main_goal: "save_team_time",
-  q8_timeline: "next_month",
-  q9_budget: "1k_to_5k",
+  q1_size: "30_a_100",
+  q2_erp: "onvio",
+  q3_client_profile: "simples",
+  q3_pain_areas: ["triagem", "nf"],
+  q5_hours_weekly: "10_a_25",
+  q6_automation_history: "nunca",
+  q8_timeline: "proximo_mes",
 };
 
 type ProbeResult = {

@@ -7,17 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { DiagnosisProgress } from "@/components/diagnosis/diagnosis-progress";
 import {
   DIAGNOSIS_QUESTIONS,
-  REVENUE_OPTIONS,
   TOTAL_STEPS,
 } from "@/lib/diagnosis-questions";
 import {
@@ -93,16 +85,6 @@ export function DiagnosisForm() {
     const value = answers[currentQuestion.field as keyof Answers];
     if (currentQuestion.type === "multi") {
       return Array.isArray(value) && value.length > 0;
-    }
-    if (currentQuestion.type === "single_with_other") {
-      if (!value) return false;
-      if (
-        value === "other" &&
-        !(answers[currentQuestion.otherField] as string | undefined)?.trim()
-      ) {
-        return false;
-      }
-      return true;
     }
     return Boolean(value);
   }, [answers, currentQuestion, isLeadStep]);
@@ -393,27 +375,6 @@ function QuestionStep({
             </button>
           );
         })}
-
-        {question.type === "single_with_other" &&
-          answers[question.field] === "other" && (
-            <div className="pt-2">
-              <Label
-                htmlFor={question.otherField}
-                className="text-xs text-muted-foreground"
-              >
-                {question.otherLabel}
-              </Label>
-              <Input
-                id={question.otherField}
-                value={
-                  (answers[question.otherField] as string | undefined) ?? ""
-                }
-                onChange={(e) => setAnswer(question.otherField, e.target.value)}
-                placeholder="Descreva brevemente"
-                className="mt-1.5"
-              />
-            </div>
-          )}
       </div>
     </div>
   );
@@ -429,7 +390,7 @@ function LeadCaptureStep({
   return (
     <div>
       <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-3">
-        Q10 · Último passo
+        Q8 · Último passo
       </p>
       <h2 className="heading-3">Pra onde envio seu relatório?</h2>
       <p className="mt-2 text-sm text-muted-foreground">
@@ -486,11 +447,3 @@ function LeadCaptureStep({
   );
 }
 
-function formatPhone(input: string): string {
-  const digits = input.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10)
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}

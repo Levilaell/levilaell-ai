@@ -1,15 +1,12 @@
 import type { DiagnosisAnswers } from "@/types/diagnosis";
 import {
-  COMPANY_SIZES,
-  BUSINESS_MODELS,
-  PAIN_AREAS,
-  TECH_MATURITY,
-  HOURS_WEEKLY,
-  AUTOMATION_HISTORY,
-  MAIN_GOALS,
-  TIMELINES,
-  BUDGETS,
-  REVENUE_OPTIONS,
+  CARTEIRA_SIZES,
+  ERPS,
+  CLIENT_PROFILES,
+  PAIN_AREAS_V2,
+  HOURS_WEEKLY_V2,
+  AUTOMATION_HISTORY_V2,
+  TIMELINES_V2,
 } from "@/lib/diagnosis-questions";
 
 function labelFromOptions<T extends { value: string; label: string }>(
@@ -19,130 +16,103 @@ function labelFromOptions<T extends { value: string; label: string }>(
   return options.find((o) => o.value === value)?.label ?? value;
 }
 
-export function describeAnswers(
-  answers: DiagnosisAnswers,
-): {
-  size: string;
-  businessModel: string;
-  painAreas: string;
-  techMaturity: string;
-  hoursWeekly: string;
-  automationHistory: string;
-  mainGoal: string;
-  timeline: string;
-  budget: string;
-  revenue: string;
-  employees: string;
+export function describeAnswers(answers: DiagnosisAnswers): {
+  carteira: string;
+  erp: string;
+  perfilCliente: string;
+  dores: string;
+  horasSemanais: string;
+  historicoAutomacao: string;
+  urgencia: string;
 } {
   return {
-    size: labelFromOptions(COMPANY_SIZES, answers.q1_size),
-    businessModel:
-      answers.q2_business_model === "other" && answers.q2_business_model_other
-        ? answers.q2_business_model_other
-        : labelFromOptions(BUSINESS_MODELS, answers.q2_business_model),
-    painAreas: answers.q3_pain_areas
-      .map((p) => labelFromOptions(PAIN_AREAS, p))
+    carteira: labelFromOptions(CARTEIRA_SIZES, answers.q1_size),
+    erp: labelFromOptions(ERPS, answers.q2_erp),
+    perfilCliente: labelFromOptions(CLIENT_PROFILES, answers.q3_client_profile),
+    dores: answers.q4_pain_areas
+      .map((p) => labelFromOptions(PAIN_AREAS_V2, p))
       .join("; "),
-    techMaturity: labelFromOptions(TECH_MATURITY, answers.q4_tech_maturity),
-    hoursWeekly: labelFromOptions(HOURS_WEEKLY, answers.q5_hours_weekly),
-    automationHistory: labelFromOptions(
-      AUTOMATION_HISTORY,
+    horasSemanais: labelFromOptions(HOURS_WEEKLY_V2, answers.q5_hours_weekly),
+    historicoAutomacao: labelFromOptions(
+      AUTOMATION_HISTORY_V2,
       answers.q6_automation_history,
     ),
-    mainGoal: labelFromOptions(MAIN_GOALS, answers.q7_main_goal),
-    timeline: labelFromOptions(TIMELINES, answers.q8_timeline),
-    budget: labelFromOptions(BUDGETS, answers.q9_budget),
-    revenue: answers.q10_revenue
-      ? labelFromOptions(REVENUE_OPTIONS, answers.q10_revenue)
-      : "(não informado)",
-    employees:
-      typeof answers.q10_employees === "number"
-        ? String(answers.q10_employees)
-        : "(não informado)",
+    urgencia: labelFromOptions(TIMELINES_V2, answers.q7_timeline),
   };
 }
 
+// ---------------------------------------------------------------------------
+// Prompt V2 — diagnóstico de negócio pra escritório contábil
+// ---------------------------------------------------------------------------
 export function buildDiagnosisPrompt(answers: DiagnosisAnswers): string {
   const d = describeAnswers(answers);
 
-  return `Você é um consultor sênior em automação de operações e IA, com 10+ anos de experiência ajudando empresas brasileiras a profissionalizarem sua operação.
+  return `Você é um diagnosticador de negócios especializado em escritórios contábeis brasileiros. Sua função é gerar um diagnóstico em formato JSON com base nas respostas abaixo.
 
-CONTEXTO:
-Uma pessoa acabou de fazer um diagnóstico no site da Levi Lael (engenharia de automação para escritórios contábeis). Você deve gerar uma análise personalizada baseada nas respostas dela.
-
-RESPOSTAS DO DIAGNÓSTICO:
-- Tamanho da operação: ${d.size}
-- Modelo de negócio: ${d.businessModel}
-- Áreas de maior consumo de tempo: ${d.painAreas}
-- Maturidade tecnológica: ${d.techMaturity}
-- Horas/semana em tarefas automatizáveis: ${d.hoursWeekly}
-- Histórico com automação: ${d.automationHistory}
-- Objetivo principal: ${d.mainGoal}
-- Horizonte temporal desejado: ${d.timeline}
-- Investimento considerado razoável: ${d.budget}
-
-DADOS OPCIONAIS (podem estar vazios):
-- Faturamento mensal: ${d.revenue}
-- Número de funcionários: ${d.employees}
+DADOS DO ESCRITÓRIO:
+- Carteira: ${d.carteira}
+- ERP principal: ${d.erp}
+- Perfil predominante: ${d.perfilCliente}
+- Dores principais: ${d.dores}
+- Horas/semana em tarefas manuais: ${d.horasSemanais}
+- Histórico de automação: ${d.historicoAutomacao}
+- Urgência: ${d.urgencia}
 
 ═══════════════════════════════════════════════════════════════
-INSTRUÇÕES CRÍTICAS
+REGRAS DE OUTPUT (rígidas)
 ═══════════════════════════════════════════════════════════════
 
-1. PERSONALIZAÇÃO REAL
-Sempre conecte sua análise ao tamanho × modelo de negócio. Empresa de 200 pessoas em indústria é diferente de autônomo em serviços B2C. NUNCA dê resposta genérica que serviria pra qualquer empresa.
-
-2. CALIBRAÇÃO TÉCNICA (baseada em Q4)
-- Se "Tudo no manual / planilhas": linguagem 100% acessível. Explique cada termo técnico ao introduzi-lo. Não use jargão como "API", "webhook", "ETL" sem explicar.
-- Se "Algumas ferramentas isoladas": linguagem semi-técnica. Pode usar termos comuns (Zapier, Make, automação).
-- Se "Stack montado, com gaps": linguagem técnica. Pode usar jargão de automação livremente.
-- Se "Operação digital madura": linguagem avançada. Pode propor arquiteturas, agentes de IA, integrações complexas. Não perca tempo explicando o básico.
-
-3. CALIBRAÇÃO DE INVESTIMENTO (baseada em Q9)
-- Se "Até R$ 1.000/mês": foco em DIY. Recomende ferramentas acessíveis (Make/Zapier free tier, ChatGPT Plus, Notion). NÃO recomende serviço pago da Levi Lael — sugira o caminho autônomo.
-- Se "R$ 1.000 a R$ 5.000/mês": projetos pontuais. Pode sugerir consultoria pontual ou implementação de uma automação específica.
-- Se "R$ 5.000 a R$ 15.000/mês": automação séria. Pode recomendar projetos completos com estratégia + implementação.
-- Se "R$ 15.000+/mês": transformação. Pode propor parceria contínua, redesenho de processos.
-- Se "Prefiro avaliar caso a caso": faça recomendação técnica sem mencionar valores específicos, deixe a call definir.
-
-4. CALIBRAÇÃO DE URGÊNCIA (baseada em Q8)
-- Se "Esta semana": foco no quick win. As 3 oportunidades devem todas ser implementáveis em 1-2 semanas. Sem roadmap longo.
-- Se "Próximo mês": misture quick win + 1 oportunidade de médio prazo.
-- Se "3 a 6 meses": apresente roadmap escalonado. Quick win + médio prazo + visão de transformação.
-- Se "Sem urgência": foque em educação e visão estratégica. Recomende caminho de descoberta antes de implementar.
-
-5. ROI — REGRA ANTI-ALUCINAÇÃO
-A estimativa de ROI deve ser calculada assim:
-
-- Se Q10 forneceu faturamento E número de funcionários:
-  Use os valores reais para calcular. Seja preciso.
-
-- Se Q10 forneceu APENAS um dos dois:
-  Calcule com o que tem, declare o que está estimando e em que faixa.
-
-- Se Q10 não foi preenchido:
-  Forneça estimativa em RANGE AMPLO (ex: "entre R$ 2.000 e R$ 8.000/mês"), e adicione no campo "estimativa_roi.disclaimer": "Estimativa preliminar baseada em médias do setor. Para cálculo preciso, podemos refinar na call gratuita."
-
-- NUNCA invente números específicos sem dados reais. Sempre prefira range amplo a número específico inventado.
-
-6. RECOMENDAÇÃO DE PRÓXIMO PASSO
-Use Q9 (investimento) + Q4 (maturidade) + Q5 (volume de horas) para escolher entre:
-- "diy": cliente tem perfil DIY (low budget OU high tech maturity OU low hours)
-- "consultoria_pontual": projeto único faz sentido
-- "parceria_continua": volume e investimento justificam parceria
-- "ainda_nao_e_hora": SE Q4 = "Tudo no manual" E Q5 = "Menos de 5h" E Q9 = "Até R$ 1.000": seja honesto e diga que automação ainda não é prioridade — recomende organizar processos antes.
+1. Linguagem PT-BR, tom direto, segunda pessoa plural ("vocês"). Tom de mentor experiente, não vendedor.
+2. Use terminologia contábil quando apropriado (obrigações, SPED, DCTF, eSocial, fechamento, ECF) — nunca inventar números, datas ou casos.
+3. NÃO inventar economia em R$ específica sem base nos dados. Quando estimar impacto, use linguagem qualitativa ("redução significativa", "alívio de carga", "previsibilidade no fechamento").
+4. NÃO recomendar ferramenta específica de mercado (n8n, Make, Zapier, ChatGPT, Notion). Foque no PROCESSO, não no fornecedor.
+5. Se faltar dado pra refinar uma afirmação, declare "depende de Y, conversar pra refinar".
+6. NÃO mencione "Levi Lael" em terceira pessoa — você ESCREVE como a equipe Levi Lael. Use "nós" / "construímos" / "alinhamos". Nunca primeira pessoa singular.
 
 ═══════════════════════════════════════════════════════════════
-REGRAS FINAIS
+ABORDAGEM RECOMENDADA (proximo_passo_recomendado.abordagem)
 ═══════════════════════════════════════════════════════════════
 
-1. NÃO seja vendedor. Seja consultor.
-2. Se o caso não justifica automação ainda (abordagem "ainda_nao_e_hora"), fale isso com clareza.
-3. Use português brasileiro técnico-didático.
-4. NUNCA invente números — use ranges quando faltar dado.
-5. O "alerta_estrategico" é fundamental — é o que faz a análise parecer GENUÍNA, não automatizada.
-6. Sempre retorne EXATAMENTE 3 oportunidades em "tres_oportunidades".
-7. NUNCA mencione "Levi Lael" no relatório em terceira pessoa — o relatório é entregue PELA equipe Levi Lael, escreva em "nós" / "construímos" / "alinhamos". Nunca primeira pessoa singular ("eu", "meu", "comigo").
+- "diy" se: carteira pequena (<=100), histórico = nunca tentou, urgência baixa, ERP = planilha/próprio.
+- "proposta_formal" se: carteira >250 E ERP robusto (Domínio/Onvio/Alterdata/Sage) E horas >50 E urgência alta.
+- "conversa" pra todo o resto — meio termo, dores claras, urgência média, ou tentativa anterior falhou.
 
-Chame a tool "save_diagnosis_analysis" com a análise estruturada.`;
+═══════════════════════════════════════════════════════════════
+FORMATO JSON (obrigatório — chame a tool save_diagnosis_analysis)
+═══════════════════════════════════════════════════════════════
+
+{
+  "diagnostico_resumido": "2-3 frases sobre o estágio do escritório no eixo de maturidade operacional. Não elogiar. Constatar.",
+
+  "gargalo_principal": {
+    "area": "nome curto da área (ex: 'Triagem documental')",
+    "descricao": "o que está acontecendo, em 2-3 frases, com terminologia contábil onde fizer sentido",
+    "impacto_estimado": "horas/mês perdidas estimadas em faixa conservadora (ex: '40-60 h/mês'), sem R$"
+  },
+
+  "tres_oportunidades": [
+    {
+      "titulo": "string curto",
+      "descricao": "3-5 frases. O que automatizar e por quê. Foco no processo, não na ferramenta.",
+      "complexidade": "baixa | media | alta",
+      "prazo_implementacao": "ex: '2 a 4 semanas'",
+      "impacto_estimado": "qualitativo, sem R$ específico"
+    }
+  ], // exatamente 3 itens, em ordem de prioridade
+
+  "plano_30_60_90": {
+    "30_dias": "1-2 ações específicas e mensuráveis",
+    "60_dias": "1-2 ações de aprofundamento",
+    "90_dias": "1-2 ações de consolidação"
+  },
+
+  "alerta_estrategico": "1 parágrafo (4-6 frases) com risco invisível ou armadilha comum pra escritórios desse perfil. Tom de mentor.",
+
+  "proximo_passo_recomendado": {
+    "abordagem": "diy | conversa | proposta_formal",
+    "justificativa": "3-4 frases. Por que essa abordagem faz sentido pra esse perfil específico."
+  }
+}
+
+Responda APENAS chamando a tool save_diagnosis_analysis. Sem markdown, sem comentários fora do JSON.`;
 }

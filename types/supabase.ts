@@ -1,4 +1,4 @@
-import type { DiagnosisAnalysis, PainArea } from "@/types/diagnosis";
+import type { DiagnosisAnalysis } from "@/types/diagnosis";
 
 export type Json =
   | string
@@ -8,6 +8,10 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+// Migration 0007 (>=2026-05-18) tornou q2_business_model / q4_tech_maturity /
+// q7_main_goal / q9_budget nullable, e adicionou q2_erp + q3_client_profile.
+// q3_pain_areas / q5_hours_weekly / q6_automation_history / q8_timeline
+// continuam NOT NULL — são reusados com semântica nova pelos registros v2.
 type DiagnosisRow = {
   id: string;
   created_at: string;
@@ -16,17 +20,19 @@ type DiagnosisRow = {
   whatsapp: string | null;
   company: string | null;
   q1_size: string;
-  q2_business_model: string;
+  q2_business_model: string | null;
   q2_business_model_other: string | null;
-  q3_pain_areas: PainArea[];
-  q4_tech_maturity: string;
+  q3_pain_areas: string[];
+  q4_tech_maturity: string | null;
   q5_hours_weekly: string;
   q6_automation_history: string;
-  q7_main_goal: string;
+  q7_main_goal: string | null;
   q8_timeline: string;
-  q9_budget: string;
+  q9_budget: string | null;
   q10_revenue: string | null;
   q10_employees: number | null;
+  q2_erp: string | null;
+  q3_client_profile: string | null;
   ai_analysis: DiagnosisAnalysis | null;
   status: "processing" | "completed" | "failed";
   error_message: string | null;

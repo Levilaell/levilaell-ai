@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     const { data: diags, error: diagErr } = await supabase
       .from("diagnoses")
       .select(
-        "id, name, email, ai_analysis, q1_size, q2_business_model, q4_tech_maturity, q7_main_goal",
+        "id, name, email, ai_analysis, q1_size, q2_erp, q3_client_profile",
       )
       .in("id", ids);
     if (diagErr) {

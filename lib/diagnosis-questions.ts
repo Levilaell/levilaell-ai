@@ -1,169 +1,136 @@
+// =============================================================================
+// Diagnóstico V2 contábil — 7 perguntas (>=2026-05-18)
+// =============================================================================
+// O array DIAGNOSIS_QUESTIONS dirige a UI, a validação Zod e o prompt da IA.
+// Mantemos opções "as const satisfies" pra garantir type-safety nos value's.
+// =============================================================================
 export type Option<T extends string = string> = {
   value: T;
   label: string;
   emoji?: string;
 };
 
-export const COMPANY_SIZES = [
-  { value: "solo", label: "Eu sozinho (autônomo / freelancer)", emoji: "🧍" },
-  { value: "small_2_10", label: "2 a 10 pessoas", emoji: "👥" },
-  { value: "medium_11_50", label: "11 a 50 pessoas", emoji: "🏢" },
-  { value: "large_51_200", label: "51 a 200 pessoas", emoji: "🏬" },
-  { value: "enterprise_200_plus", label: "Mais de 200 pessoas", emoji: "🏭" },
+export const CARTEIRA_SIZES = [
+  { value: "ate_30", label: "Até 30 clientes" },
+  { value: "30_a_100", label: "30 a 100 clientes" },
+  { value: "100_a_250", label: "100 a 250 clientes" },
+  { value: "250_a_500", label: "250 a 500 clientes" },
+  { value: "500_mais", label: "Mais de 500 clientes" },
 ] as const satisfies readonly Option[];
 
-export const BUSINESS_MODELS = [
-  { value: "b2b_services", label: "Serviços B2B (agência, consultoria, software house)" },
-  { value: "ecommerce", label: "E-commerce / varejo online" },
-  { value: "infoproduct", label: "Infoproduto / educação online" },
-  { value: "saas", label: "SaaS / produto de tecnologia" },
-  { value: "b2c_services", label: "Serviços B2C (clínica, salão, escola, academia, etc.)" },
-  { value: "industry", label: "Indústria / manufatura" },
-  { value: "other", label: "Outro" },
+export const ERPS = [
+  { value: "dominio", label: "Domínio" },
+  { value: "onvio", label: "Onvio (Thomson Reuters)" },
+  { value: "alterdata", label: "Alterdata" },
+  { value: "sage", label: "Sage" },
+  { value: "contmatic", label: "Contmatic" },
+  { value: "mastermaq", label: "MasterMaq" },
+  { value: "outro_planilha", label: "Outro / Planilha / Sistema próprio" },
 ] as const satisfies readonly Option[];
 
-export const PAIN_AREAS = [
-  { value: "lead_attendance", label: "Atendimento e qualificação de leads" },
-  { value: "onboarding", label: "Onboarding de clientes ou funcionários" },
-  { value: "reports_dashboards", label: "Geração de relatórios e dashboards" },
-  { value: "billing", label: "Cobrança e gestão financeira" },
-  { value: "client_communication", label: "Comunicação com clientes (e-mail, WhatsApp)" },
-  { value: "internal_approvals", label: "Gestão de tarefas e aprovações internas" },
-  { value: "document_analysis", label: "Análise de documentos ou contratos" },
-  { value: "system_integration", label: "Integração entre sistemas (planilhas, CRM, etc.)" },
-  { value: "marketing_nurturing", label: "Marketing e nutrição de leads" },
-  { value: "sales_followup", label: "Vendas e follow-up" },
+export const CLIENT_PROFILES = [
+  { value: "mei", label: "MEI" },
+  { value: "simples", label: "Simples Nacional" },
+  { value: "presumido", label: "Lucro Presumido" },
+  { value: "real", label: "Lucro Real" },
+  { value: "misto", label: "Misto / Não tem um predominante" },
 ] as const satisfies readonly Option[];
 
-export const TECH_MATURITY = [
-  { value: "manual", label: "Tudo no manual / planilhas (sem ferramentas)" },
-  { value: "isolated_tools", label: "Algumas ferramentas isoladas, sem integração" },
-  { value: "stack_with_gaps", label: "Stack montado, mas com gaps grandes" },
-  { value: "mature", label: "Operação digital madura, buscando otimização" },
+export const PAIN_AREAS_V2 = [
+  { value: "triagem", label: "Triagem de documentos recebidos (e-mail/WhatsApp)" },
+  { value: "cobranca", label: "Cobrança de documentos com clientes" },
+  { value: "nf", label: "Processamento/digitação de notas fiscais" },
+  { value: "lancamentos", label: "Lançamentos fiscais e contábeis" },
+  { value: "conciliacao", label: "Conciliação bancária" },
+  { value: "atendimento", label: "Atendimento (dúvidas dos clientes)" },
+  { value: "relatorios", label: "Geração e envio de relatórios mensais" },
+  { value: "onboarding", label: "Onboarding de clientes novos" },
 ] as const satisfies readonly Option[];
 
-export const HOURS_WEEKLY = [
-  { value: "less_than_5", label: "Menos de 5h/semana" },
-  { value: "5_to_10", label: "5 a 10h/semana" },
-  { value: "10_to_20", label: "10 a 20h/semana" },
-  { value: "20_to_40", label: "20 a 40h/semana" },
-  { value: "more_than_40", label: "Mais de 40h/semana" },
-  { value: "unknown", label: "Não sei estimar" },
+export const HOURS_WEEKLY_V2 = [
+  { value: "menos_10", label: "Menos de 10 horas" },
+  { value: "10_a_25", label: "10 a 25 horas" },
+  { value: "25_a_50", label: "25 a 50 horas" },
+  { value: "50_a_100", label: "50 a 100 horas" },
+  { value: "mais_100", label: "Mais de 100 horas" },
 ] as const satisfies readonly Option[];
 
-export const AUTOMATION_HISTORY = [
-  { value: "never", label: "Nunca tentamos" },
-  { value: "no_code_failed", label: "Tentamos com no-code (Zapier, Make), mas não escalou" },
-  { value: "hire_failed", label: "Contratamos alguém antes, mas não deu certo" },
-  { value: "in_progress", label: "Temos automações funcionando, queremos avançar" },
-  { value: "self_built", label: "Eu mesmo construí, mas preciso de ajuda" },
+export const AUTOMATION_HISTORY_V2 = [
+  { value: "nunca", label: "Nunca tentamos" },
+  { value: "saas_falhou", label: "Tentamos com SaaS pronto, não funcionou" },
+  { value: "freelancer_fragil", label: "Contratamos freelancer, ficou frágil" },
+  { value: "automacoes_pontuais", label: "Temos automações pontuais (RPA, planilhas)" },
+  { value: "outro_quer_conversar", label: "Outro / Quero conversar sobre isso" },
 ] as const satisfies readonly Option[];
 
-export const MAIN_GOALS = [
-  { value: "save_team_time", label: "Recuperar tempo da minha equipe" },
-  { value: "reduce_costs", label: "Reduzir custos operacionais" },
-  { value: "scale_without_hiring", label: "Crescer sem precisar contratar mais" },
-  { value: "professionalize", label: "Profissionalizar a operação (sair do amador)" },
-  { value: "improve_cx", label: "Melhorar experiência do cliente" },
-  { value: "exploring", label: "Estou explorando, ainda não defini" },
+export const TIMELINES_V2 = [
+  { value: "para_ontem", label: "Pra ontem (urgência alta)", emoji: "🔥" },
+  { value: "proximo_mes", label: "Próximo mês", emoji: "⚡" },
+  { value: "tres_meses", label: "Próximos 3 meses", emoji: "📅" },
+  { value: "sem_urgencia", label: "Sem urgência, explorando", emoji: "🌱" },
 ] as const satisfies readonly Option[];
 
-export const TIMELINES = [
-  { value: "this_week", label: "Esta semana ou nas próximas 2 semanas (urgente)", emoji: "🔥" },
-  { value: "next_month", label: "No próximo mês", emoji: "⚡" },
-  { value: "3_to_6_months", label: "Nos próximos 3 a 6 meses", emoji: "📅" },
-  { value: "no_urgency", label: "Sem urgência — estou explorando", emoji: "🌱" },
-] as const satisfies readonly Option[];
-
-export const BUDGETS = [
-  { value: "under_1k", label: "Até R$ 1.000/mês — quero soluções DIY ou de baixo custo" },
-  { value: "1k_to_5k", label: "R$ 1.000 a R$ 5.000/mês — projetos pontuais" },
-  { value: "5k_to_15k", label: "R$ 5.000 a R$ 15.000/mês — operação automatizada" },
-  { value: "over_15k", label: "Mais de R$ 15.000/mês — transformação completa" },
-  { value: "case_by_case", label: "Prefiro avaliar caso a caso" },
-] as const satisfies readonly Option[];
-
-export const REVENUE_OPTIONS = [
-  { value: "under_50k", label: "Até R$ 50k/mês" },
-  { value: "50k_to_200k", label: "R$ 50k a R$ 200k/mês" },
-  { value: "200k_to_500k", label: "R$ 200k a R$ 500k/mês" },
-  { value: "500k_to_1m", label: "R$ 500k a R$ 1M/mês" },
-  { value: "over_1m", label: "Mais de R$ 1M/mês" },
-  { value: "no_disclose", label: "Prefiro não dizer" },
-] as const satisfies readonly Option[];
-
+// =============================================================================
+// Questões na ordem em que aparecem no form
+// =============================================================================
 export const DIAGNOSIS_QUESTIONS = [
   {
     id: "q1",
     field: "q1_size" as const,
-    type: "single_with_emoji" as const,
-    title: "Qual o tamanho da sua operação hoje?",
-    options: COMPANY_SIZES,
+    type: "single" as const,
+    title: "Quantos clientes ativos seu escritório atende hoje?",
+    subtitle: "Considere apenas clientes com fatura recorrente.",
+    options: CARTEIRA_SIZES,
   },
   {
     id: "q2",
-    field: "q2_business_model" as const,
-    type: "single_with_other" as const,
-    title: "Qual modelo de negócio melhor descreve sua empresa?",
-    options: BUSINESS_MODELS,
-    otherField: "q2_business_model_other" as const,
-    otherLabel: "Qual?",
+    field: "q2_erp" as const,
+    type: "single" as const,
+    title: "Qual sistema/ERP principal vocês usam?",
+    subtitle: "Sistema onde a equipe faz lançamentos e gera obrigações.",
+    options: ERPS,
   },
   {
     id: "q3",
-    field: "q3_pain_areas" as const,
-    type: "multi" as const,
-    max: 3,
-    title: "Qual dessas situações mais consome tempo da sua equipe hoje?",
-    subtitle: "Selecione até 3 opções",
-    options: PAIN_AREAS,
+    field: "q3_client_profile" as const,
+    type: "single" as const,
+    title: "Qual o perfil de cliente predominante na carteira?",
+    subtitle: "O regime tributário que aparece mais nos clientes ativos.",
+    options: CLIENT_PROFILES,
   },
   {
     id: "q4",
-    field: "q4_tech_maturity" as const,
-    type: "single" as const,
-    title: "Como sua empresa lida com tecnologia hoje?",
-    options: TECH_MATURITY,
+    field: "q4_pain_areas" as const,
+    type: "multi" as const,
+    max: 3,
+    title: "Onde a equipe perde mais tempo hoje?",
+    subtitle: "Selecione até 3 áreas.",
+    options: PAIN_AREAS_V2,
   },
   {
     id: "q5",
     field: "q5_hours_weekly" as const,
     type: "single" as const,
-    title:
-      "Quantas horas por semana sua equipe gasta com tarefas repetitivas ou automatizáveis?",
-    options: HOURS_WEEKLY,
+    title: "Quantas horas/semana a equipe gasta nessas tarefas manuais?",
+    subtitle: "Some o tempo da equipe inteira, não só de uma pessoa.",
+    options: HOURS_WEEKLY_V2,
   },
   {
     id: "q6",
     field: "q6_automation_history" as const,
     type: "single" as const,
-    title: "Você ou sua empresa já tentou automatizar algo antes?",
-    options: AUTOMATION_HISTORY,
+    title: "Vocês já tentaram automatizar antes?",
+    subtitle: "Independente de ter dado certo ou não.",
+    options: AUTOMATION_HISTORY_V2,
   },
   {
     id: "q7",
-    field: "q7_main_goal" as const,
-    type: "single" as const,
-    title: "O que você espera resolver primeiro com automação?",
-    options: MAIN_GOALS,
-  },
-  {
-    id: "q8",
-    field: "q8_timeline" as const,
+    field: "q7_timeline" as const,
     type: "single_with_emoji" as const,
-    title: "Quando você gostaria de ver os primeiros resultados?",
-    options: TIMELINES,
-  },
-  {
-    id: "q9",
-    field: "q9_budget" as const,
-    type: "single" as const,
-    title:
-      "Qual investimento você considera razoável para resolver essa dor?",
-    subtitle:
-      "Sem compromisso — essa info ajuda a IA a sugerir o caminho certo (DIY, projeto pontual ou parceria contínua).",
-    options: BUDGETS,
+    title: "Em que prazo vocês precisam ter algo rodando?",
+    subtitle: "Importante pra entender urgência real.",
+    options: TIMELINES_V2,
   },
 ] as const;
 
-export const TOTAL_STEPS = DIAGNOSIS_QUESTIONS.length + 1; // +1 for lead capture
+export const TOTAL_STEPS = DIAGNOSIS_QUESTIONS.length + 1; // +1 lead capture

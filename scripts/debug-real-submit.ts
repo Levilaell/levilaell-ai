@@ -74,16 +74,15 @@ async function main() {
   console.log(c.dim(`▶ dev server: ${base}`));
   console.log(c.dim(`▶ test email: ${TARGET_EMAIL}\n`));
 
+  // V2 contábil (>=2026-05-18): 7 perguntas.
   const payload = {
-    q1_size: "small_2_10",
-    q2_business_model: "b2b_services",
-    q3_pain_areas: ["lead_attendance", "system_integration"],
-    q4_tech_maturity: "isolated_tools",
-    q5_hours_weekly: "10_to_20",
-    q6_automation_history: "no_code_failed",
-    q7_main_goal: "save_team_time",
-    q8_timeline: "next_month",
-    q9_budget: "1k_to_5k",
+    q1_size: "100_a_250",
+    q2_erp: "dominio",
+    q3_client_profile: "presumido",
+    q4_pain_areas: ["triagem", "nf", "conciliacao"],
+    q5_hours_weekly: "25_a_50",
+    q6_automation_history: "saas_falhou",
+    q7_timeline: "proximo_mes",
     name: "[SMOKE TEST] Probe",
     email: TARGET_EMAIL,
     company: "smoke.test",
@@ -127,7 +126,9 @@ async function main() {
   {
     const { data, error } = await supabase
       .from("diagnoses")
-      .select("id, status, ai_analysis, lead_score, q1_size, q2_business_model")
+      .select(
+        "id, status, ai_analysis, lead_score, q1_size, q2_erp, q3_client_profile",
+      )
       .eq("id", diagnosisId)
       .maybeSingle();
     if (error || !data) {
@@ -142,7 +143,7 @@ async function main() {
         name: "diagnoses row",
         ok,
         detail: ok
-          ? `status=completed · ai_analysis ✓ · lead_score=${data.lead_score} · q1=${data.q1_size} · q2=${data.q2_business_model}`
+          ? `status=completed · ai_analysis ✓ · lead_score=${data.lead_score} · carteira=${data.q1_size} · erp=${data.q2_erp} · perfil=${data.q3_client_profile}`
           : `status=${data.status} · ai_analysis=${data.ai_analysis ? "ok" : "null"}`,
       });
     }

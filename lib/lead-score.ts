@@ -1,103 +1,89 @@
 import type { DiagnosisAnswers } from "@/types/diagnosis";
 
 /**
- * Score de 0–100 calculado a partir das respostas pra priorizar leads.
- * Heurística simples: pondera urgência, budget, volume de horas, maturidade.
+ * Score V2 contábil (0-100). Mesmas faixas: hot >=80, alto 60-79, morno 40-59,
+ * frio <40. Pondera carteira, ERP, perfil de cliente, dores, horas, histórico
+ * e urgência.
  */
 export function calculateLeadScore(answers: DiagnosisAnswers): number {
   let score = 0;
 
-  // Urgência
-  switch (answers.q8_timeline) {
-    case "this_week":
-      score += 30;
-      break;
-    case "next_month":
-      score += 20;
-      break;
-    case "3_to_6_months":
-      score += 10;
-      break;
-    case "no_urgency":
-      score += 0;
-      break;
-  }
+  // Q1 — Carteira (max 15) — escritórios maiores convertem melhor
+  const carteira: Record<string, number> = {
+    ate_30: 4,
+    "30_a_100": 8,
+    "100_a_250": 12,
+    "250_a_500": 14,
+    "500_mais": 15,
+  };
+  score += carteira[answers.q1_size] ?? 0;
 
-  // Budget
-  switch (answers.q9_budget) {
-    case "over_15k":
-      score += 30;
-      break;
-    case "5k_to_15k":
-      score += 25;
-      break;
-    case "1k_to_5k":
-      score += 15;
-      break;
-    case "case_by_case":
-      score += 12;
-      break;
-    case "under_1k":
-      score += 2;
-      break;
-  }
+  // Q2 — ERP (max 15) — ERPs sérios indicam operação consolidada
+  const erp: Record<string, number> = {
+    dominio: 15,
+    onvio: 15,
+    alterdata: 12,
+    sage: 12,
+    contmatic: 10,
+    mastermaq: 8,
+    outro_planilha: 5,
+  };
+  score += erp[answers.q2_erp] ?? 0;
 
-  // Volume de horas (mais horas = mais dor = lead melhor)
-  switch (answers.q5_hours_weekly) {
-    case "more_than_40":
-      score += 20;
-      break;
-    case "20_to_40":
-      score += 15;
-      break;
-    case "10_to_20":
-      score += 10;
-      break;
-    case "5_to_10":
-      score += 5;
-      break;
-    case "less_than_5":
-      score += 0;
-      break;
-    case "unknown":
-      score += 3;
-      break;
-  }
+  // Q3 — Perfil de cliente (max 15) — Real/Presumido têm mais complexidade
+  const perfil: Record<string, number> = {
+    real: 15,
+    presumido: 13,
+    misto: 11,
+    simples: 8,
+    mei: 4,
+  };
+  score += perfil[answers.q3_client_profile] ?? 0;
 
-  // Maturidade (prefere stack-with-gaps ou mature — mais fáceis de servir)
-  switch (answers.q4_tech_maturity) {
-    case "stack_with_gaps":
-      score += 12;
-      break;
-    case "mature":
-      score += 10;
-      break;
-    case "isolated_tools":
-      score += 7;
-      break;
-    case "manual":
-      score += 3;
-      break;
-  }
+  // Q4 — Dores (max 20) — multi-select; mais dores = mais oportunidade
+  const numDores = answers.q4_pain_areas?.length ?? 0;
+  if (numDores >= 3) score += 20;
+  else if (numDores === 2) score += 15;
+  else if (numDores === 1) score += 10;
 
-  // Tamanho — favorece SMB (sweet spot do Levi)
-  switch (answers.q1_size) {
-    case "small_2_10":
-      score += 8;
-      break;
-    case "medium_11_50":
-      score += 8;
-      break;
-    case "large_51_200":
-      score += 5;
-      break;
-    case "solo":
-      score += 4;
-      break;
-    case "enterprise_200_plus":
-      score += 2;
-      break;
-  }
+  // Q5 — Horas semanais (max 15) — proxy de dor real
+  const horas: Record<string, number> = {
+    mais_100: 15,
+    "50_a_100": 13,
+    "25_a_50": 10,
+    "10_a_25": 6,
+    menos_10: 3,
+  };
+  score += horas[answers.q5_hours_weekly] ?? 0;
 
-  return Math.min(100, score);
+  // Q6 — Histórico de automação (max 10) — "tentou e falhou" é melhor sinal
+  // que "nunca tentou" (intenção declarada)
+  const historico: Record<string, number> = {
+    saas_falhou: 10,
+    automacoes_pontuais: 8,
+    freelancer_fragil: 7,
+    outro_quer_conversar: 6,
+    nunca: 4,
+  };
+  score += historico[answers.q6_automation_history] ?? 0;
+
+  // Q7 — Urgência (max 10)
+  const urgencia: Record<string, number> = {
+    para_ontem: 10,
+    proximo_mes: 8,
+    tres_meses: 5,
+    sem_urgencia: 2,
+  };
+  score += urgencia[answers.q7_timeline] ?? 0;
+
+  return Math.min(100, Math.max(0, score));
+}
+
+export function leadScoreCategory(
+  score: number,
+): "hot" | "high" | "warm" | "cold" {
+  if (score >= 80) return "hot";
+  if (score >= 60) return "high";
+  if (score >= 40) return "warm";
+  return "cold";
 }

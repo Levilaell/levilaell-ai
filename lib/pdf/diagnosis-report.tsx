@@ -7,7 +7,14 @@ import {
   Link,
   renderToBuffer,
 } from "@react-pdf/renderer";
-import type { DiagnosisAnalysis, RecommendedApproach } from "@/types/diagnosis";
+import {
+  isLegacyAnalysis,
+  type DiagnosisAnalysis,
+  type DiagnosisAnalysisLegacy,
+  type DiagnosisAnalysisV2,
+  type LegacyRecommendedApproach,
+  type RecommendedApproachV2,
+} from "@/types/diagnosis";
 import { siteConfig } from "@/lib/site";
 
 const BRAND = "#f59e0b";
@@ -96,6 +103,38 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   metaLabel: { fontFamily: "Helvetica-Bold", color: INK },
+  gargaloBox: {
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderStyle: "solid",
+    borderRadius: 6,
+    padding: 14,
+    backgroundColor: BG_SOFT,
+    marginTop: 4,
+  },
+  gargaloArea: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 11,
+    marginBottom: 6,
+  },
+  planRow: { flexDirection: "row", marginTop: 6, marginBottom: 4 },
+  planCell: {
+    flex: 1,
+    paddingRight: 8,
+    paddingLeft: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: BRAND,
+    borderLeftStyle: "solid",
+  },
+  planLabel: {
+    fontSize: 8.5,
+    color: BRAND,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 4,
+  },
+  planText: { fontSize: 9.5, color: INK, lineHeight: 1.4 },
   quickWinBox: {
     borderWidth: 1,
     borderColor: BORDER,
@@ -180,7 +219,13 @@ const styles = StyleSheet.create({
   },
 });
 
-const approachLabels: Record<RecommendedApproach, string> = {
+const approachLabelsV2: Record<RecommendedApproachV2, string> = {
+  diy: "Faça você mesmo",
+  conversa: "Conversa exploratória (30 min)",
+  proposta_formal: "Proposta formal de projeto",
+};
+
+const approachLabelsLegacy: Record<LegacyRecommendedApproach, string> = {
   diy: "Faça você mesmo",
   consultoria_pontual: "Consultoria pontual",
   parceria_continua: "Parceria contínua",
@@ -208,11 +253,19 @@ function DiagnosisReportDocument({
   generatedAt = new Date(),
   reportUrl,
 }: Props) {
+  // V2 é a forma padrão pós-2026-05-18. Legacy só é gerado se alguém
+  // reprocessar um diagnóstico antigo (improvável na prática, mas suportado).
+  const legacy = isLegacyAnalysis(analysis);
+
   return (
     <Document
-      title={`Diagnóstico de Operação — ${name}`}
+      title={`Diagnóstico${legacy ? " de Operação" : " Contábil"} — ${name}`}
       author={siteConfig.name}
-      subject="Diagnóstico de operação gerado por IA"
+      subject={
+        legacy
+          ? "Diagnóstico de operação gerado por IA"
+          : "Diagnóstico contábil gerado por IA"
+      }
       creator={siteConfig.name}
       producer={siteConfig.name}
     >
@@ -225,100 +278,15 @@ function DiagnosisReportDocument({
           <Text style={styles.meta}>{formatDate(generatedAt)}</Text>
         </View>
 
-        <Text style={styles.eyebrow}>Diagnóstico de operação · IA</Text>
+        <Text style={styles.eyebrow}>
+          {legacy ? "Diagnóstico de operação · IA" : "Diagnóstico contábil · IA"}
+        </Text>
         <Text style={styles.title}>Relatório para {name}</Text>
         <Text style={styles.lead}>{analysis.diagnostico_resumido}</Text>
 
-        <Text style={styles.sectionTitle}>Top 3 oportunidades</Text>
-        {analysis.tres_oportunidades.map((op, i) => (
-          <View key={i} style={styles.opportunityCard} wrap={false}>
-            <View style={styles.opportunityHeader}>
-              <Text style={styles.opportunityIndex}>0{i + 1}</Text>
-              <Text style={styles.opportunityTitle}>{op.titulo}</Text>
-            </View>
-            <Text style={styles.opportunityDesc}>{op.descricao}</Text>
-            <View style={styles.metaGrid}>
-              <Text style={styles.metaItem}>
-                <Text style={styles.metaLabel}>Impacto: </Text>
-                {op.impacto_estimado}
-              </Text>
-              <Text style={styles.metaItem}>
-                <Text style={styles.metaLabel}>Complexidade: </Text>
-                {op.complexidade}
-              </Text>
-              <Text style={styles.metaItem}>
-                <Text style={styles.metaLabel}>Prazo: </Text>
-                {op.prazo_implementacao}
-              </Text>
-            </View>
-            {op.ferramentas_sugeridas.length > 0 && (
-              <Text style={[styles.metaItem, { marginTop: 4 }]}>
-                <Text style={styles.metaLabel}>Ferramentas: </Text>
-                {op.ferramentas_sugeridas.join(", ")}
-              </Text>
-            )}
-          </View>
-        ))}
-
-        <Text style={styles.sectionTitle}>Quick win (1 semana)</Text>
-        <View style={styles.quickWinBox} wrap={false}>
-          <Text style={styles.quickWinTitle}>{analysis.quick_win.titulo}</Text>
-          {analysis.quick_win.passo_a_passo.map((step, i) => (
-            <View key={i} style={styles.step}>
-              <Text style={styles.stepNum}>{i + 1}.</Text>
-              <Text style={styles.stepText}>
-                {step.replace(/^\s*\d+\.\s*/, "")}
-              </Text>
-            </View>
-          ))}
-          {analysis.quick_win.ferramentas_necessarias.length > 0 && (
-            <Text style={[styles.metaItem, { marginTop: 8 }]}>
-              <Text style={styles.metaLabel}>Ferramentas: </Text>
-              {analysis.quick_win.ferramentas_necessarias.join(", ")}
-            </Text>
-          )}
-        </View>
-
-        <Text style={styles.sectionTitle}>Estimativa de retorno</Text>
-        <View style={styles.roiRow} wrap={false}>
-          <View style={styles.roiCell}>
-            <Text style={styles.roiLabel}>Horas/mês</Text>
-            <Text style={styles.roiValue}>
-              {String(analysis.estimativa_roi.horas_recuperaveis_mes)}
-            </Text>
-          </View>
-          <View style={styles.roiCell}>
-            <Text style={styles.roiLabel}>Valor/mês</Text>
-            <Text style={styles.roiValue}>
-              {analysis.estimativa_roi.valor_estimado_mensal}
-            </Text>
-          </View>
-          <View style={styles.roiCell}>
-            <Text style={styles.roiLabel}>Payback</Text>
-            <Text style={styles.roiValue}>
-              {analysis.estimativa_roi.tempo_payback}
-            </Text>
-          </View>
-        </View>
-        {analysis.estimativa_roi.disclaimer && (
-          <Text style={styles.disclaimer}>
-            {analysis.estimativa_roi.disclaimer}
-          </Text>
-        )}
-
-        <Text style={styles.sectionTitle}>Próximo passo recomendado</Text>
-        <Text style={styles.approachBadge}>
-          {approachLabels[analysis.proximo_passo_recomendado.abordagem]}
-        </Text>
-        <Text style={styles.opportunityDesc}>
-          {analysis.proximo_passo_recomendado.justificativa}
-        </Text>
-
-        <Text style={styles.sectionTitle}>Alerta estratégico</Text>
-        <View style={styles.alertBox} wrap={false}>
-          <Text style={styles.alertLabel}>Atenção</Text>
-          <Text style={styles.alertText}>{analysis.alerta_estrategico}</Text>
-        </View>
+        {legacy
+          ? renderLegacyBody(analysis as DiagnosisAnalysisLegacy)
+          : renderV2Body(analysis as DiagnosisAnalysisV2)}
 
         {reportUrl && (
           <View style={styles.ctaBox} wrap={false}>
@@ -338,6 +306,176 @@ function DiagnosisReportDocument({
         </Text>
       </Page>
     </Document>
+  );
+}
+
+function renderV2Body(analysis: DiagnosisAnalysisV2) {
+  return (
+    <>
+      <Text style={styles.sectionTitle}>Gargalo principal</Text>
+      <View style={styles.gargaloBox} wrap={false}>
+        <Text style={styles.gargaloArea}>{analysis.gargalo_principal.area}</Text>
+        <Text style={styles.opportunityDesc}>
+          {analysis.gargalo_principal.descricao}
+        </Text>
+        <Text style={styles.metaItem}>
+          <Text style={styles.metaLabel}>Impacto estimado: </Text>
+          {analysis.gargalo_principal.impacto_estimado}
+        </Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Top 3 oportunidades</Text>
+      {analysis.tres_oportunidades.map((op, i) => (
+        <View key={i} style={styles.opportunityCard} wrap={false}>
+          <View style={styles.opportunityHeader}>
+            <Text style={styles.opportunityIndex}>0{i + 1}</Text>
+            <Text style={styles.opportunityTitle}>{op.titulo}</Text>
+          </View>
+          <Text style={styles.opportunityDesc}>{op.descricao}</Text>
+          <View style={styles.metaGrid}>
+            <Text style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Complexidade: </Text>
+              {op.complexidade}
+            </Text>
+            <Text style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Prazo: </Text>
+              {op.prazo_implementacao}
+            </Text>
+            <Text style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Impacto: </Text>
+              {op.impacto_estimado}
+            </Text>
+          </View>
+        </View>
+      ))}
+
+      <Text style={styles.sectionTitle}>Plano 30 / 60 / 90 dias</Text>
+      <View style={styles.planRow} wrap={false}>
+        <View style={styles.planCell}>
+          <Text style={styles.planLabel}>30 dias</Text>
+          <Text style={styles.planText}>{analysis.plano_30_60_90["30_dias"]}</Text>
+        </View>
+        <View style={styles.planCell}>
+          <Text style={styles.planLabel}>60 dias</Text>
+          <Text style={styles.planText}>{analysis.plano_30_60_90["60_dias"]}</Text>
+        </View>
+        <View style={styles.planCell}>
+          <Text style={styles.planLabel}>90 dias</Text>
+          <Text style={styles.planText}>{analysis.plano_30_60_90["90_dias"]}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Próximo passo recomendado</Text>
+      <Text style={styles.approachBadge}>
+        {approachLabelsV2[analysis.proximo_passo_recomendado.abordagem]}
+      </Text>
+      <Text style={styles.opportunityDesc}>
+        {analysis.proximo_passo_recomendado.justificativa}
+      </Text>
+
+      <Text style={styles.sectionTitle}>Alerta estratégico</Text>
+      <View style={styles.alertBox} wrap={false}>
+        <Text style={styles.alertLabel}>Atenção</Text>
+        <Text style={styles.alertText}>{analysis.alerta_estrategico}</Text>
+      </View>
+    </>
+  );
+}
+
+function renderLegacyBody(analysis: DiagnosisAnalysisLegacy) {
+  return (
+    <>
+      <Text style={styles.sectionTitle}>Top 3 oportunidades</Text>
+      {analysis.tres_oportunidades.map((op, i) => (
+        <View key={i} style={styles.opportunityCard} wrap={false}>
+          <View style={styles.opportunityHeader}>
+            <Text style={styles.opportunityIndex}>0{i + 1}</Text>
+            <Text style={styles.opportunityTitle}>{op.titulo}</Text>
+          </View>
+          <Text style={styles.opportunityDesc}>{op.descricao}</Text>
+          <View style={styles.metaGrid}>
+            <Text style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Impacto: </Text>
+              {op.impacto_estimado}
+            </Text>
+            <Text style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Complexidade: </Text>
+              {op.complexidade}
+            </Text>
+            <Text style={styles.metaItem}>
+              <Text style={styles.metaLabel}>Prazo: </Text>
+              {op.prazo_implementacao}
+            </Text>
+          </View>
+          {op.ferramentas_sugeridas.length > 0 && (
+            <Text style={[styles.metaItem, { marginTop: 4 }]}>
+              <Text style={styles.metaLabel}>Ferramentas: </Text>
+              {op.ferramentas_sugeridas.join(", ")}
+            </Text>
+          )}
+        </View>
+      ))}
+
+      <Text style={styles.sectionTitle}>Quick win (1 semana)</Text>
+      <View style={styles.quickWinBox} wrap={false}>
+        <Text style={styles.quickWinTitle}>{analysis.quick_win.titulo}</Text>
+        {analysis.quick_win.passo_a_passo.map((step, i) => (
+          <View key={i} style={styles.step}>
+            <Text style={styles.stepNum}>{i + 1}.</Text>
+            <Text style={styles.stepText}>
+              {step.replace(/^\s*\d+\.\s*/, "")}
+            </Text>
+          </View>
+        ))}
+        {analysis.quick_win.ferramentas_necessarias.length > 0 && (
+          <Text style={[styles.metaItem, { marginTop: 8 }]}>
+            <Text style={styles.metaLabel}>Ferramentas: </Text>
+            {analysis.quick_win.ferramentas_necessarias.join(", ")}
+          </Text>
+        )}
+      </View>
+
+      <Text style={styles.sectionTitle}>Estimativa de retorno</Text>
+      <View style={styles.roiRow} wrap={false}>
+        <View style={styles.roiCell}>
+          <Text style={styles.roiLabel}>Horas/mês</Text>
+          <Text style={styles.roiValue}>
+            {String(analysis.estimativa_roi.horas_recuperaveis_mes)}
+          </Text>
+        </View>
+        <View style={styles.roiCell}>
+          <Text style={styles.roiLabel}>Valor/mês</Text>
+          <Text style={styles.roiValue}>
+            {analysis.estimativa_roi.valor_estimado_mensal}
+          </Text>
+        </View>
+        <View style={styles.roiCell}>
+          <Text style={styles.roiLabel}>Payback</Text>
+          <Text style={styles.roiValue}>
+            {analysis.estimativa_roi.tempo_payback}
+          </Text>
+        </View>
+      </View>
+      {analysis.estimativa_roi.disclaimer && (
+        <Text style={styles.disclaimer}>
+          {analysis.estimativa_roi.disclaimer}
+        </Text>
+      )}
+
+      <Text style={styles.sectionTitle}>Próximo passo recomendado</Text>
+      <Text style={styles.approachBadge}>
+        {approachLabelsLegacy[analysis.proximo_passo_recomendado.abordagem]}
+      </Text>
+      <Text style={styles.opportunityDesc}>
+        {analysis.proximo_passo_recomendado.justificativa}
+      </Text>
+
+      <Text style={styles.sectionTitle}>Alerta estratégico</Text>
+      <View style={styles.alertBox} wrap={false}>
+        <Text style={styles.alertLabel}>Atenção</Text>
+        <Text style={styles.alertText}>{analysis.alerta_estrategico}</Text>
+      </View>
+    </>
   );
 }
 

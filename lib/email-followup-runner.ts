@@ -33,15 +33,16 @@ export type SequenceRow = {
   body_subject: string | null;
 };
 
+// V2 + Legacy: registros antigos podem ter q2_erp/q3_client_profile = NULL.
+// O prompt do email 2 cai num fallback "(não informado)" nesses casos.
 export type DiagnosisCtx = {
   id: string;
   name: string;
   email: string;
   ai_analysis: DiagnosisAnalysis | null;
   q1_size: string;
-  q2_business_model: string;
-  q4_tech_maturity: string;
-  q7_main_goal: string;
+  q2_erp: string | null;
+  q3_client_profile: string | null;
 };
 
 export type RunnerResult =
@@ -92,9 +93,8 @@ export async function runFollowUpEmail(
         diagnosisId: diag.id,
         name: diag.name,
         q1_size: diag.q1_size,
-        q2_business_model: diag.q2_business_model,
-        q4_tech_maturity: diag.q4_tech_maturity,
-        q7_main_goal: diag.q7_main_goal,
+        q2_erp: diag.q2_erp ?? "",
+        q3_client_profile: diag.q3_client_profile ?? "",
         opportunity1: op1,
         calcomUrl,
         unsubscribeUrl: unsubUrl,

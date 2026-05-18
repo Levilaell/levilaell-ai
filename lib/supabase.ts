@@ -4,7 +4,6 @@ import type {
   DiagnosisAnalysis,
   DiagnosisStatus,
   DiagnosisAnswers,
-  PainArea,
 } from "@/types/diagnosis";
 import { calculateLeadScore } from "@/lib/lead-score";
 
@@ -91,6 +90,19 @@ export async function saveDiagnosis(
 
   const leadScore = calculateLeadScore(input);
 
+  // Mapping form V2 → coluna do banco (ver 0007_diagnosis_contabil_refactor.sql)
+  //   form.q1_size               → diagnoses.q1_size
+  //   form.q2_erp                → diagnoses.q2_erp (coluna nova)
+  //   form.q3_client_profile     → diagnoses.q3_client_profile (coluna nova)
+  //   form.q4_pain_areas         → diagnoses.q3_pain_areas (REUSO jsonb)
+  //   form.q5_hours_weekly       → diagnoses.q5_hours_weekly (REUSO; valores novos)
+  //   form.q6_automation_history → diagnoses.q6_automation_history (REUSO)
+  //   form.q7_timeline           → diagnoses.q8_timeline (REUSO; valores novos)
+  //
+  // Colunas legacy preenchidas com NULL pra registros V2:
+  //   q2_business_model, q2_business_model_other, q4_tech_maturity,
+  //   q7_main_goal, q9_budget, q10_revenue, q10_employees.
+
   // Log com payload sanitizado — sem PII (nome / email / whatsapp em texto).
   console.log("[DB] saveDiagnosis insert", {
     has_id: Boolean(input.id),
@@ -99,14 +111,12 @@ export async function saveDiagnosis(
     has_whatsapp: Boolean(input.whatsapp),
     has_company: Boolean(input.company),
     q1_size: input.q1_size,
-    q2_business_model: input.q2_business_model,
-    pain_areas_count: input.q3_pain_areas?.length ?? 0,
-    q4_tech_maturity: input.q4_tech_maturity,
+    q2_erp: input.q2_erp,
+    q3_client_profile: input.q3_client_profile,
+    pain_areas_count: input.q4_pain_areas?.length ?? 0,
     q5_hours_weekly: input.q5_hours_weekly,
-    q8_timeline: input.q8_timeline,
-    q9_budget: input.q9_budget,
-    q10_revenue: input.q10_revenue ?? null,
-    has_q10_employees: typeof input.q10_employees === "number",
+    q6_automation_history: input.q6_automation_history,
+    q7_timeline: input.q7_timeline,
     lead_score: leadScore,
   });
 
@@ -119,18 +129,24 @@ export async function saveDiagnosis(
       whatsapp: input.whatsapp || null,
       company: input.company || null,
       q1_size: input.q1_size,
-      q2_business_model: input.q2_business_model,
-      q2_business_model_other: input.q2_business_model_other ?? null,
-      q3_pain_areas: input.q3_pain_areas as PainArea[],
-      q4_tech_maturity: input.q4_tech_maturity,
+      // V2: ERP + perfil de cliente
+      q2_erp: input.q2_erp,
+      q3_client_profile: input.q3_client_profile,
+      // Reuso: q4_pain_areas (form) → q3_pain_areas (banco, jsonb)
+      q3_pain_areas: input.q4_pain_areas,
+      // Reuso direto (mesmo slot, valores novos)
       q5_hours_weekly: input.q5_hours_weekly,
       q6_automation_history: input.q6_automation_history,
-      q7_main_goal: input.q7_main_goal,
-      q8_timeline: input.q8_timeline,
-      q9_budget: input.q9_budget,
-      q10_revenue: input.q10_revenue ?? null,
-      q10_employees:
-        typeof input.q10_employees === "number" ? input.q10_employees : null,
+      // Reuso: q7_timeline (form) → q8_timeline (banco)
+      q8_timeline: input.q7_timeline,
+      // Legacy NULL em registros V2
+      q2_business_model: null,
+      q2_business_model_other: null,
+      q4_tech_maturity: null,
+      q7_main_goal: null,
+      q9_budget: null,
+      q10_revenue: null,
+      q10_employees: null,
       utm_source: input.utm_source ?? null,
       utm_medium: input.utm_medium ?? null,
       utm_campaign: input.utm_campaign ?? null,

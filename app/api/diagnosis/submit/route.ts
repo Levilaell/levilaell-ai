@@ -40,7 +40,7 @@ import {
 import type {
   DiagnosisAnalysis,
   DiagnosisAnswers,
-  PainArea,
+  PainAreaV2,
 } from "@/types/diagnosis";
 
 export const runtime = "nodejs";
@@ -76,21 +76,14 @@ export async function POST(request: Request) {
 
   const answers: DiagnosisAnswers = {
     q1_size: data.q1_size as DiagnosisAnswers["q1_size"],
-    q2_business_model: data.q2_business_model as DiagnosisAnswers["q2_business_model"],
-    q2_business_model_other: data.q2_business_model_other,
-    q3_pain_areas: data.q3_pain_areas as PainArea[],
-    q4_tech_maturity: data.q4_tech_maturity as DiagnosisAnswers["q4_tech_maturity"],
+    q2_erp: data.q2_erp as DiagnosisAnswers["q2_erp"],
+    q3_client_profile:
+      data.q3_client_profile as DiagnosisAnswers["q3_client_profile"],
+    q4_pain_areas: data.q4_pain_areas as PainAreaV2[],
     q5_hours_weekly: data.q5_hours_weekly as DiagnosisAnswers["q5_hours_weekly"],
     q6_automation_history:
       data.q6_automation_history as DiagnosisAnswers["q6_automation_history"],
-    q7_main_goal: data.q7_main_goal as DiagnosisAnswers["q7_main_goal"],
-    q8_timeline: data.q8_timeline as DiagnosisAnswers["q8_timeline"],
-    q9_budget: data.q9_budget as DiagnosisAnswers["q9_budget"],
-    q10_revenue: data.q10_revenue
-      ? (data.q10_revenue as DiagnosisAnswers["q10_revenue"])
-      : undefined,
-    q10_employees:
-      typeof data.q10_employees === "number" ? data.q10_employees : undefined,
+    q7_timeline: data.q7_timeline as DiagnosisAnswers["q7_timeline"],
   };
 
   // 1) Persist initial row (status=processing) ------------------------------
@@ -204,7 +197,7 @@ export async function POST(request: Request) {
       name: data.name,
       diagnosisId,
       analysis,
-      timeline: answers.q8_timeline,
+      timeline: answers.q7_timeline,
     });
 
     let pdfBuffer: Buffer | null = null;
@@ -272,11 +265,10 @@ export async function POST(request: Request) {
         leadScore: score,
         analysis,
         contextLabels: {
-          size: labels.size,
-          businessModel: labels.businessModel,
-          timeline: labels.timeline,
-          budget: labels.budget,
-          revenue: labels.revenue,
+          carteira: labels.carteira,
+          erp: labels.erp,
+          perfilCliente: labels.perfilCliente,
+          urgencia: labels.urgencia,
         },
       });
       await sendEmail({
@@ -347,7 +339,7 @@ export async function POST(request: Request) {
     event_id: diagnosisId,
     createdAt,
     name: data.name,
-    timeline: answers.q8_timeline,
+    timeline: answers.q7_timeline,
     analysis,
     lead_score: score,
   });

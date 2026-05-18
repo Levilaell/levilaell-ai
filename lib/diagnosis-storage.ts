@@ -1,6 +1,9 @@
 import type { DiagnosisAnalysis, DiagnosisSubmission } from "@/types/diagnosis";
 
-const DRAFT_KEY = "diagnosis:draft:v2";
+// v3-contabil: a virada V2 contábil (2026-05-18) mudou enums e step count.
+// Bumpamos a chave pra invalidar drafts em andamento de usuários do funil v1
+// — eles começam do zero (preferível a travar/422 silencioso na submission).
+const DRAFT_KEY = "diagnosis:draft:v3-contabil";
 const RESULT_PREFIX = "diagnosis:result:";
 
 export type DiagnosisDraft = {

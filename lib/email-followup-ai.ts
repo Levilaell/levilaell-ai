@@ -4,6 +4,11 @@
  *
  * Resultado é cacheado em email_sequences.body_html / body_subject — o cron
  * só regenera se o cache estiver vazio.
+ *
+ * V2 contábil: o contexto usa carteira (q1_size), ERP (q2_erp) e perfil de
+ * cliente (q3_client_profile). Pra leads legados (pre-2026-05-18), o cron
+ * passa string vazia nas chaves V2 e nós caímos num fallback genérico no
+ * prompt.
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
@@ -14,17 +19,13 @@ import {
   firstName,
 } from "@/lib/email-templates";
 import type {
-  CompanySize,
-  BusinessModel,
-  TechMaturity,
-  MainGoal,
   Opportunity,
+  OpportunityV2,
 } from "@/types/diagnosis";
 import {
-  COMPANY_SIZES,
-  BUSINESS_MODELS,
-  TECH_MATURITY,
-  MAIN_GOALS,
+  CARTEIRA_SIZES,
+  ERPS,
+  CLIENT_PROFILES,
 } from "@/lib/diagnosis-questions";
 
 const MAX_TOKENS = 1_200;
@@ -75,11 +76,12 @@ function labelFromOptions<T extends { value: string; label: string }>(
 export type FollowUp2Context = {
   diagnosisId: string;
   name: string;
-  q1_size: CompanySize | string;
-  q2_business_model: BusinessModel | string;
-  q4_tech_maturity: TechMaturity | string;
-  q7_main_goal: MainGoal | string;
-  opportunity1: Opportunity;
+  // V2 contábil — pode vir vazio pra registros legados; nesse caso o prompt
+  // cai em "perfil não informado".
+  q1_size: string;
+  q2_erp: string;
+  q3_client_profile: string;
+  opportunity1: OpportunityV2 | Opportunity;
   calcomUrl: string;
   unsubscribeUrl: string;
 };
@@ -140,38 +142,41 @@ export async function generateFollowUpEmail2(
 // Prompt builder
 // ---------------------------------------------------------------------------
 function buildPrompt(ctx: FollowUp2Context): string {
-  const sizeLabel = labelFromOptions(COMPANY_SIZES, ctx.q1_size);
-  const modelLabel = labelFromOptions(BUSINESS_MODELS, ctx.q2_business_model);
-  const maturityLabel = labelFromOptions(TECH_MATURITY, ctx.q4_tech_maturity);
-  const goalLabel = labelFromOptions(MAIN_GOALS, ctx.q7_main_goal);
-  const tools = ctx.opportunity1.ferramentas_sugeridas.join(", ");
+  const carteiraLabel = ctx.q1_size
+    ? labelFromOptions(CARTEIRA_SIZES, ctx.q1_size)
+    : "(não informado)";
+  const erpLabel = ctx.q2_erp
+    ? labelFromOptions(ERPS, ctx.q2_erp)
+    : "(não informado)";
+  const perfilLabel = ctx.q3_client_profile
+    ? labelFromOptions(CLIENT_PROFILES, ctx.q3_client_profile)
+    : "(não informado)";
 
   return `Você está escrevendo o segundo e-mail de uma sequência de nurturing pra um lead que fez um diagnóstico no site da Levi Lael (engenharia de automação para escritórios contábeis). Esse e-mail vai 2 dias depois do diagnóstico.
 
 CONTEXTO DO LEAD:
 - Nome: ${ctx.name}
-- Tamanho: ${sizeLabel}
-- Modelo: ${modelLabel}
-- Maturidade tech: ${maturityLabel}
-- Objetivo principal: ${goalLabel}
+- Carteira: ${carteiraLabel}
+- ERP principal: ${erpLabel}
+- Perfil predominante de cliente: ${perfilLabel}
 
 OPORTUNIDADE #1 DO DIAGNÓSTICO:
 - Título: ${ctx.opportunity1.titulo}
 - Descrição: ${ctx.opportunity1.descricao}
-- Ferramentas sugeridas: ${tools}
 
 OBJETIVO DO EMAIL:
-Aprofundar a Oportunidade #1 com 1 nuance que o relatório inicial não mencionou. Educar, não vender. Tom didático.
+Aprofundar a Oportunidade #1 com 1 nuance que o relatório inicial não mencionou. Educar, não vender. Tom didático e contábil.
 
 REGRAS:
 1. Máximo 250 palavras no body
 2. Subject curto e específico (não use "novidades", "atualização" ou similar)
 3. Termina com convite suave pra agendar conversa no link ${ctx.calcomUrl}
-4. NUNCA invente estatísticas ou casos
-5. Linguagem calibrada pra maturidade tech: "${maturityLabel}" — se for "manual", evite jargão; se for "mature", pode ser técnico
-6. Não use "querido(a)" ou abertura formal — comece com "Oi, [primeiro nome]."
-7. Português brasileiro direto
-8. NÃO mencione Levi Lael em terceira pessoa — você é a equipe Levi Lael escrevendo. Use "nós" / "construímos" / "alinhamos" — nunca primeira pessoa singular ("eu", "meu", "comigo")
+4. NUNCA invente estatísticas, casos ou números
+5. NÃO recomende ferramenta específica (n8n, Make, Zapier, ChatGPT). Foque no processo.
+6. Linguagem ajustada pra contabilidade — pode usar terminologia técnica (SPED, DCTF, eSocial, fechamento) quando fizer sentido
+7. Não use "querido(a)" ou abertura formal — comece com "Oi, [primeiro nome]."
+8. Português brasileiro direto
+9. NÃO mencione Levi Lael em terceira pessoa — você é a equipe Levi Lael escrevendo. Use "nós" / "construímos" / "alinhamos" — nunca primeira pessoa singular ("eu", "meu", "comigo")
 
 FORMATO DO HTML:
 - Use apenas <p>, <strong>, <em>, <a href>, <ul>/<li>
@@ -243,14 +248,14 @@ function mockFollowUpResponse(ctx: FollowUp2Context): AiResponse {
   const op = ctx.opportunity1;
   const subject = `${f}, um detalhe sobre ${op.titulo} que vale relembrar`;
   const body_html = `<p>Oi, ${escapeHtml(f)}.</p>
-<p>Dois dias atrás você terminou o diagnóstico — e <strong>${escapeHtml(op.titulo)}</strong> apareceu como sua maior oportunidade.</p>
-<p>O relatório falou do <em>quê</em>. Hoje queremos falar de uma nuance do <em>como</em>: a maioria das equipes que tentam essa automação param na primeira integração porque o sistema legado responde devagar e ninguém calibrou os retries. Sem retry exponencial, a primeira semana de produção mostra os bugs. Antes de codar, mapeie 3 pontos onde o fluxo pode quebrar (timeout, payload inválido, rate limit) e desenhe o que acontece em cada — não tratar isso custa o dobro depois.</p>
-<p>Se quiser revisar o plano com a gente (30 min, sem compromisso): <a href="${ctx.calcomUrl}">${ctx.calcomUrl}</a></p>`;
+<p>Dois dias atrás vocês terminaram o diagnóstico — e <strong>${escapeHtml(op.titulo)}</strong> apareceu como a maior oportunidade.</p>
+<p>O relatório falou do <em>quê</em>. Hoje queremos falar de uma nuance do <em>como</em>: a maioria dos escritórios contábeis começa essa automação pela ponta errada — tenta automatizar o registro antes de padronizar a entrada. Resultado: a equipe ainda recebe arquivo solto por WhatsApp, e o "automatizador" trabalha em cima do caos. Antes de plugar qualquer coisa no ERP, vale mapear como os documentos chegam hoje e desenhar um único canal padrão de entrada — pra cada tipo de cliente. Esse passo, sozinho, normalmente derruba 30% do tempo de triagem.</p>
+<p>Se quiserem revisar o plano com a gente (30 min, sem compromisso): <a href="${ctx.calcomUrl}">${ctx.calcomUrl}</a></p>`;
   const body_text = `Oi, ${f}.
 
-Dois dias atrás você terminou o diagnóstico — e ${op.titulo} apareceu como sua maior oportunidade.
+Dois dias atrás vocês terminaram o diagnóstico — e ${op.titulo} apareceu como a maior oportunidade.
 
-O relatório falou do quê. Hoje queremos falar de uma nuance do como: a maioria das equipes que tentam essa automação para na primeira integração porque o sistema legado responde devagar e ninguém calibrou os retries. Antes de codar, mapeie 3 pontos onde o fluxo pode quebrar e desenhe o que acontece em cada.
+O relatório falou do quê. Hoje queremos falar de uma nuance do como: a maioria dos escritórios começa essa automação pela ponta errada — tenta automatizar o registro antes de padronizar a entrada. Antes de plugar no ERP, vale mapear como os documentos chegam hoje e desenhar um único canal padrão de entrada.
 
 Agendar 30 min: ${ctx.calcomUrl}`;
   return { subject, body_html, body_text };

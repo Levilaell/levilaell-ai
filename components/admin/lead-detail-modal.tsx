@@ -24,7 +24,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/admin-format";
 import type { LeadSummary } from "@/lib/admin-stats";
-import type { DiagnosisAnalysis } from "@/types/diagnosis";
+import {
+  isLegacyAnalysis,
+  type DiagnosisAnalysis,
+  type DiagnosisAnalysisLegacy,
+  type DiagnosisAnalysisV2,
+} from "@/types/diagnosis";
 
 type Sequence = {
   email_number: number;
@@ -41,16 +46,20 @@ type FullDiagnosis = {
   whatsapp: string | null;
   company: string | null;
   q1_size: string;
-  q2_business_model: string;
+  // v1 legacy (nullable após migration 0007 — preenchido só pra <2026-05-18)
+  q2_business_model: string | null;
   q3_pain_areas: string[];
-  q4_tech_maturity: string;
+  q4_tech_maturity: string | null;
   q5_hours_weekly: string;
   q6_automation_history: string;
-  q7_main_goal: string;
+  q7_main_goal: string | null;
   q8_timeline: string;
-  q9_budget: string;
+  q9_budget: string | null;
   q10_revenue: string | null;
   q10_employees: number | null;
+  // v2 contábil (preenchido só pra >=2026-05-18)
+  q2_erp: string | null;
+  q3_client_profile: string | null;
   ai_analysis: DiagnosisAnalysis | null;
   lead_score: number | null;
   contacted_at: string | null;
@@ -421,9 +430,21 @@ function NotesBlock({
   );
 }
 
+// V2 + Legacy: dicts acumulam ambos. Pain labels novas (contábil) coexistem
+// com as antigas — q3_pain_areas guarda valores diferentes dependendo da
+// época do registro.
 const PAIN_LABELS: Record<string, string> = {
-  lead_attendance: "Atendimento",
+  // V2 contábil
+  triagem: "Triagem",
+  cobranca: "Cobrança docs",
+  nf: "Notas fiscais",
+  lancamentos: "Lançamentos",
+  conciliacao: "Conciliação",
+  atendimento: "Atendimento",
+  relatorios: "Relatórios",
   onboarding: "Onboarding",
+  // Legacy v1
+  lead_attendance: "Atendimento",
   reports_dashboards: "Relatórios",
   billing: "Cobrança",
   client_communication: "Comunicação",
@@ -434,7 +455,14 @@ const PAIN_LABELS: Record<string, string> = {
   sales_followup: "Follow-up",
 };
 
-const SIZE_LABELS: Record<string, string> = {
+const CARTEIRA_LABELS: Record<string, string> = {
+  // V2 contábil
+  ate_30: "Até 30",
+  "30_a_100": "30-100",
+  "100_a_250": "100-250",
+  "250_a_500": "250-500",
+  "500_mais": "500+",
+  // Legacy v1
   solo: "Solo",
   small_2_10: "2-10",
   medium_11_50: "11-50",
@@ -442,26 +470,79 @@ const SIZE_LABELS: Record<string, string> = {
   enterprise_200_plus: "200+",
 };
 
+const ERP_LABELS: Record<string, string> = {
+  dominio: "Domínio",
+  onvio: "Onvio",
+  alterdata: "Alterdata",
+  sage: "Sage",
+  contmatic: "Contmatic",
+  mastermaq: "MasterMaq",
+  outro_planilha: "Outro/planilha",
+};
+
+const PROFILE_LABELS: Record<string, string> = {
+  mei: "MEI",
+  simples: "Simples",
+  presumido: "Presumido",
+  real: "Lucro Real",
+  misto: "Misto",
+};
+
+const TIMELINE_LABELS: Record<string, string> = {
+  // V2
+  para_ontem: "Pra ontem",
+  proximo_mes: "Próximo mês",
+  tres_meses: "3 meses",
+  sem_urgencia: "Sem urgência",
+  // Legacy
+  this_week: "Esta semana",
+  next_month: "Próximo mês",
+  "3_to_6_months": "3-6 meses",
+  no_urgency: "Sem urgência",
+};
+
 function AnswersBlock({ detail }: { detail: Detail }) {
   const d = detail.diagnosis;
   const pains = (d.q3_pain_areas ?? [])
     .map((p) => PAIN_LABELS[p] ?? p)
     .join(", ");
+  const isV2 = Boolean(d.q2_erp);
   return (
     <section className="rounded-xl border border-border/60 bg-muted/30 p-3">
       <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        Diagnóstico
+        Diagnóstico {isV2 ? "(contábil v2)" : "(v1 legacy)"}
       </h4>
       <dl className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-        <Field label="Tamanho">{SIZE_LABELS[d.q1_size] ?? d.q1_size}</Field>
-        <Field label="Modelo">{d.q2_business_model}</Field>
+        <Field label={isV2 ? "Carteira" : "Tamanho"}>
+          {CARTEIRA_LABELS[d.q1_size] ?? d.q1_size}
+        </Field>
+        {isV2 ? (
+          <>
+            <Field label="ERP">{ERP_LABELS[d.q2_erp ?? ""] ?? d.q2_erp}</Field>
+            <Field label="Perfil cliente">
+              {PROFILE_LABELS[d.q3_client_profile ?? ""] ?? d.q3_client_profile}
+            </Field>
+          </>
+        ) : (
+          d.q2_business_model && (
+            <Field label="Modelo">{d.q2_business_model}</Field>
+          )
+        )}
         <Field label="Dores">{pains}</Field>
-        <Field label="Maturidade">{d.q4_tech_maturity}</Field>
+        {!isV2 && d.q4_tech_maturity && (
+          <Field label="Maturidade">{d.q4_tech_maturity}</Field>
+        )}
         <Field label="Horas/sem">{d.q5_hours_weekly}</Field>
         <Field label="Histórico">{d.q6_automation_history}</Field>
-        <Field label="Objetivo">{d.q7_main_goal}</Field>
-        <Field label="Urgência">{d.q8_timeline}</Field>
-        <Field label="Orçamento">{d.q9_budget}</Field>
+        {!isV2 && d.q7_main_goal && (
+          <Field label="Objetivo">{d.q7_main_goal}</Field>
+        )}
+        <Field label="Urgência">
+          {TIMELINE_LABELS[d.q8_timeline] ?? d.q8_timeline}
+        </Field>
+        {!isV2 && d.q9_budget && (
+          <Field label="Orçamento">{d.q9_budget}</Field>
+        )}
       </dl>
     </section>
   );
@@ -479,12 +560,34 @@ function AnalysisBlock({
       </section>
     );
   }
+  const legacy = isLegacyAnalysis(analysis);
   return (
     <section className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-3">
       <h4 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        Análise da IA
+        Análise da IA {legacy ? "(legacy)" : "(contábil v2)"}
       </h4>
       <p className="text-sm">{analysis.diagnostico_resumido}</p>
+
+      {!legacy && (
+        <div className="rounded-lg border border-border bg-background p-3 text-sm">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Gargalo principal
+          </p>
+          <p className="mt-1 font-medium">
+            {(analysis as DiagnosisAnalysisV2).gargalo_principal.area}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            {(analysis as DiagnosisAnalysisV2).gargalo_principal.descricao}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Impacto:{" "}
+            <strong>
+              {(analysis as DiagnosisAnalysisV2).gargalo_principal
+                .impacto_estimado}
+            </strong>
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2.5">
         <h5 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -509,32 +612,70 @@ function AnalysisBlock({
         </ol>
       </div>
 
-      <div className="rounded-lg border border-border bg-background p-3 text-sm">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Quick win
-        </p>
-        <p className="mt-1 font-medium">{analysis.quick_win.titulo}</p>
-        <ol className="mt-1.5 list-decimal space-y-0.5 pl-5 text-muted-foreground">
-          {analysis.quick_win.passo_a_passo.map((s, i) => (
-            <li key={i}>{s}</li>
-          ))}
-        </ol>
-      </div>
+      {legacy && (
+        <>
+          <div className="rounded-lg border border-border bg-background p-3 text-sm">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Quick win
+            </p>
+            <p className="mt-1 font-medium">
+              {(analysis as DiagnosisAnalysisLegacy).quick_win.titulo}
+            </p>
+            <ol className="mt-1.5 list-decimal space-y-0.5 pl-5 text-muted-foreground">
+              {(analysis as DiagnosisAnalysisLegacy).quick_win.passo_a_passo.map(
+                (s, i) => (
+                  <li key={i}>{s}</li>
+                ),
+              )}
+            </ol>
+          </div>
 
-      <div className="rounded-lg border border-border bg-background p-3 text-sm">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          ROI estimado
-        </p>
-        <p className="mt-1">
-          <strong>{analysis.estimativa_roi.valor_estimado_mensal}</strong> ·
-          payback {analysis.estimativa_roi.tempo_payback}
-        </p>
-        {analysis.estimativa_roi.disclaimer && (
-          <p className="mt-1 text-xs italic text-muted-foreground">
-            {analysis.estimativa_roi.disclaimer}
+          <div className="rounded-lg border border-border bg-background p-3 text-sm">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              ROI estimado
+            </p>
+            <p className="mt-1">
+              <strong>
+                {
+                  (analysis as DiagnosisAnalysisLegacy).estimativa_roi
+                    .valor_estimado_mensal
+                }
+              </strong>{" "}
+              · payback{" "}
+              {
+                (analysis as DiagnosisAnalysisLegacy).estimativa_roi
+                  .tempo_payback
+              }
+            </p>
+            {(analysis as DiagnosisAnalysisLegacy).estimativa_roi.disclaimer && (
+              <p className="mt-1 text-xs italic text-muted-foreground">
+                {(analysis as DiagnosisAnalysisLegacy).estimativa_roi
+                  .disclaimer}
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {!legacy && (
+        <div className="rounded-lg border border-border bg-background p-3 text-sm">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Plano 30 / 60 / 90 dias
           </p>
-        )}
-      </div>
+          <p className="mt-1 text-muted-foreground">
+            <strong>30:</strong>{" "}
+            {(analysis as DiagnosisAnalysisV2).plano_30_60_90["30_dias"]}
+          </p>
+          <p className="mt-0.5 text-muted-foreground">
+            <strong>60:</strong>{" "}
+            {(analysis as DiagnosisAnalysisV2).plano_30_60_90["60_dias"]}
+          </p>
+          <p className="mt-0.5 text-muted-foreground">
+            <strong>90:</strong>{" "}
+            {(analysis as DiagnosisAnalysisV2).plano_30_60_90["90_dias"]}
+          </p>
+        </div>
+      )}
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
         <p className="text-xs font-medium uppercase tracking-wider text-amber-900">
