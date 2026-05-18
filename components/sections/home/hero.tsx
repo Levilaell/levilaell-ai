@@ -1,6 +1,7 @@
-import { ArrowRight, Clock, Mail, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrackedLink } from "@/components/tracking/tracked-link";
+import { SchedulingButton } from "@/components/ui/scheduling-button";
 
 export function Hero() {
   return (
@@ -31,19 +32,12 @@ export function Hero() {
                   <ArrowRight className="size-4" aria-hidden />
                 </TrackedLink>
               </Button>
-              <Button
-                asChild
+              <SchedulingButton
                 size="xl"
-                variant="outline"
-                className="rounded-xl"
-              >
-                <TrackedLink
-                  href="/automacao-contabil"
-                  trackLabel="home_hero_solutions"
-                >
-                  Ver soluções
-                </TrackedLink>
-              </Button>
+                variant="secondary"
+                source="home_hero"
+                subject="Conversa inicial — site"
+              />
             </div>
           </div>
 
