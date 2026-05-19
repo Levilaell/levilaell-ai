@@ -5,7 +5,9 @@
  *   1. Salva em scheduling_requests (se Supabase configurado)
  *   2. Cancela email sequence pendente (se vier diagnosis_id)
  *   3. Dispara notificação Telegram pro Levi + comercial
- *   4. Dispara CAPI Schedule (server-side, dedup com Pixel via event_id)
+ *   4. Dispara CAPI Lead (tier=hot) — único ponto onde Lead é contado.
+ *      Não é Schedule porque não tem slot de calendário; é pedido de
+ *      contato 1x1 WhatsApp. Diagnóstico é top-of-funnel e não conta.
  *   5. Loga tracking_events.scheduling_submitted
  *
  * Tudo step 2-5 é graceful: ausência de integração só loga e segue.
@@ -175,19 +177,20 @@ export async function POST(request: Request) {
   }
 
   // -----------------------------------------------------------------------
-  // 4) CAPI Schedule (server-side). event_id = requestId quando temos, senão
-  // gera um próprio. Cliente também dispara Pixel.schedule com mesmo id =>
-  // dedup. Silent fail.
+  // 4) CAPI Lead (server-side). event_id = requestId quando temos, senão gera.
+  // Cliente também dispara Pixel.lead com mesmo id => dedup. Silent fail.
+  // Único evento de conversion — não é Schedule porque não tem agendamento
+  // real (form pede contato 1x1 WhatsApp, Levi marca depois manualmente).
   // -----------------------------------------------------------------------
   const eventId =
     requestId ??
     (typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
-      : `sched_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+      : `lead_${Date.now()}_${Math.random().toString(36).slice(2)}`);
 
   try {
     await sendCapiEvent({
-      event_name: "Schedule",
+      event_name: "Lead",
       event_id: eventId,
       event_time: Math.floor(Date.now() / 1000),
       event_source_url: request.headers.get("referer") ?? siteConfig.url,
@@ -200,13 +203,14 @@ export async function POST(request: Request) {
         ...parseFbCookies(request.headers.get("cookie")),
       },
       custom_data: {
-        value: EVENT_VALUE_BRL.schedule,
+        value: EVENT_VALUE_BRL.hot_lead,
         currency: "BRL",
+        lead_quality: "hot",
       },
     });
   } catch (err) {
     console.error(
-      "[scheduling] CAPI Schedule failed (silent)",
+      "[scheduling] CAPI Lead failed (silent)",
       err instanceof Error ? err.message : err,
     );
   }

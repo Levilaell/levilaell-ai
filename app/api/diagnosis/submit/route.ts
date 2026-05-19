@@ -26,18 +26,6 @@ import { describeAnswers } from "@/lib/diagnosis-prompt";
 import { buildEmailSequenceItems } from "@/lib/email-sequence";
 import { siteConfig } from "@/lib/site";
 import { calculateLeadScore } from "@/lib/lead-score";
-import { EVENT_VALUE_BRL, leadTier } from "@/lib/tracking/types";
-import {
-  sendCapiEvent,
-  parseFbCookies,
-  extractClientIp,
-} from "@/lib/server/meta-capi";
-import {
-  hashEmailServer,
-  hashPhoneServer,
-  hashNameServer,
-  firstNameFromServer,
-} from "@/lib/server/hash";
 import type {
   DiagnosisAnalysis,
   DiagnosisAnswers,
@@ -87,17 +75,7 @@ export async function POST(request: Request) {
     q7_timeline: data.q7_timeline as DiagnosisAnswers["q7_timeline"],
   };
 
-  // Headers / cookies pra Meta CAPI: extrai upfront antes de qualquer
-  // after(), porque request scope pode estar morto no callback.
-  const referer = request.headers.get("referer");
-  const userAgent = request.headers.get("user-agent");
-  const cookieHeader = request.headers.get("cookie");
-  const clientIp = extractClientIp(request.headers);
-
   const score = calculateLeadScore(answers);
-  const tier = leadTier(score);
-  const leadValue =
-    tier === "hot" ? EVENT_VALUE_BRL.hot_lead : EVENT_VALUE_BRL.lead;
 
   // ---------------------------------------------------------------------------
   // Fallback sync — só quando Supabase OFF (dev sem credenciais). Mantém o
@@ -376,39 +354,6 @@ export async function POST(request: Request) {
       log("email sequence agendada", { count: items.length });
     } catch (err) {
       errLog("scheduleEmailSequence falhou", err);
-    }
-  });
-
-  // -----------------------------------------------------------------------
-  // after() #3 — CAPI Lead. event_id = diagnosisId pra dedup com Pixel
-  // client. Não depende da análise — pode disparar em paralelo.
-  // -----------------------------------------------------------------------
-  after(async () => {
-    try {
-      await sendCapiEvent({
-        event_name: "Lead",
-        event_id: diagnosisId,
-        event_time: Math.floor(Date.now() / 1000),
-        event_source_url: referer ?? siteConfig.url,
-        user_data: {
-          em: hashEmailServer(data.email),
-          ph: hashPhoneServer(data.whatsapp),
-          fn: hashNameServer(firstNameFromServer(data.name)),
-          client_ip_address: clientIp,
-          client_user_agent: userAgent ?? undefined,
-          ...parseFbCookies(cookieHeader),
-        },
-        custom_data: {
-          value: leadValue,
-          currency: "BRL",
-          lead_quality: tier,
-        },
-      });
-    } catch (err) {
-      console.error(
-        "[diagnosis:after] CAPI Lead failed",
-        err instanceof Error ? err.message : err,
-      );
     }
   });
 

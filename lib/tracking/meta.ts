@@ -1,6 +1,6 @@
 /**
- * Wrapper client-side pro Meta Pixel. Tipa as 4 ações que disparamos
- * (PageView, ViewContent, Lead, Schedule) e garante que PII vai hashada.
+ * Wrapper client-side pro Meta Pixel. Tipa as ações que disparamos
+ * (PageView, ViewContent, InitiateCheckout, Lead) e garante que PII vai hashada.
  *
  * Política:
  *   • event_id quando fornecido → habilita deduplication com CAPI.
@@ -115,36 +115,6 @@ export const metaPixel = {
         value: params.value,
         currency: "BRL",
         lead_quality: params.leadQuality,
-        ...userData,
-      },
-      params.event_id,
-    );
-  },
-
-  /**
-   * Schedule (agendamento de call). Dedup contra CAPI via event_id.
-   * Funciona via beacon do fbevents.js — sobrevive navegação same-tab,
-   * mas o SchedulingButton usa target="_blank" então beacon nunca está
-   * em risco mesmo.
-   */
-  async schedule(params: {
-    event_id: string;
-    value: number;
-    email?: string;
-    phone?: string;
-    fullName?: string;
-  }): Promise<void> {
-    if (!canFire()) return;
-    const userData = await hashUserData({
-      email: params.email,
-      phone: params.phone,
-      firstName: firstNameFrom(params.fullName),
-    });
-    fire(
-      "Schedule",
-      {
-        value: params.value,
-        currency: "BRL",
         ...userData,
       },
       params.event_id,

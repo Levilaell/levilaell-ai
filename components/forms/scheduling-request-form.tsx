@@ -6,9 +6,11 @@
  * Fluxo:
  *   1. Lead preenche 5 campos (nome, whatsapp, email, site, urgência)
  *   2. Submit → POST /api/scheduling/request
- *   3. API salva no banco + dispara Telegram pro Levi/comercial + CAPI Schedule
- *   4. Cliente dispara Meta Pixel Schedule (dedup com CAPI via event_id) +
- *      gtag schedule_call + track interno
+ *   3. API salva no banco + dispara Telegram pro Levi/comercial + CAPI Lead
+ *      (único evento de conversion — não tem agendamento real, só pedido de
+ *      contato 1x1 via WhatsApp, então Schedule seria semanticamente errado)
+ *   4. Cliente dispara Meta Pixel Lead (dedup com CAPI via event_id) +
+ *      Google generateHotLead + track interno
  *   5. Tela de sucesso: "vou te chamar no WhatsApp"
  *
  * Props:
@@ -133,18 +135,22 @@ export function SchedulingRequestForm({
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error ?? `Erro ${res.status}`);
         }
-        const data = (await res.json()) as { ok: true; event_id: string };
+        const data = (await res.json()) as {
+          ok: true;
+          event_id: string;
+        };
 
-        // Dispara conversões client-side com mesmo event_id pra dedup CAPI.
-        void metaPixel.schedule({
+        // Dispara Lead client-side com mesmo event_id pra dedup CAPI.
+        void metaPixel.lead({
           event_id: data.event_id,
-          value: EVENT_VALUE_BRL.schedule,
+          value: EVENT_VALUE_BRL.hot_lead,
           email: values.email,
           phone: values.whatsapp,
           fullName: values.name,
+          leadQuality: "hot",
         });
-        googleTracking.scheduleCall({
-          value: EVENT_VALUE_BRL.schedule,
+        googleTracking.generateHotLead({
+          value: EVENT_VALUE_BRL.hot_lead,
           email: values.email,
         });
         track({

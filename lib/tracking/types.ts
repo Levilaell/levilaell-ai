@@ -59,11 +59,10 @@ export function leadTier(score: number): LeadTier {
  * Valores monetários (em BRL) anexados aos eventos. Servem pra Google Ads
  * estimar ROAS e pra Meta otimizar campanhas de valor.
  *
- * Heurística: hot lead vale 5x mais que warm/cold, schedule vale 2x hot.
- * Não são valores reais de pipeline — são proxies pra otimização.
+ * Heurística: hot lead vale 5x mais que warm/cold. Não são valores reais
+ * de pipeline — são proxies pra otimização.
  */
 export const EVENT_VALUE_BRL = {
   lead: 100,
   hot_lead: 500,
-  schedule: 1000,
 } as const;

@@ -94,19 +94,4 @@ export const googleTracking = {
     });
   },
 
-  scheduleCall(params: { value: number; email?: string }): void {
-    setUserData(params.email);
-    const sendTo = process.env.NEXT_PUBLIC_GADS_CONVERSION_CALL_SCHEDULED;
-    if (sendTo) {
-      gtag("event", "conversion", {
-        send_to: sendTo,
-        value: params.value,
-        currency: "BRL",
-      });
-    }
-    gtag("event", "schedule_call", {
-      value: params.value,
-      currency: "BRL",
-    });
-  },
 };

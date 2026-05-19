@@ -23,7 +23,6 @@ import {
 import { track } from "@/lib/tracking";
 import { metaPixel } from "@/lib/tracking/meta";
 import { googleTracking } from "@/lib/tracking/google";
-import { EVENT_VALUE_BRL, leadTier } from "@/lib/tracking/types";
 import {
   captureAttribution,
   readAttribution,
@@ -176,30 +175,8 @@ export function DiagnosisForm() {
         },
       });
 
-      // Pixel Lead + Google Ads/GA4 conversion. event_id = diagnosis_id casa
-      // com o dispatch CAPI server-side pra Meta deduplicar.
-      const tier = leadTier(data.lead_score);
-      const leadValue =
-        tier === "hot" ? EVENT_VALUE_BRL.hot_lead : EVENT_VALUE_BRL.lead;
-      await metaPixel.lead({
-        event_id: data.event_id,
-        value: leadValue,
-        email: answers.email,
-        phone: answers.whatsapp,
-        fullName: answers.name,
-        leadQuality: tier,
-      });
-      if (tier === "hot") {
-        googleTracking.generateHotLead({
-          value: leadValue,
-          email: answers.email,
-        });
-      } else {
-        googleTracking.generateLead({
-          value: leadValue,
-          email: answers.email,
-        });
-      }
+      // Diagnóstico não dispara Lead — é top-of-funnel (curioso). Lead só
+      // quando o cara preenche "Vamos conversar" (intent real de fechar).
 
       router.push(`/diagnosis/result/${data.id}`);
     } catch (err) {
