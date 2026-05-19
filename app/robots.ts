@@ -7,14 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/api/",
-          "/diagnosis/result/",
-          "/triagem-documentos",
-          "/cobranca-automatica",
-          "/processamento-notas",
-          "/automacao-contabil",
-        ],
+        disallow: ["/api/", "/diagnosis/result/"],
       },
     ],
     sitemap: `${siteConfig.url}/sitemap.xml`,

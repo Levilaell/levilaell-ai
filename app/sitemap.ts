@@ -10,11 +10,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     "/",
+    "/automacao-contabil",
     "/diagnosis",
     "/about",
     "/blog",
     "/newsletter",
     "/contact",
+    "/privacy",
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: now,

@@ -14,12 +14,7 @@ export const metadata: Metadata = {
   title: "Automação de processos para escritórios contábeis | Levi Lael",
   description:
     "Sistemas sob medida para automatizar triagem, cobrança e processamento de documentos no seu escritório contábil.",
-  robots: {
-    index: false,
-    follow: false,
-    noimageindex: true,
-    nocache: true,
-  },
+  alternates: { canonical: "/automacao-contabil" },
 };
 
 const dtrVariants: Record<string, string> = {
