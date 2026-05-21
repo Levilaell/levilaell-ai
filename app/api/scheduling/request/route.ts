@@ -27,6 +27,7 @@ import {
   trackEvent,
 } from "@/lib/supabase";
 import { escapeHtml, isTelegramConfigured, notifyTelegram } from "@/lib/telegram";
+import { notifyCrmLeadFromForm } from "@/lib/crm-webhook";
 import { sendCapiEvent, parseFbCookies, extractClientIp } from "@/lib/server/meta-capi";
 import {
   hashEmailServer,
@@ -216,7 +217,33 @@ export async function POST(request: Request) {
   }
 
   // -----------------------------------------------------------------------
-  // 5) Tracking interno. Silent fail.
+  // 5) Notificar CRM Levi Lael. Silent fail.
+  //    O CRM cria o lead, faz matching com diagnosis snapshot prévio
+  //    (se houver) e dispara Telegram próprio com formato estruturado.
+  // -----------------------------------------------------------------------
+  try {
+    await notifyCrmLeadFromForm({
+      source: "whatsapp_form",
+      name: data.name,
+      email: data.email,
+      phone: data.whatsapp,
+      message: data.site_url
+        ? `Site: ${data.site_url} · Urgência: ${SCHEDULING_URGENCY_LABEL[data.urgency]}${
+            source ? ` · Origem: ${source}` : ""
+          }`
+        : `Urgência: ${SCHEDULING_URGENCY_LABEL[data.urgency]}${
+            source ? ` · Origem: ${source}` : ""
+          }`,
+    });
+  } catch (err) {
+    console.error(
+      "[scheduling] CRM webhook failed (silent)",
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  // -----------------------------------------------------------------------
+  // 6) Tracking interno. Silent fail.
   // -----------------------------------------------------------------------
   await trackEvent({
     event_type: "scheduling_submitted",
