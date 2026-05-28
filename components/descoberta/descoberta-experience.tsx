@@ -102,6 +102,7 @@ export function DescobertaExperience({
   const collectedRef = useRef<DiscoveryCollectedItem[]>([]);
   const needRef = useRef("");
   const startedRef = useRef(false);
+  const submitLockRef = useRef(false); // trava submit de contato contra duplo-disparo
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const nextId = () => ++idRef.current;
@@ -339,6 +340,8 @@ export function DescobertaExperience({
     if (wppDigits < 10 || wppDigits > 13)
       return setContactErr("WhatsApp inválido — DDD + número.");
     setContactErr(null);
+    if (submitLockRef.current) return; // já está enviando — ignora duplo-clique
+    submitLockRef.current = true;
     pushUser(`${cName} · ${cWhatsapp} · ${cEmail}`);
     setComposer({ type: "none" });
     setPhase("finishing");
@@ -403,6 +406,7 @@ export function DescobertaExperience({
     } catch (err) {
       setBusy(false);
       setStatus(null);
+      submitLockRef.current = false; // libera pra retry
       setContactErr(
         err instanceof Error
           ? `${err.message} — tenta de novo.`

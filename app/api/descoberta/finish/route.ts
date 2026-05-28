@@ -129,18 +129,30 @@ export async function POST(request: Request) {
   // 1) Extração + recap (Sonnet). Falha → segue sem extração; o lead ainda
   //    é capturado e o transcript bruto vai pro Telegram.
   // -----------------------------------------------------------------------
+  // Timeout duro na extração: Sonnet lento/sobrecarregado não pode travar o
+  // lead. Se estourar 12s, segue sem extração (recap cai pro fallback) e o
+  // pipeline dispara mesmo assim — o lead é sempre capturado.
   let extracted: DescobertaExtract | null = null;
   let recap: string | null = null;
   if (isDescobertaAiConfigured()) {
+    const extractP = extractAndRecap({
+      need: data.need,
+      collected: data.collected,
+    });
+    // Evita unhandledRejection se a promise resolver/rejeitar depois do timeout.
+    extractP.catch(() => {});
     try {
-      extracted = await extractAndRecap({
-        need: data.need,
-        collected: data.collected,
-      });
-      recap = extracted.recap;
+      const result = await Promise.race([
+        extractP,
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("extract timeout (12s)")), 12_000),
+        ),
+      ]);
+      extracted = result;
+      recap = result.recap;
     } catch (err) {
       console.error(
-        "[descoberta/finish] extração falhou (silent)",
+        "[descoberta/finish] extração falhou/timeout (silent)",
         err instanceof Error ? err.message : err,
       );
     }
