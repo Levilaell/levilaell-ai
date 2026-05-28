@@ -281,6 +281,9 @@ type SchedulingRequestRow = {
   notified_at: string | null;
   contacted_at: string | null;
   status: "new" | "contacted" | "scheduled" | "won" | "lost";
+  // 0010: descoberta conversacional (null em requests do form simples)
+  transcript: Json | null;
+  extracted: Json | null;
 };
 
 type SchedulingRequestInsert = {
@@ -303,6 +306,8 @@ type SchedulingRequestInsert = {
   notified_at?: string | null;
   contacted_at?: string | null;
   status?: SchedulingRequestRow["status"];
+  transcript?: Json | null;
+  extracted?: Json | null;
 };
 
 type NewsletterSendRow = {

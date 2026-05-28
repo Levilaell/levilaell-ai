@@ -458,6 +458,9 @@ export type SaveSchedulingRequestInput = {
   utm_term?: string | null;
   landing_page?: string | null;
   referrer?: string | null;
+  // Descoberta conversacional (0010) — null em requests do form simples.
+  transcript?: unknown;
+  extracted?: unknown;
 };
 
 export async function saveSchedulingRequest(
@@ -498,6 +501,8 @@ export async function saveSchedulingRequest(
       utm_term: input.utm_term ?? null,
       landing_page: input.landing_page ?? null,
       referrer: input.referrer ?? null,
+      transcript: (input.transcript ?? null) as never,
+      extracted: (input.extracted ?? null) as never,
     })
     .select("id")
     .single();

@@ -212,3 +212,51 @@ export const diagnosisAnalysisSchema = z.object({
 });
 
 export type DiagnosisAnalysisOutput = z.infer<typeof diagnosisAnalysisSchema>;
+
+// ---------------------------------------------------------------------------
+// Descoberta — form de descoberta conversacional (substitui a call de descoberta)
+// ---------------------------------------------------------------------------
+// Endpoints públicos batem na API paga (Haiku/Sonnet). Caps de tamanho aqui
+// são a primeira linha contra abuso — texto longo, payload inflado.
+const DISCOVERY_TEXT_MAX = 2000;
+
+// POST /api/descoberta/plan — Q0 (a necessidade) → ack + perguntas sob medida.
+export const discoveryPlanRequestSchema = z.object({
+  need: z.string().min(2, "Conta um pouco mais.").max(1000),
+  name: z.string().max(80).optional().or(z.literal("")),
+});
+export type DiscoveryPlanRequest = z.infer<typeof discoveryPlanRequestSchema>;
+
+// POST /api/descoberta/ack — resposta de pergunta aberta → reação curta (stream).
+export const discoveryAckRequestSchema = z.object({
+  need: z.string().max(1000),
+  question: z.string().max(500),
+  answer: z.string().min(1).max(DISCOVERY_TEXT_MAX),
+});
+export type DiscoveryAckRequest = z.infer<typeof discoveryAckRequestSchema>;
+
+const discoveryCollectedItemSchema = z.object({
+  key: z.string().max(40),
+  question: z.string().max(500),
+  answer: z.string().max(DISCOVERY_TEXT_MAX),
+});
+export type DiscoveryCollectedItem = z.infer<typeof discoveryCollectedItemSchema>;
+
+// POST /api/descoberta/finish — fecha: extrai dados, gera recap, dispara pipeline.
+export const discoveryFinishRequestSchema = z.object({
+  need: z.string().min(2).max(1000),
+  collected: z.array(discoveryCollectedItemSchema).max(12),
+  name: z.string().min(2, "Nome muito curto.").max(80),
+  email: z.email("E-mail inválido."),
+  whatsapp: brWhatsapp,
+  source: z.string().max(40).optional().or(z.literal("")),
+  diagnosis_id: z.string().uuid().optional().or(z.literal("")),
+  utm_source: attributionField,
+  utm_medium: attributionField,
+  utm_campaign: attributionField,
+  utm_content: attributionField,
+  utm_term: attributionField,
+  landing_page: attributionField,
+  referrer: attributionField,
+});
+export type DiscoveryFinishRequest = z.infer<typeof discoveryFinishRequestSchema>;

@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Mail, ShieldCheck } from "lucide-react";
+import { ArrowRight, Clock, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrackedLink } from "@/components/tracking/tracked-link";
 
@@ -20,6 +20,17 @@ export function FinalCTA() {
             <TrackedLink href="/diagnosis" trackLabel="home_final_diagnosis">
               Iniciar diagnóstico gratuito
               <ArrowRight className="size-4" aria-hidden />
+            </TrackedLink>
+          </Button>
+          <Button
+            asChild
+            size="xl"
+            variant="outline"
+            className="rounded-xl !bg-transparent border-zinc-700 text-zinc-100 hover:!bg-zinc-800/60 dark:border-zinc-300 dark:text-zinc-900 dark:hover:!bg-zinc-200"
+          >
+            <TrackedLink href="/descoberta?source=home_final" trackLabel="home_final_descoberta">
+              Montar minha proposta com a IA
+              <Sparkles className="size-4" aria-hidden />
             </TrackedLink>
           </Button>
         </div>
