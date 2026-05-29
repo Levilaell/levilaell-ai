@@ -9,8 +9,11 @@ interface LpHeroProps {
   defaultHeadline: string;
   dtrVariants: Record<string, string>;
   subHeadline: string;
-  primaryCtaText?: string;
-  secondaryCtaText?: string;
+  /** CTA primária → /diagnosis. O funil é diagnóstico-first (sem gate de contato). */
+  ctaText?: string;
+  /** Mostra também "Agendar conversa" (gate de contato). Off por padrão. */
+  showScheduling?: boolean;
+  schedulingText?: string;
 }
 
 export function LpHero({
@@ -19,8 +22,9 @@ export function LpHero({
   defaultHeadline,
   dtrVariants,
   subHeadline,
-  primaryCtaText = "Agendar conversa",
-  secondaryCtaText = "Fazer diagnóstico",
+  ctaText = "Fazer diagnóstico gratuito",
+  showScheduling = false,
+  schedulingText = "Agendar conversa",
 }: LpHeroProps) {
   return (
     <section className="relative overflow-hidden border-b border-border/60">
@@ -39,16 +43,14 @@ export function LpHero({
           />
           <p className="text-lead mt-6 mx-auto">{subHeadline}</p>
           <div className="mt-10 flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3">
-            <LpCalcomCta lpSlug={lpSlug} ctaPosition="hero">
-              {primaryCtaText}
-            </LpCalcomCta>
-            <LpCtaButton
-              lpSlug={lpSlug}
-              ctaPosition="hero"
-              variant="outline"
-            >
-              {secondaryCtaText}
+            <LpCtaButton lpSlug={lpSlug} ctaPosition="hero" withArrow>
+              {ctaText}
             </LpCtaButton>
+            {showScheduling && (
+              <LpCalcomCta lpSlug={lpSlug} ctaPosition="hero">
+                {schedulingText}
+              </LpCalcomCta>
+            )}
           </div>
         </div>
       </div>
