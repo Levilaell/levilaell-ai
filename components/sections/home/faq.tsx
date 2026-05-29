@@ -15,7 +15,7 @@ type FAQItem = {
 const faq: FAQItem[] = [
   {
     q: "O diagnóstico é realmente gratuito?",
-    a: "Sim, sem letra miúda. Você responde, recebe o relatório, e decide se quer ir adiante. Oferecemos gratuitamente porque é a melhor forma de te mostrar valor antes de pedir qualquer coisa.",
+    a: "Sim, sem letra miúda. Você responde, recebe o retrato do seu cenário na hora, e decide se quer ir adiante. Oferecemos gratuitamente porque é a melhor forma de te mostrar valor antes de pedir qualquer coisa.",
   },
   {
     q: "Preciso entender de tecnologia pra contratar?",

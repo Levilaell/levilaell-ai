@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Clock, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrackedLink } from "@/components/tracking/tracked-link";
 
@@ -15,31 +15,20 @@ export function FinalCTA() {
         <p className="text-lead mt-6 max-w-2xl mx-auto !text-zinc-300 dark:!text-zinc-700">
           A maioria dos escritórios contábeis perde dezenas de horas por semana em tarefas que software resolveria. O diagnóstico te mostra exatamente onde — em 2 minutos.
         </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-3">
+        <div className="mt-10 flex justify-center">
           <Button asChild size="xl" variant="brand" className="rounded-xl">
             <TrackedLink href="/diagnosis" trackLabel="home_final_diagnosis">
               Iniciar diagnóstico gratuito
               <ArrowRight className="size-4" aria-hidden />
             </TrackedLink>
           </Button>
-          <Button
-            asChild
-            size="xl"
-            variant="outline"
-            className="rounded-xl !bg-transparent border-zinc-700 text-zinc-100 hover:!bg-zinc-800/60 dark:border-zinc-300 dark:text-zinc-900 dark:hover:!bg-zinc-200"
-          >
-            <TrackedLink href="/descoberta?source=home_final" trackLabel="home_final_descoberta">
-              Montar minha proposta com a IA
-              <Sparkles className="size-4" aria-hidden />
-            </TrackedLink>
-          </Button>
         </div>
         <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-zinc-400 dark:text-zinc-600">
           <li className="inline-flex items-center gap-1.5">
-            <Mail className="size-3.5" aria-hidden /> Receba seu relatório no e-mail
+            <Sparkles className="size-3.5" aria-hidden /> Perguntas sob medida pro seu caso
           </li>
           <li className="inline-flex items-center gap-1.5">
-            <Clock className="size-3.5" aria-hidden /> Sem cadastro pra começar
+            <Clock className="size-3.5" aria-hidden /> Resultado na hora, sem cadastro
           </li>
           <li className="inline-flex items-center gap-1.5">
             <ShieldCheck className="size-3.5" aria-hidden /> Sem ligações de vendedor

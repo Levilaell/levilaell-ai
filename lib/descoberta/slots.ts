@@ -203,58 +203,120 @@ export const DISCOVERY_SLOTS: SlotSpec[] = [
       "Sem urgência, explorando 🌱",
     ],
   },
+
+  // ---------------------------------------------------------------------------
+  // Viabilidade de ambiente/acesso + dimensionamento + fechamento — os forks que
+  // mais matam projeto de automação contábil. Ativados por REGRA do checklist
+  // (lib/descoberta/checklist.ts) conforme a dor e as respostas, não por todo
+  // mundo. Vários são `needs_confirmation`: o lead às vezes não sabe de cabeça.
+  // ---------------------------------------------------------------------------
+  {
+    key: "portal_entrada",
+    captures:
+      "quando os docs entram por 'portal' (citado em canais): QUAL portal — Onvio Portal (nativo, às vezes já recebe/distribui sozinho), portal próprio do escritório, ou outro. Não aceite 'portal' genérico — decide SE e COMO dá pra ler.",
+    kind: "single",
+    chips: [
+      "Onvio Portal",
+      "Portal próprio do escritório",
+      "Outro portal / sistema",
+    ],
+  },
+  {
+    key: "api_acesso",
+    captures:
+      "quando o ERP é web/nuvem (Onvio, Domínio Web): a API está LIBERADA no contrato/plano e o lead tem credencial de API? 'É web' NÃO garante API — decide API oficial vs RPA. O lead frequentemente não sabe (vira confirmação técnica).",
+    kind: "single",
+    chips: ["Tem API liberada", "Plano não inclui API", "Não sei"],
+  },
+  {
+    key: "certificado",
+    captures:
+      "quando a automação opera fiscal (NFe, guias, e-CAC, SEFAZ): qual certificado digital — A1 (arquivo .pfx, automatizável) vs A3 (token/cartão, trava automação headless), de quem (escritório/cada cliente) e onde fica. Define viabilidade da operação fiscal.",
+    kind: "single",
+    chips: ["A1 (arquivo)", "A3 (token/cartão)", "Os dois / varia", "Não sei"],
+  },
+  {
+    key: "seguranca",
+    captures:
+      "os sistemas que o robô vai operar (ERP web, e-CAC, portais de prefeitura, internet banking) exigem 2FA/MFA (código no celular) ou captcha pra logar? Mata operação desassistida. O lead às vezes não sabe (vira confirmação técnica).",
+    kind: "single",
+    chips: ["Sim, 2FA/código", "Tem captcha", "Não", "Não sei"],
+  },
+  {
+    key: "ambiente",
+    captures:
+      "quando precisa de RPA local (ERP Desktop instalado): existe máquina/servidor ligado 24/7 pra hospedar o robô, ou rodaria no PC de alguém? Sem ambiente, RPA local não roda. Define a infra do projeto.",
+    kind: "single",
+    chips: [
+      "Servidor/máquina dedicada ligada",
+      "PC de alguém",
+      "Tudo em nuvem",
+      "Não sei",
+    ],
+  },
+  {
+    key: "volume_tx",
+    captures:
+      "volume TRANSACIONAL por mês do que será automatizado: nº de notas/guias/documentos/extratos por mês — NÃO nº de clientes (1 cliente pode ter centenas). É o que dimensiona esforço e ganho.",
+    kind: "single",
+    chips: [
+      "Até 200/mês",
+      "200 a 1.000/mês",
+      "1.000 a 5.000/mês",
+      "Mais de 5.000/mês",
+    ],
+  },
+  {
+    key: "variacao",
+    captures:
+      "cardinalidade da variação: quantas FONTES/FORMATOS distintos entram (quantos bancos com layout diferente, quantos tipos de documento, quantos layouts). O custo escala com a variação, não com o volume. Crítico em conciliação/triagem.",
+    kind: "text",
+    placeholder:
+      "Ex: uns 8 bancos, cada um num formato; e 3 tipos de documento diferentes.",
+  },
+  {
+    key: "qualidade",
+    captures:
+      "régua de qualidade tolerável: dá pra ter uma % caindo pra revisão manual, ou precisa ser ~100% automático? Define determinístico vs OCR/IA e o handoff de exceção.",
+    kind: "single",
+    chips: [
+      "Tolero alguns % manual",
+      "Quase tudo automático",
+      "Quero reduzir trabalho, ajusto a régua",
+    ],
+  },
+  {
+    key: "decisor",
+    captures:
+      "quem aprova/assina um investimento desse tipo: o lead é dono/sócio (decide) ou funcionário (leva pra decisão)? Define se a proposta vai pra quem fecha.",
+    kind: "single",
+    chips: [
+      "Sou eu (dono/sócio)",
+      "Eu + sócio(s)",
+      "Eu avalio, decide outro",
+      "Decide outra pessoa",
+    ],
+  },
+  {
+    key: "cobranca",
+    captures:
+      "modelo de cobrança que o lead imagina: projeto único (paga uma vez) vs mensalidade/serviço contínuo. Define o formato da proposta. NÃO pergunte valor/budget aqui — só o modelo.",
+    kind: "single",
+    chips: ["Projeto único", "Mensalidade / contínuo", "O que fizer mais sentido"],
+  },
+  {
+    key: "gatilho",
+    captures:
+      "por que resolver AGORA: o que mudou (cresceu, perdeu prazo de obrigação, cliente reclamando, contratou/demitiu). Cria urgência real de fechamento.",
+    kind: "text",
+    placeholder:
+      "Ex: dobramos de clientes esse ano e o time não dá conta do fechamento no prazo.",
+  },
 ];
 
 export type SlotKey = (typeof DISCOVERY_SLOTS)[number]["key"];
 
 export const SLOT_KEYS: readonly string[] = DISCOVERY_SLOTS.map((s) => s.key);
-
-// -----------------------------------------------------------------------------
-// Fallback estático — usado quando a IA do /plan falha. Mantém o lead no fluxo.
-// Sequência enxuta que serve pra qualquer dor contábil.
-// -----------------------------------------------------------------------------
-function slotChips(key: string): string[] {
-  return [...(DISCOVERY_SLOTS.find((s) => s.key === key)?.chips ?? [])];
-}
-
-export const FALLBACK_QUESTIONS: DiscoveryQuestion[] = [
-  {
-    key: "erp_conexao",
-    prompt: "Qual sistema/ERP vocês usam de base — e qual versão (instalado no PC, web/nuvem)?",
-    kind: "single",
-    chips: slotChips("erp_conexao"),
-  },
-  {
-    key: "destino",
-    prompt: "Hoje, por onde isso chega/sai pro cliente? Qual sistema especificamente?",
-    kind: "single",
-    chips: slotChips("destino"),
-  },
-  {
-    key: "volume",
-    prompt: "Pra eu dimensionar — quantos clientes ativos? (e, se souber, quantos por cliente/mês)",
-    kind: "single",
-    chips: slotChips("volume"),
-  },
-  {
-    key: "processo",
-    prompt: "Me conta como isso funciona hoje no dia a dia — passo a passo, e quem toca nisso.",
-    kind: "text",
-    placeholder: DISCOVERY_SLOTS.find((s) => s.key === "processo")?.placeholder,
-  },
-  {
-    key: "tentativas",
-    prompt: "Já tentaram automatizar isso de alguma forma? O que aconteceu?",
-    kind: "single",
-    chips: slotChips("tentativas"),
-  },
-  {
-    key: "prazo",
-    prompt: "Por último: em que prazo você quer ter isso rodando?",
-    kind: "single",
-    chips: slotChips("prazo"),
-  },
-];
 
 // -----------------------------------------------------------------------------
 // Acks canned — reação instantânea após resposta de chip (sem chamar a IA).
@@ -309,7 +371,7 @@ const ACK_BY_SLOT: Record<string, string> = {
   canais: "Certo, é por aí que entra documento.",
   volume: "Boa, isso me dá a escala.",
   time: "Entendi o time.",
-  criterio: "Boa — isso ajuda a vender o valor certo.",
+  criterio: "Boa — isso ajuda a priorizar o que mais pesa.",
   tentativas: "Valeu por contar — isso ajuda a calibrar.",
   prazo: "Fechou.",
 };
@@ -343,10 +405,3 @@ export const Q0_PLACEHOLDERS: string[] = [
   "Cobrança automática de documento que falta no fechamento",
   "Geração e envio dos relatórios mensais",
 ];
-
-export const Q0_PROMPT = "O que você precisa automatizar no seu escritório?";
-
-// Limite de perguntas que a IA pode planejar (UX + custo). 7 dá espaço pros
-// drills técnicos decisivos (versão do ERP, qual portal) sem virar formulário.
-export const MAX_PLAN_QUESTIONS = 7;
-export const MIN_PLAN_QUESTIONS = 3;

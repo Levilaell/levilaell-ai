@@ -220,12 +220,8 @@ export type DiagnosisAnalysisOutput = z.infer<typeof diagnosisAnalysisSchema>;
 // são a primeira linha contra abuso — texto longo, payload inflado.
 const DISCOVERY_TEXT_MAX = 2000;
 
-// POST /api/descoberta/plan — Q0 (a necessidade) → ack + perguntas sob medida.
-export const discoveryPlanRequestSchema = z.object({
-  need: z.string().min(2, "Conta um pouco mais.").max(1000),
-  name: z.string().max(80).optional().or(z.literal("")),
-});
-export type DiscoveryPlanRequest = z.infer<typeof discoveryPlanRequestSchema>;
+// O endpoint /plan (one-shot) foi substituído pelo loop /step guiado por
+// checklist — ver discoveryStepRequestSchema, definido após o collected item.
 
 // POST /api/descoberta/ack — resposta de pergunta aberta → reação curta (stream).
 export const discoveryAckRequestSchema = z.object({
@@ -242,10 +238,20 @@ const discoveryCollectedItemSchema = z.object({
 });
 export type DiscoveryCollectedItem = z.infer<typeof discoveryCollectedItemSchema>;
 
+// POST /api/descoberta/step — um passo do loop de descoberta guiado por checklist.
+// Stateless: o client manda need + pains + tudo coletado; o server devolve o
+// próximo lote OU "completo" + pauta de confirmação técnica.
+export const discoveryStepRequestSchema = z.object({
+  need: z.string().min(2, "Conta um pouco mais.").max(1000),
+  pains: z.array(z.string().max(120)).max(8).optional(),
+  collected: z.array(discoveryCollectedItemSchema).max(60),
+});
+export type DiscoveryStepRequest = z.infer<typeof discoveryStepRequestSchema>;
+
 // POST /api/descoberta/finish — fecha: extrai dados, gera recap, dispara pipeline.
 export const discoveryFinishRequestSchema = z.object({
   need: z.string().min(2).max(1000),
-  collected: z.array(discoveryCollectedItemSchema).max(12),
+  collected: z.array(discoveryCollectedItemSchema).max(60),
   name: z.string().min(2, "Nome muito curto.").max(80),
   email: z.email("E-mail inválido."),
   whatsapp: brWhatsapp,

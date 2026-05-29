@@ -1,14 +1,22 @@
 import type { Metadata } from "next";
-import { DiagnosisForm } from "@/components/diagnosis/diagnosis-form";
+import { DescobertaExperience } from "@/components/descoberta/descoberta-experience";
 
 export const metadata: Metadata = {
   title: "Diagnóstico contábil com IA",
   description:
-    "Em 2 minutos, mapeie onde seu escritório contábil perde tempo. Recebe gargalo principal, top 3 oportunidades e plano de 30/60/90 dias.",
+    "Em 2 minutos, mapeie onde seu escritório contábil perde tempo. A IA faz perguntas sob medida pro seu cenário e aponta o que dá pra resolver primeiro.",
   alternates: { canonical: "/diagnosis" },
 };
 
-export default function DiagnosisPage() {
+export default async function DiagnosisPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ source?: string; d?: string }>;
+}) {
+  const sp = await searchParams;
+  const source = typeof sp.source === "string" ? sp.source : undefined;
+  const diagnosisId = typeof sp.d === "string" ? sp.d : undefined;
+
   return (
     <section className="container-prose py-16 md:py-20">
       <header className="mb-10 md:mb-12">
@@ -19,10 +27,12 @@ export default function DiagnosisPage() {
           Onde seu escritório contábil está perdendo tempo?
         </h1>
         <p className="text-lead mt-4">
-          Diagnóstico em 2 minutos. Você recebe gargalo principal, top 3 oportunidades priorizadas e plano de 30/60/90 dias pro seu escritório.
+          Responde algumas perguntas e a IA mapeia o seu cenário — aponta o
+          gargalo principal e o que dá pra automatizar primeiro no seu
+          escritório.
         </p>
       </header>
-      <DiagnosisForm />
+      <DescobertaExperience source={source} diagnosisId={diagnosisId} />
     </section>
   );
 }

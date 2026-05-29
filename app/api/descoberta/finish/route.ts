@@ -7,7 +7,7 @@
  *   2. Persiste em scheduling_requests (source=descoberta, transcript+extracted).
  *   3. Cancela email sequence pendente (se veio diagnosis_id).
  *   4. Telegram pro Levi com a necessidade + Q&A + extração.
- *   5. CAPI Lead (tier=hot) — mesmo evento de conversion do agendamento.
+ *   5. CAPI Lead (tier=warm) — diagnóstico grátis não é hot; hot fica pro agendamento.
  *   6. CRM webhook (lead-from-site).
  *   7. tracking_events.descoberta_submitted
  *
@@ -22,6 +22,11 @@ import {
   type DescobertaExtract,
 } from "@/lib/descoberta/ai";
 import { prazoToUrgency } from "@/lib/descoberta/slots";
+import {
+  buildActivationCtx,
+  attemptsByKey,
+  pendingConfirmationItems,
+} from "@/lib/descoberta/checklist";
 import {
   cancelEmailSequence,
   isSupabaseConfigured,
@@ -65,6 +70,8 @@ function buildTelegramMessage(input: {
   need: string;
   collected: { key: string; question: string; answer: string }[];
   extracted: DescobertaExtract | null;
+  /** Pauta de confirmação técnica (forks que o lead não soube / não respondeu). */
+  pending: string[];
 }): string {
   const waLink = `https://wa.me/${formatWhatsappForLink(input.whatsapp)}`;
   const lines = [
@@ -86,6 +93,20 @@ function buildTelegramMessage(input: {
   if (input.extracted) {
     const e = input.extracted;
     lines.push("", "<b>Extração (IA):</b>", escapeHtml(truncate(e.resumo, 400)));
+    const s = e.sistemas;
+    if (s) {
+      const viab = [
+        s.erp && `ERP ${s.erp}`,
+        s.erp_conexao && `conexão ${s.erp_conexao}`,
+        s.api_acesso && `API ${s.api_acesso}`,
+        s.certificado && `cert ${s.certificado}`,
+        s.seguranca && `2FA ${s.seguranca}`,
+        s.ambiente_execucao && `ambiente ${s.ambiente_execucao}`,
+      ].filter(Boolean);
+      if (viab.length) {
+        lines.push(`<b>Viabilidade:</b> ${escapeHtml(truncate(viab.join(" · "), 360))}`);
+      }
+    }
     if (e.escopo_sugerido?.length) {
       lines.push("<b>Escopo sugerido:</b>");
       for (const item of e.escopo_sugerido.slice(0, 4)) {
@@ -98,6 +119,12 @@ function buildTelegramMessage(input: {
           truncate(e.perguntas_em_aberto.join("; "), 300),
         )}`,
       );
+    }
+  }
+  if (input.pending.length) {
+    lines.push("", "⚠️ <b>Confirmar antes de propor (o lead pode não saber):</b>");
+    for (const p of input.pending.slice(0, 8)) {
+      lines.push(`  – ${escapeHtml(truncate(p, 160))}`);
     }
   }
   if (input.id) {
@@ -161,6 +188,14 @@ export async function POST(request: Request) {
   const prazoAnswer = data.collected.find((c) => c.key === "prazo")?.answer;
   const urgency = prazoToUrgency(prazoAnswer);
 
+  // Pauta de confirmação técnica — determinística (do checklist), independe da
+  // IA: roda mesmo se a extração falhar. São os forks que o lead não soube
+  // responder e que precisam de um toque técnico curto antes de propor.
+  const pendingConfirmation = pendingConfirmationItems(
+    buildActivationCtx({ need: data.need, collected: data.collected }),
+    { attempts: attemptsByKey(data.collected) },
+  ).map((i) => i.captures);
+
   // -----------------------------------------------------------------------
   // 2) Persistência (graceful — fail-open pra não bloquear conversão).
   // -----------------------------------------------------------------------
@@ -220,6 +255,7 @@ export async function POST(request: Request) {
       need: data.need,
       collected: data.collected,
       extracted,
+      pending: pendingConfirmation,
     });
     const results = await notifyTelegram({ text, parseMode: "HTML" });
     if (results.some((r) => r.ok) && requestId) {
@@ -228,7 +264,8 @@ export async function POST(request: Request) {
   }
 
   // -----------------------------------------------------------------------
-  // 5) CAPI Lead (tier=hot). event_id = requestId quando temos. Silent fail.
+  // 5) CAPI Lead (tier=warm — diagnóstico grátis ≠ intenção de fechar; hot fica
+  //    pro form de agendamento). event_id = requestId quando temos. Silent fail.
   // -----------------------------------------------------------------------
   const eventId =
     requestId ??
@@ -251,9 +288,9 @@ export async function POST(request: Request) {
         ...parseFbCookies(request.headers.get("cookie")),
       },
       custom_data: {
-        value: EVENT_VALUE_BRL.hot_lead,
+        value: EVENT_VALUE_BRL.lead,
         currency: "BRL",
-        lead_quality: "hot",
+        lead_quality: "warm",
       },
     });
   } catch (err) {

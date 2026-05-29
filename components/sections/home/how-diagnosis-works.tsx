@@ -10,13 +10,13 @@ const steps = [
   },
   {
     title:
-      "IA analisa as respostas e identifica padrões, gargalos e oportunidades específicas do seu caso",
-    detail: "análise feita por modelo especializado em consultoria",
+      "A IA puxa o fio do seu caso com perguntas sob medida — sistema, volume, como o processo roda hoje",
+    detail: "nada de formulário genérico",
   },
   {
     title:
-      "Você recebe um relatório personalizado com priorização do que automatizar primeiro, ordem de impacto e estimativa de retorno",
-    detail: "no e-mail · acessível por link permanente",
+      "Você recebe na hora o gargalo principal e o que dá pra automatizar primeiro, na ordem que faz sentido",
+    detail: "resultado na tela · sem espera",
   },
   {
     title: "Se quiser implementar, agenda uma conversa — sem compromisso",

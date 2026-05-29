@@ -1,26 +1,24 @@
 // =============================================================================
 // Descoberta — driver de IA
 // =============================================================================
-// 3 chamadas, separadas por papel e latência:
-//   planQuestions   — Haiku, tool forçada. Q0 → ack + perguntas sob medida.
+// 3 chamadas, por papel (a completude NÃO depende de IA — é determinística no
+// checklist; aqui a IA só frase/reage/extrai):
+//   stepQuestions   — Haiku, tool forçada. Frasea o lote de itens que o engine
+//                     mandou + o ack inicial.
 //   streamAckDeltas — Haiku, streaming. Reação curta a resposta aberta.
-//   extractAndRecap — Sonnet 4.6, tool forçada. Extrai dados + recap pro lead.
+//   extractAndRecap — Sonnet 4.6, tool forçada. Estrai dados + recap pro lead.
 //
-// Modelo do driver = Haiku (rápido/barato, escolhido pra esse fluxo). Extração
-// = Sonnet 4.6 (padrão do repo; 1 chamada não-crítica de latência onde a
-// qualidade do PT-BR estruturado importa). O SDK já faz retry de 429/5xx.
+// O SDK já faz retry de 429/5xx. Erros sobem pro chamador (engine/route), que
+// tem fallback determinístico (perguntas-piso do checklist).
 // =============================================================================
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import {
-  DISCOVERY_SLOTS,
-  MAX_PLAN_QUESTIONS,
-  type DiscoveryQuestion,
-} from "@/lib/descoberta/slots";
 import type { DiscoveryCollectedItem } from "@/types/forms";
 import {
-  PLAN_SYSTEM,
-  PLAN_TOOL,
+  STEP_SYSTEM,
+  STEP_TOOL,
+  buildStepUserMessage,
+  type StepBatchItem,
   ACK_SYSTEM,
   buildAckUserMessage,
   EXTRACT_SYSTEM,
@@ -53,90 +51,53 @@ function firstToolUse<T extends { type: string }>(content: T[]) {
 }
 
 // -----------------------------------------------------------------------------
-// planQuestions — Q0 → ack + perguntas
+// stepQuestions — frasea o lote de itens (o engine decide QUAIS itens)
 // -----------------------------------------------------------------------------
-const planQuestionSchema = z.object({
-  key: z.string().min(1).max(40),
-  prompt: z.string().min(1).max(400),
-  kind: z.enum(["single", "multi", "text"]),
-  chips: z.array(z.string().max(80)).max(10).optional(),
-  placeholder: z.string().max(240).optional(),
-});
-const planOutputSchema = z.object({
-  ack: z.string().min(1).max(600),
-  questions: z.array(planQuestionSchema).min(1).max(MAX_PLAN_QUESTIONS),
+const stepOutputSchema = z.object({
+  ack: z.string().max(600).optional(),
+  questions: z
+    .array(
+      z.object({
+        item_id: z.string().min(1).max(40),
+        prompt: z.string().min(1).max(400),
+      }),
+    )
+    .max(20),
 });
 
-export type DiscoveryPlan = {
-  ack: string;
-  questions: DiscoveryQuestion[];
+export type StepResult = {
+  ack?: string;
+  /** item_id → prompt frasado pela IA. */
+  prompts: Record<string, string>;
 };
 
-// Garante que single/multi sempre tem chips (backfill do vocabulário; se não
-// achar, vira text). Evita UI quebrada por output torto do modelo.
-function normalizeQuestions(
-  raw: z.infer<typeof planQuestionSchema>[],
-): DiscoveryQuestion[] {
-  const out: DiscoveryQuestion[] = [];
-  for (const q of raw) {
-    const slot = DISCOVERY_SLOTS.find((s) => s.key === q.key);
-    let kind: DiscoveryQuestion["kind"] = q.kind;
-    let chips: string[] | undefined = q.chips ? [...q.chips] : undefined;
-
-    if (kind === "single" || kind === "multi") {
-      if (!chips || chips.length === 0) {
-        if (slot?.chips) chips = [...slot.chips];
-        else {
-          kind = "text";
-          chips = undefined;
-        }
-      }
-    }
-    if (kind === "text") chips = undefined;
-
-    out.push({
-      key: q.key,
-      prompt: q.prompt,
-      kind,
-      chips,
-      placeholder:
-        kind === "text" ? (q.placeholder ?? slot?.placeholder) : undefined,
-    });
-  }
-  return out;
-}
-
-export async function planQuestions(input: {
+export async function stepQuestions(input: {
   need: string;
-  name?: string;
-}): Promise<DiscoveryPlan> {
+  collected: DiscoveryCollectedItem[];
+  batch: StepBatchItem[];
+}): Promise<StepResult> {
   const c = getClient();
-  const userMsg = input.name
-    ? `Lead: ${input.name}\nO que ele precisa: ${input.need}`
-    : `O que o lead precisa: ${input.need}`;
-
   const res = await c.messages.create({
     model: DESCOBERTA_DRIVER_MODEL,
     max_tokens: 1024,
     system: [
-      { type: "text", text: PLAN_SYSTEM, cache_control: { type: "ephemeral" } },
+      { type: "text", text: STEP_SYSTEM, cache_control: { type: "ephemeral" } },
     ],
-    tools: [PLAN_TOOL],
-    tool_choice: { type: "tool", name: PLAN_TOOL.name },
-    messages: [{ role: "user", content: userMsg }],
+    tools: [STEP_TOOL],
+    tool_choice: { type: "tool", name: STEP_TOOL.name },
+    messages: [{ role: "user", content: buildStepUserMessage(input) }],
   });
 
   const toolUse = firstToolUse(res.content);
-  if (!toolUse) throw new Error("[descoberta] plan: sem tool_use");
+  if (!toolUse) throw new Error("[descoberta] step: sem tool_use");
 
-  const parsed = planOutputSchema.safeParse(toolUse.input);
+  const parsed = stepOutputSchema.safeParse(toolUse.input);
   if (!parsed.success) {
-    throw new Error(`[descoberta] plan: schema inválido — ${parsed.error.message}`);
+    throw new Error(`[descoberta] step: schema inválido — ${parsed.error.message}`);
   }
-  return {
-    ack: parsed.data.ack,
-    questions: normalizeQuestions(parsed.data.questions),
-  };
+  const prompts: Record<string, string> = {};
+  for (const q of parsed.data.questions) prompts[q.item_id] = q.prompt;
+  return { ack: parsed.data.ack, prompts };
 }
 
 // -----------------------------------------------------------------------------
@@ -177,16 +138,27 @@ const extractOutputSchema = z.object({
     .object({
       erp: z.string().optional(),
       erp_conexao: z.string().optional(),
+      api_acesso: z.string().optional(),
       onde_arquivos: z.string().optional(),
+      portal_entrada: z.string().optional(),
       portal_destino: z.string().optional(),
       canais: z.array(z.string()).optional(),
+      certificado: z.string().optional(),
+      seguranca: z.string().optional(),
+      ambiente_execucao: z.string().optional(),
     })
     .optional(),
-  volume: z.string().optional(),
+  volume_clientes: z.string().optional(),
+  volume_transacional: z.string().optional(),
+  variacao: z.string().optional(),
+  qualidade: z.string().optional(),
   processo_atual: z.string().optional(),
   time: z.string().optional(),
   tentativas_anteriores: z.string().optional(),
+  gatilho: z.string().optional(),
   prazo: z.string().optional(),
+  decisor: z.string().optional(),
+  modelo_cobranca: z.string().optional(),
   detalhes_tecnicos: z.array(z.string()).optional(),
   escopo_sugerido: z.array(z.string()),
   perguntas_em_aberto: z.array(z.string()).optional(),
@@ -201,7 +173,7 @@ export async function extractAndRecap(input: {
   const c = getClient();
   const res = await c.messages.create({
     model: DESCOBERTA_EXTRACT_MODEL,
-    max_tokens: 1500,
+    max_tokens: 1800,
     system: [
       {
         type: "text",
