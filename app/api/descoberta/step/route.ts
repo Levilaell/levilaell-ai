@@ -12,27 +12,9 @@
 import { NextResponse } from "next/server";
 import { discoveryStepRequestSchema } from "@/types/forms";
 import { discoveryStep } from "@/lib/descoberta/engine";
+import { rateLimited, clientIp } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
-
-// Rate limit best-effort por instância. O loop chama várias vezes por sessão,
-// então o teto é mais folgado que o de um endpoint one-shot.
-const hits = new Map<string, number[]>();
-const WINDOW_MS = 5 * 60_000;
-const MAX_HITS = 40;
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const arr = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
-  arr.push(now);
-  hits.set(ip, arr);
-  return arr.length > MAX_HITS;
-}
-
-function clientIp(req: Request): string {
-  const xff = req.headers.get("x-forwarded-for");
-  return xff?.split(",")[0]?.trim() || "unknown";
-}
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -51,7 +33,7 @@ export async function POST(request: Request) {
   }
 
   // Rate limit → segue determinístico (sem fraseado de IA), nunca trava o lead.
-  const phrase = !rateLimited(clientIp(request));
+  const phrase = !rateLimited("step", clientIp(request), { max: 40 });
 
   try {
     const step = await discoveryStep(parsed.data, { phrase });

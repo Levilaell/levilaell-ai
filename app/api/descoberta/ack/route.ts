@@ -8,6 +8,7 @@
  */
 import { discoveryAckRequestSchema } from "@/types/forms";
 import { isDescobertaAiConfigured, streamAckDeltas } from "@/lib/descoberta/ai";
+import { rateLimited, clientIp } from "@/lib/server/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,11 @@ export async function POST(request: Request) {
   const parsed = discoveryAckRequestSchema.safeParse(body);
   if (!parsed.success) {
     return new Response("Dados inválidos", { status: 422 });
+  }
+
+  // Abuso de custo (endpoint Haiku pago): degrada pro ack canned (204), não trava.
+  if (rateLimited("ack", clientIp(request), { max: 30 })) {
+    return new Response(null, { status: 204 });
   }
 
   if (!isDescobertaAiConfigured()) {

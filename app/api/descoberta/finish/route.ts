@@ -27,6 +27,7 @@ import {
   attemptsByKey,
   pendingConfirmationItems,
 } from "@/lib/descoberta/checklist";
+import { rateLimited, clientIp } from "@/lib/server/rate-limit";
 import {
   cancelEmailSequence,
   isSupabaseConfigured,
@@ -148,6 +149,14 @@ export async function POST(request: Request) {
       { status: 422 },
     );
   }
+  // Anti-abuso (endpoint Sonnet caro). Teto baixo — lead real envia 1x.
+  if (rateLimited("finish", clientIp(request), { max: 8 })) {
+    return NextResponse.json(
+      { error: "Muitas tentativas. Aguarde um instante e tente de novo." },
+      { status: 429 },
+    );
+  }
+
   const data = parsed.data;
   const diagnosisId = data.diagnosis_id || "";
   const source = data.source || "descoberta";
@@ -247,19 +256,26 @@ export async function POST(request: Request) {
   // 4) Telegram. Silent fail.
   // -----------------------------------------------------------------------
   if (isTelegramConfigured()) {
-    const text = buildTelegramMessage({
-      id: requestId,
-      name: data.name,
-      email: data.email,
-      whatsapp: data.whatsapp,
-      need: data.need,
-      collected: data.collected,
-      extracted,
-      pending: pendingConfirmation,
-    });
-    const results = await notifyTelegram({ text, parseMode: "HTML" });
-    if (results.some((r) => r.ok) && requestId) {
-      await markSchedulingRequestNotified(requestId);
+    try {
+      const text = buildTelegramMessage({
+        id: requestId,
+        name: data.name,
+        email: data.email,
+        whatsapp: data.whatsapp,
+        need: data.need,
+        collected: data.collected,
+        extracted,
+        pending: pendingConfirmation,
+      });
+      const results = await notifyTelegram({ text, parseMode: "HTML" });
+      if (results.some((r) => r.ok) && requestId) {
+        await markSchedulingRequestNotified(requestId);
+      }
+    } catch (err) {
+      console.error(
+        "[descoberta/finish] Telegram failed (silent)",
+        err instanceof Error ? err.message : err,
+      );
     }
   }
 
@@ -267,8 +283,11 @@ export async function POST(request: Request) {
   // 5) CAPI Lead (tier=warm — diagnóstico grátis ≠ intenção de fechar; hot fica
   //    pro form de agendamento). event_id = requestId quando temos. Silent fail.
   // -----------------------------------------------------------------------
+  // event_id ESTÁVEL entre retries: dedup_id do client (Meta deduplica o Lead
+  // se o lead reenviar após blip de rede), senão requestId, senão random.
   const eventId =
-    requestId ??
+    data.dedup_id ||
+    requestId ||
     (typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `desc_${Date.now()}_${Math.random().toString(36).slice(2)}`);

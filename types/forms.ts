@@ -255,8 +255,14 @@ export const discoveryFinishRequestSchema = z.object({
   name: z.string().min(2, "Nome muito curto.").max(80),
   email: z.email("E-mail inválido."),
   whatsapp: brWhatsapp,
-  source: z.string().max(40).optional().or(z.literal("")),
-  diagnosis_id: z.string().uuid().optional().or(z.literal("")),
+  // source/diagnosis_id vêm da URL (param de tracking/link encurtado/id de outro
+  // formato). São atribuição opcional — NUNCA podem 422 e perder o lead na linha
+  // de chegada. .catch() coage valor inválido pra "" em vez de rejeitar o submit.
+  source: z.string().max(40).optional().or(z.literal("")).catch(""),
+  diagnosis_id: z.string().uuid().optional().or(z.literal("")).catch(""),
+  // Idempotência: o client gera 1x por sessão e reenvia em retry. Vira o event_id
+  // da CAPI (estável → Meta deduplica o Lead) e chave de dedup.
+  dedup_id: z.string().max(64).optional(),
   utm_source: attributionField,
   utm_medium: attributionField,
   utm_campaign: attributionField,
