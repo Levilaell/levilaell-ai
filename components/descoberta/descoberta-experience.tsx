@@ -128,6 +128,8 @@ export function DescobertaExperience({
   const introStartedRef = useRef(false); // intro roda 1x por instância (anti re-fire)
   const answeringRef = useRef(false); // trava resposta de pergunta contra duplo-tap
   const submitLockRef = useRef(false); // trava submit de contato contra duplo-disparo
+  const dedupRef = useRef(""); // idempotência do /finish: estável entre retries
+  const contactPushedRef = useRef(false); // bolha de contato só 1x (sem dup no retry)
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const nextId = () => ++idRef.current;
@@ -279,7 +281,15 @@ export function DescobertaExperience({
       void goToContact(); // rede caiu — não perde o lead, captura com o que tem
       return;
     }
-    setProgress({ done: step.answered, total: step.total });
+    // progresso monotônico: o total cresce quando os drills condicionais ativam;
+    // não deixa a % cair (a sensação de "fim que foge" empurra abandono em mobile).
+    setProgress((p) => {
+      const floor = p.total ? Math.round((p.done / p.total) * step.total) : 0;
+      return {
+        done: Math.min(Math.max(step.answered, floor), step.total),
+        total: step.total,
+      };
+    });
     if (step.complete || step.questions.length === 0) {
       void goToContact();
       return;
@@ -382,7 +392,13 @@ export function DescobertaExperience({
       });
       questionsRef.current = step.questions;
       indexRef.current = 0;
-      setProgress({ done: step.answered, total: step.total });
+      setProgress((p) => {
+        const floor = p.total ? Math.round((p.done / p.total) * step.total) : 0;
+        return {
+          done: Math.min(Math.max(step.answered, floor), step.total),
+          total: step.total,
+        };
+      });
       setStatus(null);
       if (step.ack) pushAiPlain(step.ack); // instantâneo — o lead já esperou
       if (step.complete || step.questions.length === 0) {
@@ -403,7 +419,16 @@ export function DescobertaExperience({
     setContactErr(null);
     if (submitLockRef.current) return; // já está enviando — ignora duplo-clique
     submitLockRef.current = true;
-    pushUser(`${cName} · ${cWhatsapp} · ${cEmail}`);
+    if (!dedupRef.current) {
+      dedupRef.current =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `desc_${idRef.current}_${cWhatsapp.replace(/\D/g, "")}`;
+    }
+    if (!contactPushedRef.current) {
+      pushUser(`${cName} · ${cWhatsapp} · ${cEmail}`);
+      contactPushedRef.current = true;
+    }
     setComposer({ type: "none" });
     setPhase("finishing");
     setBusy(true);
@@ -420,6 +445,7 @@ export function DescobertaExperience({
           name: cName,
           email: cEmail,
           whatsapp: cWhatsapp,
+          dedup_id: dedupRef.current,
           source: source ?? "descoberta",
           diagnosis_id: diagnosisId ?? "",
           utm_source: attr?.utm_source ?? null,
