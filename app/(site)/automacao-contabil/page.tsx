@@ -102,7 +102,7 @@ export default function Page() {
             {
               question: "Quanto custa um projeto?",
               answer:
-                "Depende do escopo. Projetos pontuais começam em R$ 5.000. Implementações mais robustas vão até R$ 25.000. O diagnóstico gratuito traz uma estimativa baseada no seu caso específico.",
+                "Depende do escopo. Projetos pontuais começam em R$ 5.000. Implementações mais robustas vão até R$ 25.000. Na conversa rápida eu já te dou uma estimativa baseada no seu caso.",
             },
             {
               question: "Quanto tempo demora?",
@@ -115,9 +115,9 @@ export default function Page() {
                 "Conectamos via API ou import automático. Suporta Domínio, Onvio, Sage, Alterdata, MasterMaq e outros — sistema é construído pra integrar com o que você usa, no caminho que o ERP permitir.",
             },
             {
-              question: "Como funciona o diagnóstico?",
+              question: "Como funciona a conversa?",
               answer:
-                "Diagnóstico em 2 minutos sobre o seu escritório. IA gera análise com 3 oportunidades priorizadas, estimativa de ROI e recomendação honesta (inclui 'ainda não é hora' quando aplicável).",
+                "Uma conversa rápida (uns 15 min) pra eu entender seu fluxo — ERP, volume, onde trava — e te dizer com honestidade o que dá pra automatizar primeiro (inclui 'ainda não é hora' quando for o caso). Sem pitch de vendedor.",
             },
           ]}
         />
