@@ -53,19 +53,6 @@ export type SlotSpec = {
 
 export const DISCOVERY_SLOTS: SlotSpec[] = [
   {
-    key: "segmento",
-    captures:
-      "que tipo de escritório/serviço é (contábil geral, fiscal, departamento pessoal, BPO financeiro). Pular se a necessidade já deixa claro.",
-    kind: "single",
-    chips: [
-      "Contábil geral",
-      "Fiscal / tributário",
-      "Departamento pessoal",
-      "BPO financeiro",
-      "Outro",
-    ],
-  },
-  {
     key: "erp",
     captures:
       "qual ERP/sistema principal usam (onde lançam e geram obrigações). Crítico pra proposta — integração depende disso.",
@@ -187,7 +174,6 @@ export const DISCOVERY_SLOTS: SlotSpec[] = [
       "SaaS pronto, não rolou",
       "Freelancer, ficou frágil",
       "Temos automações pontuais",
-      "Quero conversar sobre isso",
     ],
   },
   {
@@ -249,7 +235,7 @@ export const DISCOVERY_SLOTS: SlotSpec[] = [
     chips: [
       "Servidor/máquina dedicada ligada",
       "PC de alguém",
-      "Tudo em nuvem",
+      "Não tenho máquina local fixa",
       "Não sei",
     ],
   },
@@ -358,10 +344,22 @@ const ACK_BY_VALUE: Record<string, string> = {
   "prazo:Pra ontem 🔥": "Pra ontem, entendi. Urgência muda a ordem das coisas.",
   "prazo:Sem urgência, explorando 🌱":
     "Sem urgência, tranquilo — dá pra desenhar com calma.",
+  // Viabilidade/fechamento (forks que decidem o projeto)
+  "certificado:A1 (arquivo)": "A1 em arquivo — boa, isso automatiza limpo.",
+  "certificado:A3 (token/cartão)":
+    "A3 em token trava automação headless — ponto que vou confirmar no desenho.",
+  "seguranca:Sim, 2FA/código":
+    "2FA muda o jogo — ou sessão persistente ou humano no loop. Anotado.",
+  "seguranca:Não": "Sem 2FA — boa, o robô loga sozinho.",
+  "api_acesso:Tem API liberada": "API liberada — caminho mais limpo e estável.",
+  "ambiente:PC de alguém":
+    "PC de alguém é frágil pra robô 24/7 — vou considerar um servidor.",
+  "decisor:Sou eu (dono/sócio)": "Você decide, ótimo — conversa direta.",
+  "cobranca:Mensalidade / contínuo":
+    "Mensalidade faz sentido pra automação que roda todo mês.",
 };
 
 const ACK_BY_SLOT: Record<string, string> = {
-  segmento: "Saquei o perfil.",
   erp: "Anotado.",
   erp_conexao: "Anotado — isso define o caminho técnico.",
   especifico: "Boa — esse detalhe muda o caminho técnico. Anotado.",
@@ -373,6 +371,17 @@ const ACK_BY_SLOT: Record<string, string> = {
   criterio: "Boa — isso ajuda a priorizar o que mais pesa.",
   tentativas: "Valeu por contar — isso ajuda a calibrar.",
   prazo: "Fechou.",
+  portal_entrada: "Beleza, sei qual portal é.",
+  api_acesso: "Anotado — isso decide API vs robô.",
+  certificado: "Certo, o certificado muda o caminho da parte fiscal.",
+  seguranca: "Importante — isso muda como o robô loga.",
+  ambiente: "Entendi onde o robô rodaria.",
+  volume_tx: "Boa, isso me dá o volume real.",
+  variacao: "Certo — a variação é o que pesa no custo.",
+  qualidade: "Anotado a régua de qualidade.",
+  decisor: "Entendi quem decide.",
+  cobranca: "Beleza, sei o formato que faz sentido.",
+  gatilho: "Saquei o que tá puxando isso agora.",
 };
 
 /**

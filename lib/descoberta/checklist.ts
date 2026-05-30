@@ -76,12 +76,16 @@ const RE = {
   entrega: /entreg|envi|\bguia|relat[óo]rio|distribu|sa[íi]da/,
   // dor com fork técnico de formato/origem (casa singular/plural: nota(s), fiscal/fiscais)
   fork: /\bnotas?\b|\bnf\b|lançament|lancament|concilia|extrato|triagem|document|fisca(l|is)|\bguia/,
-  // operação fiscal (exige certificado digital) — casa "nota(s) fiscal/fiscais", plurais
+  // operação fiscal (exige certificado digital) — casa "nota(s) fiscal/fiscais", plurais.
+  // NÃO inclui \bdas\b: em texto livre lowercased casaria a preposição "das"
+  // ("relatório das despesas") e dispararia certificado/2FA em dor não-fiscal.
+  // A guia DAS cai em \bguia/imposto/obrigaç na prática.
   fiscal:
-    /nfe|nf-?e|notas? fisca(l|is)|\bguia|e-?cac|sefaz|obrigaç|obrigac|imposto|fisca(l|is)|\bsped\b|\bdctf\b|\bdas\b/,
+    /nfe|nf-?e|notas? fisca(l|is)|\bguia|e-?cac|sefaz|obrigaç|obrigac|imposto|fisca(l|is)|\bsped\b|\bdctf\b/,
   // operação que mexe com banco (conciliação)
   banco: /concilia|extrato|banc[áa]rio|\bbanco/,
-  triagemDoc: /triagem|document/,
+  // triagem real — só /triagem/ pra não casar "cobrança de documentos" por "document"
+  triagem: /triagem/,
   // atendimento ao cliente (responder dúvidas) e onboarding de cliente novo —
   // dores selecionáveis que também têm fork técnico de viabilidade.
   atendimento: /atendiment|d[úu]vida|suporte|responder.*client/,
@@ -210,7 +214,7 @@ export const CHECKLIST: ChecklistItem[] = [
     answerable: "lead",
     defaultPrompt:
       "Quantas fontes/formatos diferentes entram nisso — quantos bancos, tipos de documento ou layouts distintos?",
-    activate: (c) => painHits(c, RE.banco) || painHits(c, RE.triagemDoc),
+    activate: (c) => painHits(c, RE.banco) || painHits(c, RE.triagem),
   },
   {
     id: "certificado",
