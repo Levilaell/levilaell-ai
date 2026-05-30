@@ -84,13 +84,12 @@ export const DISCOVERY_SLOTS: SlotSpec[] = [
   {
     key: "erp_conexao",
     captures:
-      "versão/conexão do ERP quando ele já foi citado (ex.: Domínio Desktop instalado vs Onvio/Domínio Web vs versão antiga). DEFINE viabilidade e custo — RPA local vs API oficial vs scraping. SEMPRE pergunte quando um ERP é citado; não trate 'citou o ERP' como resolvido.",
+      "como o ERP roda — instalado na máquina/servidor (desktop) vs acessado pela web/nuvem (navegador). INDEPENDENTE de qual ERP é. DEFINE viabilidade e custo: RPA local vs API oficial vs scraping. SEMPRE pergunte quando um ERP é citado (mencionar o ERP não resolve a conexão). Os chips são genéricos — a pergunta deve citar o ERP do lead (ex.: 'teu Alterdata é instalado na máquina ou tu acessa pela web?').",
     kind: "single",
     chips: [
-      "Domínio Desktop (instalado)",
-      "Onvio / Domínio Web",
-      "Versão antiga / não sei",
-      "Outro ERP",
+      "Instalado na máquina (desktop)",
+      "Acesso pela web / nuvem",
+      "Não sei / versão antiga",
     ],
   },
   {
@@ -332,12 +331,12 @@ const ACK_BY_VALUE: Record<string, string> = {
   "erp:Planilha / sistema próprio":
     "Planilha/sistema próprio — clássico. Tem muita dor pra tirar daí.",
   // Conexão do ERP — define o caminho técnico (RPA vs API)
-  "erp_conexao:Domínio Desktop (instalado)":
-    "Desktop instalado, então é robô local, não API. Muda o caminho — anotado.",
-  "erp_conexao:Onvio / Domínio Web":
-    "Onvio/Web — boa, dá pra ir de API oficial. Bem mais limpo e estável.",
-  "erp_conexao:Versão antiga / não sei":
-    "Sem problema — eu confirmo a versão na hora de desenhar.",
+  "erp_conexao:Instalado na máquina (desktop)":
+    "Instalado na máquina, então é robô local (RPA), não API. Muda o caminho — anotado.",
+  "erp_conexao:Acesso pela web / nuvem":
+    "Web/nuvem — boa, às vezes dá pra ir de API oficial, bem mais estável. Vou confirmar.",
+  "erp_conexao:Não sei / versão antiga":
+    "Sem problema — eu confirmo isso na hora de desenhar.",
   // Destino — se for Onvio nativo, a oferta pode mudar
   "destino:Onvio Portal":
     "Onvio Portal — importante: às vezes ele já distribui guia sozinho. Vou checar se vale automatizar ou usar o que já tem.",

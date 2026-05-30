@@ -40,7 +40,7 @@ const MAX_ROUNDS = 16;
 // Cada caso pode sobrescrever pra exercitar um branch (portal, desktop, "não sei").
 const DEFAULT_ANSWER: Record<string, string> = {
   erp: "Domínio",
-  erp_conexao: "Domínio Desktop (instalado)",
+  erp_conexao: "Instalado na máquina (desktop)",
   api_acesso: "Tem API liberada",
   ambiente: "Servidor/máquina dedicada ligada",
   canais: "Email, WhatsApp",
@@ -78,30 +78,30 @@ const CASES: Case[] = [
     name: "Triagem + cobrança, portal de entrada",
     need: "Triagem de documentos recebidos (e-mail/WhatsApp), Cobrança de documentos com clientes",
     pains: ["Triagem de documentos", "Cobrança de documentos com clientes"],
-    answers: { canais: "Email, Portal do cliente", erp: "Onvio", erp_conexao: "Onvio / Domínio Web" },
+    answers: { canais: "Email, Portal do cliente", erp: "Onvio", erp_conexao: "Acesso pela web / nuvem" },
     extract: true,
   },
   {
     name: "Conciliação bancária (Domínio desktop)",
     need: "Conciliação bancária dos clientes todo mês",
-    answers: { erp: "Domínio", erp_conexao: "Domínio Desktop (instalado)" },
+    answers: { erp: "Domínio", erp_conexao: "Instalado na máquina (desktop)" },
     extract: true,
   },
   {
     name: "Coleta/envio de guias (fiscal, Onvio web)",
     need: "Coleta automática de guias no Domínio e envio pro cliente",
-    answers: { erp: "Domínio", erp_conexao: "Onvio / Domínio Web", destino: "Onvio Portal" },
+    answers: { erp: "Domínio", erp_conexao: "Acesso pela web / nuvem", destino: "Onvio Portal" },
   },
   {
     name: "Lançamento de NF (Onvio web, API/2FA 'não sei')",
     need: "Automatizar o lançamento das notas fiscais no Onvio",
-    answers: { erp: "Onvio", erp_conexao: "Onvio / Domínio Web", api_acesso: "Não sei", seguranca: "Não sei" },
+    answers: { erp: "Onvio", erp_conexao: "Acesso pela web / nuvem", api_acesso: "Não sei", seguranca: "Não sei" },
     extract: true,
   },
   {
     name: "Composta pesada (triagem + cobrança + conciliação)",
     need: "Triagem de documentos, cobrança de docs e conciliação bancária",
-    answers: { canais: "Email, Portal do cliente", erp: "Onvio", erp_conexao: "Onvio / Domínio Web" },
+    answers: { canais: "Email, Portal do cliente", erp: "Onvio", erp_conexao: "Acesso pela web / nuvem" },
   },
   {
     name: "ERP planilha (sem fork de conexão)",
@@ -111,13 +111,13 @@ const CASES: Case[] = [
   {
     name: "Relatórios mensais (entrega, sem entrada)",
     need: "Gerar e enviar relatórios mensais pros clientes",
-    answers: { destino: "Email", erp: "Domínio", erp_conexao: "Domínio Desktop (instalado)" },
+    answers: { destino: "Email", erp: "Domínio", erp_conexao: "Instalado na máquina (desktop)" },
   },
   {
     name: "Onboarding de cliente novo (dor antes sem drills)",
     need: "Onboarding de clientes novos",
     pains: ["Onboarding de clientes novos"],
-    answers: { erp: "Domínio", erp_conexao: "Domínio Desktop (instalado)", canais: "Email" },
+    answers: { erp: "Domínio", erp_conexao: "Instalado na máquina (desktop)", canais: "Email" },
     extract: true,
   },
 ];
